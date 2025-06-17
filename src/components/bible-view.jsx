@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import Typography from '@mui/material/Typography'
 import Fab from '@mui/material/Fab'
-import Home from '@mui/icons-material/Home'
-import ChevronLeft from '@mui/icons-material/ChevronLeft'
+import Language from '@mui/icons-material/Language'
 import ImageList from '@mui/material/ImageList'
 import ImageListItem from '@mui/material/ImageListItem'
 import ImageListItemBar from '@mui/material/ImageListItemBar'
-import LangSelect from './active-lang-select'
 import { rangeArray, isEmptyObj } from '../utils/obj-functions'
 import { 
   selectAudioBible,
@@ -41,7 +39,7 @@ const BibleView = (props) => {
     selectedLanguage,
   } = useMediaPlayer()
   const isPlaying = !isEmptyObj(curPlay)
-  const { onExitNavigation, onStartPlay } = props
+  const { onOpenSettings, onStartPlay } = props
   const activeLangList = activeLangListStr ? JSON.parse(activeLangListStr) : []
   const lng = selectedLanguage || ((activeLangList.length>0) ? activeLangList[0] : "eng")
   const [curLevel, setCurLevel] = useState(4)
@@ -104,25 +102,13 @@ const BibleView = (props) => {
     }
   }
 
-  const navigateHome = () => {
-    setCurLevel(1)
-    setLevel1(1)
-  }
-
-  const handleReturn = () => {
-    if ((curLevel===4)&&(naviChapters[level1][level2].length===1)){
-      navigateUp(2)
-    } else
-    if (curLevel>0){
-      navigateUp(curLevel-1)
-    } else {
-      onExitNavigation()
+  const handleOpenSettings = () => {
+    if (onOpenSettings) {
+      console.log("!")
+       onOpenSettings()
     }
   }
-  const handleClose = () => {
-    navigateUp(0)
-  }
-    
+   
   let validIconList = []
   let validBookList = []
   if (curLevel>0){
@@ -192,23 +178,12 @@ const BibleView = (props) => {
   else if (size==="xl") useCols = 5
   return (
     <div>
-      {(activeLangList.length>1) && (curLevel===1) && <LangSelect/>}
       {(!isPlaying) && (curLevel>2) && (
         <Fab
-          onClick={navigateHome}
-          // className={largeScreen ? classes.exitButtonLS : classes.exitButton}
-          color="primary"
+          onClick={()=>handleOpenSettings()}
+          color="grey"
         >
-          <Home/>
-        </Fab>
-      )}
-      {(curLevel>1) && (!isPlaying) && (
-        <Fab
-          onClick={handleReturn}
-          // className={largeScreen ? classes.exitButtonLS : classes.exitButton}
-          color="primary"
-        >
-          <ChevronLeft />
+          <Language/>
         </Fab>
       )}
       {(!isPlaying) && (<ImageList

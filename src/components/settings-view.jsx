@@ -85,8 +85,7 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
   } = useMediaPlayer()
   const curCountryLangList = (curCountryJsonStr) && JSON.parse(curCountryJsonStr)
   const langList = (langListJsonStr) && JSON.parse(langListJsonStr)
-  const defaultLangList = ((curCountryLangList) && (curCountryLangList?.a)) ? Object.keys(curCountryLangList?.a) : []
-  const defaultLang = (defaultLangList.length>0) ? defaultLangList[0] : "eng"
+  const defaultLang = "eng"
   const activeLangList = activeLangListStr ? JSON.parse(activeLangListStr) : [defaultLang]
   const curCountry = selectedCountry || detectedCountry
   const langData = (langDataJsonStr) && JSON.parse(langDataJsonStr)
@@ -138,11 +137,14 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
   }
   const handleConfirmClick = () => {
     if (activeLangList.length<=0) addActiveLang(defaultLang)
-    setConfirmedCountry(curCountry)
+      setConfirmedCountry(curCountry)
+    if (onConfirmClick) {
+      onConfirmClick()
+    }
   }
   const handleCountryChange = (newCountry) => setSelectedCountry(newCountry) 
-  let selAudioLang = [{value: "eng", label: "English"}]
-  let selOtherLang = [{value: "eng", label: "English"}]
+  let selAudioLang = {value: "eng", label: "English"}
+  let selOtherLang = {value: "", label: ""}
   if (langList) {
     if (activeLangList && activeLangList.length>0) {
       const l = activeLangList[0]
@@ -199,7 +201,6 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             id="audio-lang-autocomplete"
             disablePortal
             options={availableAudioLangOptions}
-            getOptionDisabled={(option) =>option?.value === i18n.language}
             sx={{ 
               width: '100%',
               backgroundColor: "lightgrey"
@@ -208,7 +209,8 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             value={selAudioLang}
             onChange={(event, newValue) => {
               if (newValue) {
-                const newList = newValue.map(item => item.value)
+                const newList = [...activeLangList]
+                if (newList.length>0) newList[0] = newValue.value
                 updateActiveLang(newList)
               }
             }}
@@ -221,7 +223,7 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             id="lang-autocomplete"
             disablePortal
             options={availableLangOptions}
-            getOptionDisabled={(option) =>option?.value === i18n.language}
+            // getOptionDisabled={(option) =>option?.value === i18n.language}
             sx={{ 
               width: '100%',
               backgroundColor: "lightgrey"
@@ -230,7 +232,8 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             value={selOtherLang}
             onChange={(event, newValue) => {
               if (newValue) {
-                const newList = newValue.map(item => item.value)
+                const newList = [...activeLangList]
+                if (newList.length>0) newList[1] = newValue.value
                 updateActiveLang(newList)
               }
             }}

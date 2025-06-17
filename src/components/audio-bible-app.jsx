@@ -4,18 +4,9 @@ import SettingsView from './settings-view'
 import BibleView from './bible-view'
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import HomeIcon from '@mui/icons-material/Home'
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import MenuBookIcon from '@mui/icons-material/MenuBook'
 import useMediaPlayer from '../hooks/useMediaPlayer'
 import useBrowserData from '../hooks/useBrowserData'
 import { isEmptyObj } from '../utils/obj-functions'
-
-const topLevelNavItems = [
-  {text: "Home", icon: <HomeIcon/>},
-  {text: "Library", icon: <VideoLibraryIcon/>},
-  {text: "Bible", icon: <MenuBookIcon/>}
-]
 
 const defaultBackgroundStyle = {
   height: 'auto',
@@ -33,7 +24,7 @@ export default function AudioBibleNavigationApp() {
   const isMobileSize = (size === "sm" || size === "xs")
   const [menuValue, setMenuValue] = React.useState(2)
   const [emptyList, setEmptyList] = React.useState(true)
-  const [open, setOpen] = React.useState(false)
+  const [openSettings, setOpenSettings] = React.useState(false)
 
   const ref = React.useRef(null);
 
@@ -57,14 +48,20 @@ export default function AudioBibleNavigationApp() {
     const curEp = {bibleType: true,bk,bookObj,id}
     startPlay(topIdStr,id,curSerie,curEp)
   }
+  const handleOpenSettings = () => {
+    console.log("go to settings")
+    setOpenSettings(true)
+  }
+  const handleConfirmed = () => setOpenSettings(false)
+  const mainView = confirmedCountry && !openSettings
   return (
     <div style={defaultBackgroundStyle}>
       <ThemeProvider theme={theme}>
-        {!isPlaying && isMobileSize && confirmedCountry && (
+        {!isPlaying && isMobileSize && mainView && (
           <Box sx={{ pb: 7 }} ref={ref}>
             <CssBaseline />
             <BibleView
-                onExitNavigation={() => console.log("onExitNavigation - BibleView")}
+                onOpenSettings={handleOpenSettings}
                 onStartPlay={handleStartBiblePlay}
             />
           </Box>
@@ -72,19 +69,21 @@ export default function AudioBibleNavigationApp() {
         {!isPlaying && !confirmedCountry && (
           <SettingsView initialSettingsMode={true}/>
         )}
-        {!isPlaying && !isMobileSize && confirmedCountry && (
+        {openSettings && (
+          <SettingsView initialSettingsMode={true} onConfirmClick={handleConfirmed}/>
+        )}
+        {!isPlaying && !isMobileSize && mainView && (
           <Box sx={{ display: 'flex' }}>
             <CssBaseline />
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
               <BibleView
-                onExitNavigation={() => console.log("onExitNavigation - BibleView")}
+                onOpenSettings={handleOpenSettings}
                 onStartPlay={handleStartBiblePlay}
               />
             </Box>
           </Box>
         )}
         {isPlaying && (<BibleView
-            onExitNavigation={() => console.log("onExitNavigation - BibleView")}
             onStartPlay={handleStartBiblePlay}
         />)}
       </ThemeProvider>
