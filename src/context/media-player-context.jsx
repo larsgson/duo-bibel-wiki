@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback  } from 'react'
+import React, { useState, useEffect } from 'react'
 import { apiSetStorage, apiGetStorage, apiObjGetStorage, apiObjSetStorage } from '../utils/api'
 import { unique } from 'shorthash'
-import { pad, getChFreePicFirstEntry } from '../utils/obj-functions'
 import { useTranslation } from 'react-i18next'
 import { serieLang, serieNaviType } from '../utils/dynamic-lang'
 import { freeAudioId, freeAudioIdOsisMap } from '../constants/osisFreeAudiobible'
@@ -9,10 +8,7 @@ import { contentByLang } from '../constants/content-by-lang'
 import { 
   audioByID, 
   audioWithTimestampsSet, 
-  langWithTimestampsSet 
 } from '../constants/audio-by-b-id'
-import { iconsSyncData } from '../constants/iconsSyncData'
-import { freePixId, osisIconList } from '../constants/osisIconList'
 import { versesPerCh, getImgSrcString, getValidVerse } from '../constants/naviChaptersJohn'
 
 const MediaPlayerContext = React.createContext([{}, () => {}])
@@ -22,39 +18,14 @@ const MediaPlayerProvider = (props) => {
   const setStateKeyVal = (key,val) => setState(state => ({ ...state, [key]: val }))
 
   const [isPaused, setIsPaused] = useState(false)
-  const [imgPosOBS, setImgPosOBS] = useState({})
   const [imgPosAudio, setImgPosAudio] = useState({})
   const [verseTextPosAudio, setVerseTextPosAudio] = useState([])
   const [verseText, setVerseText] = useState({})
+  const [verseText2, setVerseText2] = useState({})
   const apiURLPath = "https://demo-api-bibel-wiki.netlify.app"
   const apiBasePath = `${apiURLPath}/.netlify/functions`
   const [timestampParamStr, setTimestampParamStr] = useState("")
   const [textParamStr, setTextParamStr] = useState("")
-
-  const fetchJSONDataFrom = useCallback(async (inx) => {
-    const response = await fetch(`data/img_pos${pad(inx +1)}.json`, {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      }
-    })
-    const data = await response.json()
-    setImgPosOBS((prev) => ({
-      ...prev,
-      [inx]: data,
-    }))
-  }, [])
-
-  useEffect(() => {
-    const getDataForAllStories = async () => {
-      const maxStories = 50
-      for(let i=0; i < maxStories; i++) {
-        // Wait for each task to finish
-        await fetchJSONDataFrom(i)
-      }      
-    }
-    getDataForAllStories()
-  }, [fetchJSONDataFrom])
 
   useEffect(() => {
     const getLocationData = async () => {
@@ -156,59 +127,24 @@ const MediaPlayerProvider = (props) => {
         // const curBook = osisFromFreeAudioId(curApiParam?.bookID)
         const curBookInx = freeAudioId.findIndex(el => (el === curApiParam?.bookID)) +1
         const curCh = curApiParam?.ch
-        let doFetch = false
-        let curIconList
-        let chIconData
-        let tsType 
         let resData
         const activeLangList = state.activeLangListStr ? JSON.parse(state.activeLangListStr) : []
         const lng = (activeLangList.length>0) ? activeLangList[0] : "eng"
-        if ((curBookInx === 43) && langWithTimestampsSet.has(lng)) {
-          tsType = "johnPics"
-          doFetch = true
-        } else if (iconsSyncData && iconsSyncData[curBookInx] && iconsSyncData[curBookInx][curCh]) {
-          tsType = "sweetPublishing"
-          chIconData = iconsSyncData[curBookInx][curCh]
-          curIconList = Object.keys(chIconData)
-          doFetch = (curIconList.length>1)
-        }
-        if (doFetch) {
-          const resTimestamp = await fetch(fetchTimestampPath, {
-            method: 'POST',
-            body: timestampParamStr
-          })
-          .then(resTimestamp => resTimestamp.json())
-          .catch(error => console.error(error))
-          resData = resTimestamp?.data
-          setVerseTextPosAudio(resData)
-        }
-        if (tsType === "sweetPublishing") {
-          const timestampPoints = curIconList.map((verse,inx) => {
-            let pos = 0
-            const vInx = parseInt(verse)
-            const img = chIconData[vInx].id[0]
-            if (inx!==0) {
-              pos = resData[vInx]?.timestamp
-            }
-            return {
-              img,
-              pos
-            }  
-          })
-          setImgPosAudio(timestampPoints)
-        } else { // if (tsType === "johnPics") {
-          const timestampPoints = [...Array(versesPerCh[curCh])].map((_,i) => {
-            return {
-              img: getImgSrcString(curCh,i+1) || getImgSrcString(curCh,getValidVerse(curCh,i+1)),
-              pos: resData[i]?.timestamp
-            }
-          })
-          console.log(timestampPoints)
-          setImgPosAudio(timestampPoints)
-        }
-      } else {
-        setVerseTextPosAudio([])
-        setImgPosAudio({})
+        const resTimestamp = await fetch(fetchTimestampPath, {
+          method: 'POST',
+          body: timestampParamStr
+        })
+        .then(resTimestamp => resTimestamp.json())
+        .catch(error => console.error(error))
+        resData = resTimestamp?.data
+        setVerseTextPosAudio(resData)
+        const timestampPoints = [...Array(versesPerCh[curCh])].map((_,i) => {
+          return {
+            img: getImgSrcString(curCh,i+1) || getImgSrcString(curCh,getValidVerse(curCh,i+1)),
+            pos: resData[i]?.timestamp
+          }
+        })
+        setImgPosAudio(timestampPoints)
       }
     }
     getTimecodeData()
@@ -217,10 +153,13 @@ const MediaPlayerProvider = (props) => {
   useEffect(() => {
     const getTextData = async () => {      
       if (textParamStr.length>0) {
+        const tempParam = JSON.parse(textParamStr)
+        const textParamStr1 = JSON.stringify({ ...tempParam })
+        const textParamStr2 = JSON.stringify({ ...tempParam, filesetID: tempParam.filesetID2 })
         const fetchTextPath = `${apiBasePath}/get-text`
         const resText = await fetch(fetchTextPath, {
           method: 'POST',
-          body: textParamStr
+          body: textParamStr1
         })
         .then(resText => resText.json())
         .catch(error => console.error(error))
@@ -229,6 +168,17 @@ const MediaPlayerProvider = (props) => {
           useVerseText[obj.verse_start] = obj.verse_text
         })
         setVerseText(useVerseText)
+        const resText2 = await fetch(fetchTextPath, {
+          method: 'POST',
+          body: textParamStr2
+        })
+        .then(resText2 => resText2.json())
+        .catch(error => console.error(error))
+        const useVerseText2 = {}
+        resText2?.data.forEach(obj => {
+          useVerseText2[obj.verse_start] = obj.verse_text
+        })
+        setVerseText2(useVerseText2)
       }
     }
     getTextData()
@@ -427,58 +377,20 @@ const MediaPlayerProvider = (props) => {
   }
 
   const updateImgBasedOnPos = ( navType, ep, curInx, msPos ) => {
-    let checkMsPosArray = []
     let curImgSrc = ""
     let retStr = ""
-    if ((navType === "audioStories") && (imgPosOBS)) {
-      checkMsPosArray = imgPosOBS[ curInx ]
-      curImgSrc = `${pad(curInx+1)}-01`
-    } else if (navType === "audioBible") {
-      checkMsPosArray = imgPosAudio
-    }
-    (checkMsPosArray?.length>0) && checkMsPosArray?.map(checkObj => {
-      const checkMs = parseInt(checkObj.pos) * 1000
-      if (msPos>=checkMs) curImgSrc = checkObj.img
-    })
-    if (navType === "audioStories") {
-      retStr = `https://storage.googleapis.com/img.bibel.wiki/obsIcons/obs-en-${curImgSrc}.mp4`
-    } else if (navType === "audioBible") {
+    if (imgPosAudio && imgPosAudio?.length>0) {
+      imgPosAudio?.map(checkObj => {
+        const checkMs = parseInt(checkObj.pos) * 1000
+        if (msPos>=checkMs) curImgSrc = checkObj.img
+      })
       const bookObj = ep?.bookObj
       let checkLang = ep?.lang
       if (!checkLang) {
         const activeLangList = state.activeLangListStr ? JSON.parse(state.activeLangListStr) : []
         checkLang = (activeLangList.length>0) ? activeLangList[0] : "eng"
       }
-      if ((bookObj?.bk==="John") && langWithTimestampsSet.has(checkLang)) {
-        retStr = curImgSrc
-      } else if (bookObj) {
-        const preNav = "https://storage.googleapis.com/img.bibel.wiki/navIcons/"
-        const picsPreNav = "https://storage.googleapis.com/img.bibel.wiki/img/free-pics/"
-        let useDefaultImage = true
-        const {level1,level2} = bookObj
-        let checkIcon = "000-" + pad(level1)
-        if (level2!=null) checkIcon = "00-" + pad(level1) + level2
-        const bk = (bookObj!=null)?bookObj.bk:null
-        if (bk!=null){ // level 3
-          if (curImgSrc && (curImgSrc?.length > 0)) {
-            const checkObj = osisIconList[bk]
-            if (checkObj!=null){
-              const ch = ep?.id
-              if (checkObj[ch]!=null){
-                const curImgP1 = curImgSrc.substring(0,2)
-                const curImgP2 = curImgSrc.substring(2)
-                // const firstId = pad(parseInt(ch))
-                checkIcon = `${curImgP1}/610px/${curImgP1}_${freePixId[curImgP1]}${curImgP2}_RG`
-                useDefaultImage = false
-              }
-            }
-            retStr = useDefaultImage ? preNav +checkIcon +".png" : picsPreNav +checkIcon +".jpg"
-          } else {
-            const tempImgObj = getChFreePicFirstEntry(bookObj,ep?.id)
-            retStr = tempImgObj.imgSrc
-          }    
-        }
-      }
+      retStr = curImgSrc
     }
     return retStr
   }
@@ -498,30 +410,46 @@ const MediaPlayerProvider = (props) => {
     return retStr
   }
 
+  const updateText2BasedOnPos = ( msPos ) => {
+    let retStr = ""
+    let checkVerseInx = 0
+    const offsetMs = 300
+    const checkMsPosArray = verseTextPosAudio
+    if ((checkMsPosArray) && (checkMsPosArray?.length>0)) {
+      checkMsPosArray?.map(checkObj => {
+        const checkMs = checkObj.timestamp * 1000
+        if ((msPos+offsetMs)>=checkMs) checkVerseInx = parseInt(checkObj.verse_start)
+      })
+    }
+    if (checkVerseInx>0) retStr = verseText2[checkVerseInx] || ""
+    return retStr
+  }
+  
+
 
   const onPlaying = (curPos) => {
     const curImgSrc = state?.syncImgSrc
     const curInx = state?.curEp?.id
     const msPos = curPos?.position
-    const curSerId = state?.curPlay?.curSerie?.uniqueID
     let nextImgSrc
     const curEp = state?.curPlay?.curEp
-    const topIdStr = curEp?.topIdStr
-    const nType = serieNaviType(topIdStr)
 
-    if ((curSerId === "uW.OBS.en") || (nType === "audioBible")) {
-      nextImgSrc = updateImgBasedOnPos( nType, curEp, curInx, msPos )
-    }
+    nextImgSrc = updateImgBasedOnPos( "audioBible", curEp, curInx, msPos )
     if (nextImgSrc!==curImgSrc) {
+      console.log(nextImgSrc)
       setStateKeyVal( "syncImgSrc", nextImgSrc )
     }
     let nextText
     const curVerseText = state?.syncVerseText
-    if (nType === "audioBible") {
-      nextText = updateTextBasedOnPos( msPos )
-    }
+    nextText = updateTextBasedOnPos( msPos )
     if (nextText!==curVerseText) {
       setStateKeyVal( "syncVerseText", nextText )
+    }
+    let nextText2
+    const curVerseText2 = state?.syncVerseText2
+    nextText2 = updateText2BasedOnPos( msPos )
+    if (nextText2!==curVerseText2) {
+      setStateKeyVal( "syncVerseText2", nextText2 )
     }
     setStateKeyVal( "curPos", curPos )
   }
@@ -541,8 +469,11 @@ const MediaPlayerProvider = (props) => {
         })
       }).then(response => response.json())
       curSerie.curPath = response?.data?.path
+      const activeLangList = JSON.parse(state?.activeLangListStr)
+      const tempLangList = (activeLangList) ? activeLangList.slice(0,2) : []
       setTextParamStr(JSON.stringify({
-        filesetID: getTextFilesetId(curSerie.langID,audioFilesetID),
+        filesetID: getTextFilesetId(tempLangList[0],audioFilesetID),
+        filesetID2: getTextFilesetId(tempLangList[1],audioFilesetID),
         bookID: freeAudioIdOsisMap[curEp?.bk],
         ch: curEp?.id,
         query: ["verse_text", "verse_start"]
@@ -573,6 +504,7 @@ const MediaPlayerProvider = (props) => {
       if (curEp!=null){
 //          props.onStartPlay && props.onStartPlay(curSerie,curEp)
         await apiObjSetStorage({curSerie},"curEp",curEp.id)
+        console.log(newPlayObj)
         setStateKeyVal( "curPlay", newPlayObj)
       } else {
         apiObjGetStorage(newPlayObj,"curEp").then((value) => {
@@ -602,12 +534,10 @@ const MediaPlayerProvider = (props) => {
         ((curSerId === "uW.OBS.en") || (nType === "audioBible")) 
           ? updateImgBasedOnPos( nType, curEp, curInx, 0 ) 
           : ""
-      const syncVerseText =
-        (nType === "audioBible") 
-      ? updateTextBasedOnPos( 0 ) 
-      : ""
-    setState(state => ({...state, navHist, syncImgSrc, syncVerseText, curSerId, curSerie, curEp: tmpEp}))
-      // setState(state => ({...state, syncImgSrc, curSerId, curSerie, curEp: tmpEp}))
+      const syncVerseText = updateTextBasedOnPos( 0 ) 
+      const syncVerseText2 = updateText2BasedOnPos( 0 ) 
+      setState(state => ({...state, navHist, syncImgSrc, syncVerseText, syncVerseText2, curSerId, curSerie, curEp: tmpEp}))
+      // setState(state => ({...state, syncImgSrc, curSerId, curSerie,erId, curSeri2e, curEp: tmpEp}))
     }
   }
 

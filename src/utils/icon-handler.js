@@ -3,7 +3,6 @@ import { serieNavLang, serieLang } from './dynamic-lang'
 import { getOsisChTitle, getChoiceTitle } from '../constants/osisChTitles'
 import { pad } from './obj-functions'
 import i18n from "../constants/i18n";
-import { langWithTimestampsSet } from '../constants/audio-by-b-id'
 import { johnImageID, johnPicsLocationUrl  } from '../constants/naviChaptersJohn'
 
 const preNav = "./navIcons/"
@@ -19,7 +18,7 @@ export const getChIcon = (key,lev0,lev1,lev2,bookObj,ch) => {
   let checkTitle
   const bk = (bookObj!=null)?bookObj.bk:null
   const johnVideoIcon = ((lev1==="7") && (lev2==="d") && (lev0.indexOf("audio-bible-bb-project-") === 0)) 
-  const useJohnVideo = ((johnVideoIcon) && (langWithTimestampsSet.has(curLang)))
+  const useJohnVideo = true
   if (bk!=null){ // level 3
     const checkObj = osisIconList[bk]
     if (checkObj!=null){

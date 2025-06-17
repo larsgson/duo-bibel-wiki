@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Fab from '@mui/material/Fab'
 import NavClose from '@mui/icons-material/Close'
-import VideoPlayer from './video'
+// import VideoPlayer from './video'
 import { PlayerInfo } from '../components/player-info'
 import Sound from './sound'
 import useMediaPlayer from "../hooks/useMediaPlayer"
@@ -424,7 +424,7 @@ console.log("handleFinishedPlaying")
           >
             <NavClose />
           </Fab>
-          {videoFound && (
+          {/* {videoFound && (
             <VideoPlayer
               url={locPath}
               fullSize={fullSizeFound}
@@ -438,7 +438,7 @@ console.log("handleFinishedPlaying")
               height={curHeight}
               playing
               controls />
-          )}
+          )} */}
         </div>
       </footer>
     )

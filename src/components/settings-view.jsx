@@ -16,6 +16,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { cCode } from '../constants/country-codes'
 import useBrowserData from '../hooks/useBrowserData'
 import useMediaPlayer from '../hooks/useMediaPlayer'
+import { langWithTimestampsSet } from '../constants/audio-by-b-id'
 
 const navLangList = {
   deu:{en:"German",n:"Deutsch"},
@@ -99,14 +100,28 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
     }
     return retVal
   }
-  const countryLangList = (curCountryLangList) && curCountryLangList?.a
-  const langListInfo = {...countryLangList}
+  const audioLangListInfo = {}
+  const langListInfo = {}
+  const tempObj = (curCountryLangList) && curCountryLangList.a
+  if (tempObj) {
+    Object.keys(tempObj).forEach(lKey => {
+      langListInfo[lKey] = tempObj[lKey]
+      if (langWithTimestampsSet.has(lKey)) {
+        audioLangListInfo[lKey] = tempObj[lKey]
+      }
+    })
+  }
   activeLangList && activeLangList.forEach(l => {
-    langListInfo[l] = { ts: checkTSAvailable(l) }
+    const ts = checkTSAvailable(l) 
+    langListInfo[l] = { ts }
+    if (l => langWithTimestampsSet.has(l)) audioLangListInfo[l] = { ts }
   })
   const langKeyArr = (langList) && Object.keys(langList) || []
   const availableLangOptions = langKeyArr.map(lKey => {
     return {value: lKey,label: getNameLabel(langList[lKey])}              
+  })
+  const availableAudioLangOptions = langKeyArr.filter(l => langWithTimestampsSet.has(l)).map(lKey => {
+      return {value: lKey,label: getNameLabel(langList[lKey])}              
   })
   let useCols = 3
   if (size==="xs") useCols = 2
@@ -126,9 +141,17 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
     setConfirmedCountry(curCountry)
   }
   const handleCountryChange = (newCountry) => setSelectedCountry(newCountry) 
-  let selLangArr = [{value: "eng", label: "English"}]
+  let selAudioLang = [{value: "eng", label: "English"}]
+  let selOtherLang = [{value: "eng", label: "English"}]
   if (langList) {
-    selLangArr = activeLangList.filter(l => l && l.length>0).map(l => mapOptions(l,langList[l]))
+    if (activeLangList && activeLangList.length>0) {
+      const l = activeLangList[0]
+      selAudioLang = mapOptions(l,langList[l])
+    }
+    if (activeLangList && activeLangList.length>1) {
+      const l = activeLangList[1]
+      selOtherLang = mapOptions(l,langList[l])
+    }
   }
   return (
     <Box sx={{ tp: 3 }}>
@@ -142,9 +165,10 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             variant="contained"
             color="success"
             aria-label="confirm settings"
+            disabled={activeLangList.length<2}
             onClick={handleConfirmClick}
             startIcon={<CheckIcon />}
-          >Confirm Language
+          >Confirm Languages
           </Button>
         </Toolbar>
       </SimpleAppBar>)}
@@ -162,41 +186,26 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             renderInput={(params) => <TextField {...params} label="Country" />}
             value={mapOptions(curCountry,cCode[curCountry])}
             onChange={(event, newValue) => {
-              handleCountryChange(newValue.value)
+              if (newValue) {
+                handleCountryChange(newValue.value)
+              }
             }}
           />
-          {/* <Autocomplete
-            id="nav-lang-autocomplete"
-            disablePortal
-            options={navLangOptions}
-            getOptionDisabled={(option) =>option?.value !== "eng"}
-            sx={{ 
-              width: '40%',
-              backgroundColor: "lightgrey"
-            }}
-            renderInput={(params) => <TextField {...params} label="Navigation Language" />}
-            value={mapOptions("eng",navLangList["eng"])}
-            onChange={(event, newValue) => {
-              setNavLang(newValue.value)
-              // i18n.changeLanguage(newValue)
-            }}
-          /> */}
           <br/>
           <br/>
-          <div>Selected Languages</div>
+          <div>Audio language</div>
           <br/>
           <Autocomplete
-            id="lang-autocomplete"
+            id="audio-lang-autocomplete"
             disablePortal
-            multiple
-            options={availableLangOptions}
+            options={availableAudioLangOptions}
             getOptionDisabled={(option) =>option?.value === i18n.language}
             sx={{ 
               width: '100%',
               backgroundColor: "lightgrey"
             }}
             renderInput={(params) => <TextField {...params} label="Languages" />}
-            value={selLangArr}
+            value={selAudioLang}
             onChange={(event, newValue) => {
               if (newValue) {
                 const newList = newValue.map(item => item.value)
@@ -205,14 +214,36 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
             }}
           />
           <br/>
-          {langListInfo && (
+          <br/>
+          <div>Other language</div>
+          <br/>
+          <Autocomplete
+            id="lang-autocomplete"
+            disablePortal
+            options={availableLangOptions}
+            getOptionDisabled={(option) =>option?.value === i18n.language}
+            sx={{ 
+              width: '100%',
+              backgroundColor: "lightgrey"
+            }}
+            renderInput={(params) => <TextField {...params} label="Languages" />}
+            value={selOtherLang}
+            onChange={(event, newValue) => {
+              if (newValue) {
+                const newList = newValue.map(item => item.value)
+                updateActiveLang(newList)
+              }
+            }}
+          />
+          <br/>
+          {audioLangListInfo && (
             <ImageList
               rowHeight={120}
               cols={useCols}
               gap={9}
               sx={{overflowY: 'clip'}}
             >
-              {Object.keys(langListInfo).map((lng) => {
+              {Object.keys(audioLangListInfo).map((lng) => {
                 const langData = langList && langList[lng]
                 let nativeStr = ""
                 let subtitle = undefined
@@ -232,7 +263,7 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
                 const shortNativeStr = ((curCountry === "IN") && (nativeStr)) ? nativeStr.substring(0,3) : lng
                 const shortLang = capitalizeFirstLetter(shortNativeStr)
                 const isActive = activeLangList.includes(lng) 
-                const curData = langListInfo[lng]
+                const curData = audioLangListInfo[lng]
                 const bkgdColor = (curData?.ts) ? isActive ? 'lightgreen' :`green` : isActive ? 'lightblue' : `#020054`
                 return (
                   <span key={lng}>

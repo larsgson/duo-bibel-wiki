@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import Typography from '@mui/material/Typography'
 import Fab from '@mui/material/Fab'
 import Home from '@mui/icons-material/Home'
@@ -12,7 +11,6 @@ import { rangeArray, isEmptyObj } from '../utils/obj-functions'
 import { 
   selectAudioBible,
   getSerie,
-  serieNaviType, 
 } from '../utils/dynamic-lang'
 import { getChIcon } from '../utils/icon-handler'
 import useBrowserData from '../hooks/useBrowserData'
@@ -38,19 +36,19 @@ const BibleView = (props) => {
     curPlay, 
     syncImgSrc, 
     syncVerseText, 
+    syncVerseText2, 
     activeLangListStr,
     selectedLanguage,
   } = useMediaPlayer()
   const isPlaying = !isEmptyObj(curPlay)
-  const { t, i18n } = useTranslation()
   const { onExitNavigation, onStartPlay } = props
   const activeLangList = activeLangListStr ? JSON.parse(activeLangListStr) : []
   const lng = selectedLanguage || ((activeLangList.length>0) ? activeLangList[0] : "eng")
-  const [curLevel, setCurLevel] = useState(1)
+  const [curLevel, setCurLevel] = useState(4)
   const [level0, setLevel0] = useState("")
-  const [level1, setLevel1] = useState(1)
-  const [level2, setLevel2] = useState("")
-  const [level3, setLevel3] = useState("")
+  const [level1, setLevel1] = useState(7)
+  const [level2, setLevel2] = useState("d")
+  const [level3, setLevel3] = useState(0)
   const [skipLevelList,setSkipLevelList] = useState([])
   // const lng = i18n.language
   // ToDo !!! find a bibleBookList and use this here
@@ -58,13 +56,14 @@ const BibleView = (props) => {
   const getSort = (val) => naviSortOrder.indexOf(parseInt(val))
   const addSkipLevel = (level) => setSkipLevelList([...skipLevelList,level])
 
-useEffect(() => {
-  const useSerieId = selectAudioBible(lng)
-  setLevel0(useSerieId)
-}, [lng,setLevel0])
+  useEffect(() => {
+    const useSerieId = selectAudioBible(lng)
+    setLevel0(useSerieId)
+  }, [lng,setLevel0])
 
   // eslint-disable-next-line no-unused-vars
   const handleClick = (ev,id,_isBookIcon) => {
+    console.log(id)
     if (curLevel===0) {
       setLevel0(id)
       setCurLevel(1)
@@ -191,11 +190,10 @@ useEffect(() => {
   if (size==="xs") useCols = 2
   else if (size==="lg") useCols = 4
   else if (size==="xl") useCols = 5
-  const naviType = serieNaviType(level0) || "audioBible"
   return (
     <div>
       {(activeLangList.length>1) && (curLevel===1) && <LangSelect/>}
-      {(naviType==="audioBible") && (!isPlaying) && (curLevel>2) && (
+      {(!isPlaying) && (curLevel>2) && (
         <Fab
           onClick={navigateHome}
           // className={largeScreen ? classes.exitButtonLS : classes.exitButton}
@@ -204,7 +202,7 @@ useEffect(() => {
           <Home/>
         </Fab>
       )}
-      {(curLevel>1) && (!isPlaying) && (naviType==="audioBible") && (
+      {(curLevel>1) && (!isPlaying) && (
         <Fab
           onClick={handleReturn}
           // className={largeScreen ? classes.exitButtonLS : classes.exitButton}
@@ -213,7 +211,7 @@ useEffect(() => {
           <ChevronLeft />
         </Fab>
       )}
-      {(naviType==="audioBible") && (!isPlaying) && (<ImageList
+      {(!isPlaying) && (<ImageList
         rowHeight="auto"
         cols={useCols}
       >
@@ -236,7 +234,7 @@ useEffect(() => {
         })}
         </ImageList>
       )}
-      {((naviType==="audioStories") || (naviType==="audioBible")) && (isPlaying) && (
+      {(isPlaying) && (
       <>
         <ImageList
           rowHeight={"auto"}
@@ -254,6 +252,10 @@ useEffect(() => {
           type="title"
           sx={{maxWidth:'500px'}}
         >{syncVerseText}<br/><br/></Typography>
+        <Typography
+          type="title"
+          sx={{maxWidth:'500px'}}
+        >{syncVerseText2}<br/><br/></Typography>
       </>)}
     </div>
   )

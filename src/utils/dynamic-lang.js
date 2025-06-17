@@ -1,4 +1,3 @@
-import { obsStoryList } from '../constants/obsHierarchy'
 import { fullBibleList, newTestamentList } from '../constants/bibleData'
 import { lang2to3letters } from '../constants/languages'
 import { gospelOfJohnObj, gospelOfJohnPlanObj } from '../constants/naviChaptersJohn'
@@ -12,22 +11,6 @@ import {
  bibleDataRO_WP,
  bibleDataPT_BR_WP
 } from '../constants/bibleData'
-
-const bibleDataEnOBSStory = {
-  freeType: false,
-  curPath: "",
-  title: "Open Bible Stories",
-  description: "",
-  image: {
-      origin: "Local",
-      filename: ""
-  },
-  language: "en",
-  langID: "en",
-  mediaType: "audio",
-  episodeList: obsStoryList,
-  uniqueID: "uW.OBS.en"
-}
 
 export const langVersion = {
   as: "irv", 
@@ -76,7 +59,6 @@ export const getSerie = (lang,serId) => {
     "es-jhn-plan": gospelOfJohnPlanObj,
     "en-jhn-serie": gospelOfJohnObj,
     "es-jhn-serie": gospelOfJohnObj,
-    "en-audio-OBS": bibleDataEnOBSStory,
   "de-jhn-serie": gospelOfJohnObj,
   "de-audio-bible-ML": bibleDataDE_ML_1912,
   "en-audio-bible-WEB": bibleDataEN,
@@ -171,7 +153,6 @@ export const serieLang = (id) => {
       "de-jhn-plan": "ger",
       "en-jhn-plan": "eng",
       "es-jhn-plan": "spa",
-      "en-audio-OBS": "eng",
     }
     return checkObj[id] || "eng"
   }
@@ -217,7 +198,6 @@ export const serieNaviType =(id) => {
     "es-jhn-serie": "videoSerie",
     "en-jhn-plan": "videoPlan",
     "es-jhn-plan": "videoPlan",
-    "en-audio-OBS": "audioStories",
   "de-audio-bible-ML": "audioBible",
   "es-audio-bible-WordProject": "audioBible",
   "pt-br-audio-bible-WordProject": "audioBible",
