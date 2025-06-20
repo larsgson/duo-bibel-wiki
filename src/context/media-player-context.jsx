@@ -22,6 +22,7 @@ const MediaPlayerProvider = (props) => {
   const [verseTextPosAudio, setVerseTextPosAudio] = useState([])
   const [verseText, setVerseText] = useState({})
   const [verseText2, setVerseText2] = useState({})
+  const [curVerse,setCurVerse] = useState(0)
   const apiURLPath = "https://demo-api-bibel-wiki.netlify.app"
   const apiBasePath = `${apiURLPath}/.netlify/functions`
   const [timestampParamStr, setTimestampParamStr] = useState("")
@@ -400,11 +401,16 @@ const MediaPlayerProvider = (props) => {
     let checkVerseInx = 0
     const offsetMs = 300
     const checkMsPosArray = verseTextPosAudio
+    const checkVerse = curVerse
     if ((checkMsPosArray) && (checkMsPosArray?.length>0)) {
       checkMsPosArray?.map(checkObj => {
         const checkMs = checkObj.timestamp * 1000
         if ((msPos+offsetMs)>=checkMs) checkVerseInx = parseInt(checkObj.verse_start)
       })
+    }
+    if ((checkVerseInx>1) && (checkVerse!==checkVerseInx)) {
+      setIsPaused(true)
+      setCurVerse(checkVerseInx)
     }
     if (checkVerseInx>0) retStr = verseText[checkVerseInx] || ""
     return retStr
