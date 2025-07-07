@@ -104,7 +104,7 @@ export const chSelectedImgList = [
   "17v14","18v24","19v10","20v17b","21v15b"
 ]
 
-export const johnPicsLocationUrl = "./img/john-pics"
+export const johnPicsLocationUrl = "/img/john-pics"
 
 export const getChNode = (inx,title) => {
   return (inx < chInBook)
@@ -340,7 +340,7 @@ export const getImgSrcString = (ch,v) => {
   } else if ((imgAltVerse[ch]) && (imgAltVerse[ch][v])) {
     imgVStr = imgAltVerse[ch][v]
   }
-  return `./img/john-pics/VB-John${ch}v${imgVStr}.jpg`
+  return `/img/john-pics/VB-John${ch}v${imgVStr}.jpg`
 }
 
 export const gospelOfJohnPlanObj = {

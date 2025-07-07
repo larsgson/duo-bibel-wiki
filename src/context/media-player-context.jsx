@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { serieLang, serieNaviType } from '../utils/dynamic-lang'
 import { freeAudioId, freeAudioIdOsisMap } from '../constants/osisFreeAudiobible'
 import { contentByLang } from '../constants/content-by-lang'
+import { allLangNames } from '../constants/get-languages'
 import { 
   audioByID, 
   audioWithTimestampsSet, 
@@ -40,37 +41,42 @@ const MediaPlayerProvider = (props) => {
       const curCountry = await apiGetStorage("selectedCountry")
       setStateKeyVal("selectedCountry",curCountry)
     }
-    const getConfirmedCountry = async () => {
-      const curConfirmedCountry = await apiGetStorage("confirmedCountry")
-      if (curConfirmedCountry) {
-        setStateKeyVal("confirmedCountry",true)
-      } else {
-        console.log(`Check location`)
-        const detectedCountry = await getLocationData()
-        console.log(`Country: ${detectedCountry}`)
-        setStateKeyVal("detectedCountry",detectedCountry)
-      }
-    }
-    const getCurLangList = async () => {
-      const curLangs = await apiGetStorage("activeLangListStr")
-      if (curLangs) {
-        setStateKeyVal("activeLangListStr",curLangs)
-      }
-    }
-    const getCurLang = async () => {
-      const curLang = await apiGetStorage("selectedLanguage")
-      if (curLang) {
-        setStateKeyVal("selectedLanguage",curLang)
-      }
-    }
     const getNavHist = async () => {
       const navHist = await apiGetStorage("navHist")
       setState(prev => ({...prev, navHist}))
     }
+    const parsePathNLang = async () => {
+      const curPathStr = window.location.pathname
+      setStateKeyVal("pathname",curPathStr)
+      const resArr = (curPathStr?.split("/"))
+      console.log(!!allLangNames[resArr[2]])
+      if ((resArr) && (resArr.length>2) && (!!allLangNames[resArr[1]]) && (!!allLangNames[resArr[2]])) {
+          console.log(resArr)        
+        setStateKeyVal("selectedLanguage",resArr[1])
+        setStateKeyVal("activeLangListStr",JSON.stringify([resArr[1],resArr[2]]))
+        setStateKeyVal("confirmedCountry",true)
+      } else {
+        const curLang = await apiGetStorage("selectedLanguage")
+        if (curLang) {
+          setStateKeyVal("selectedLanguage",curLang)
+        } 
+        const curLangs = await apiGetStorage("activeLangListStr")
+        if (curLangs) {
+          setStateKeyVal("activeLangListStr",curLangs)
+        }
+        const curConfirmedCountry = await apiGetStorage("confirmedCountry")
+        if (curConfirmedCountry) {
+          setStateKeyVal("confirmedCountry",true)
+        } else {
+          console.log(`Check location`)
+          const detectedCountry = await getLocationData()
+          console.log(`Country: ${detectedCountry}`)
+          setStateKeyVal("detectedCountry",detectedCountry)
+        }  
+      }
+    }
+    parsePathNLang()
     getCurCountry()
-    getConfirmedCountry()
-    getCurLangList()
-    getCurLang()
     getNavHist()
   }, [])
 

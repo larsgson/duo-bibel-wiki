@@ -18,9 +18,9 @@ const defaultBackgroundStyle = {
 
 export default function AudioBibleNavigationApp() {
   const theme = useTheme();
-  const { navHist, startPlay, curPlay, selectedCountry, confirmedCountry} = useMediaPlayer()
+  const { navHist, startPlay, curPlay, confirmedCountry, pathname} = useMediaPlayer()
   const isPlaying = !isEmptyObj(curPlay)
-  const { size, width } = useBrowserData()
+  const { size } = useBrowserData()
   const isMobileSize = (size === "sm" || size === "xs")
   const [menuValue, setMenuValue] = React.useState(2)
   const [emptyList, setEmptyList] = React.useState(true)
@@ -49,7 +49,6 @@ export default function AudioBibleNavigationApp() {
     startPlay(topIdStr,id,curSerie,curEp)
   }
   const handleOpenSettings = () => {
-    console.log("go to settings")
     setOpenSettings(true)
   }
   const handleConfirmed = () => setOpenSettings(false)

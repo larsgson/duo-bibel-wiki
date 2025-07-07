@@ -32,6 +32,7 @@ const BibleView = (props) => {
   const { size } = useBrowserData()
   const { 
     curPlay, 
+    pathname,
     syncImgSrc, 
     syncVerseText, 
     syncVerseText2, 
@@ -41,6 +42,7 @@ const BibleView = (props) => {
   const isPlaying = !isEmptyObj(curPlay)
   const { onOpenSettings, onStartPlay } = props
   const activeLangList = activeLangListStr ? JSON.parse(activeLangListStr) : []
+  const pathExists = ((pathname) && (pathname.length>1))
   const lng = selectedLanguage || ((activeLangList.length>0) ? activeLangList[0] : "eng")
   const [curLevel, setCurLevel] = useState(4)
   const [level0, setLevel0] = useState("")
@@ -178,7 +180,7 @@ const BibleView = (props) => {
   else if (size==="xl") useCols = 5
   return (
     <div>
-      {(!isPlaying) && (curLevel>2) && (
+      {(!isPlaying) && (!pathExists) && (curLevel>2) && (
         <Fab
           onClick={()=>handleOpenSettings()}
           color="grey"
@@ -186,6 +188,10 @@ const BibleView = (props) => {
           <Language/>
         </Fab>
       )}
+      {(pathExists) && <Typography
+          type="title"
+          sx={{maxWidth:'500px'}}
+        >{pathname}<br/><br/></Typography>}
       {(!isPlaying) && (<ImageList
         rowHeight="auto"
         cols={useCols}

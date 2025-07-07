@@ -1,4 +1,4 @@
-const langNameByCode = {
+export const langNameByCode = {
   aai:"Arifama-Miniafia",
   aak:"Ankave",
   aau:"Abau",
@@ -1523,7 +1523,7 @@ const langNameByCode = {
   zyp:"Zyphe Chin"
 }
 
-const allLangNames = {
+export const allLangNames = {
 en:{eNm:"English"},
 es:{eNm:"Spanish",nm:"Español"},
 nzi:{eNm:"Nzema"},
@@ -3509,6 +3509,7 @@ nxd:{eNm:"Ngando"},
 bxh:{eNm:"Buhutu"},
 ssd:{eNm:"Siroi"},
 pma:{eNm:"Paama"},
+ger:{eNm:"German",nm:"Deutsch"},
 gfk:{eNm:"Patpatar"},
 tlf:{eNm:"Telefol"},
 kjs:{eNm:"Kewa, East"},
@@ -3580,70 +3581,3 @@ leu:{eNm:"Kara (Papua New Guinea)"},
 nss:{eNm:"Nali"}
 }
 
-export const handler = async (event, context) => {
-  if (event.httpMethod === "POST") {
-    const eventBody = JSON.parse(event.body)
-    const countryCodeList = eventBody?.countryCodeList
-    const query = eventBody?.query
-    const data = {}
-    const allowedQuery = new Set(["a","v","t"])
-    if ((query) && (countryCodeList)) {
-      countryCodeList.forEach(country => {
-        if (country === "*") {
-          const allLangList = [...allLangSet]
-          data.allLanguages = {}
-          allLangList.forEach(langCode => {
-            const chk = allLangNames[langCode] // Use this definition by default
-            if (chk && chk.nm) {
-              data.allLanguages[langCode] = {n: chk.nm,en: chk.eNm}
-            } else if (langNameByCode[langCode]) {
-              data.allLanguages[langCode] = {n: langNameByCode[langCode]}
-            } else if (chk && chk.eNm) {
-              data.allLanguages[langCode] = {n: chk.eNm}
-            } else {
-              console.log(langCode)
-            }
-          })
-        } else {
-          if (!data[country]) data[country] = {}
-          query.forEach(key => {
-            if (!data[country][key]) data[country][key] = {}
-          })
-          const langObj = countryData[country]
-          Object.keys(langObj).forEach(lang => {
-            query.forEach(key => {
-              if (allowedQuery.has(key)) {
-                if (contentList[key].has(lang) && (!tempDisregardSet.has(lang))) {
-                  data[country][key][lang] = {}
-                  const langData = countryData[country][lang]
-                  if (langData.includes("m")) data[country][key][lang].main = true
-                  if (langData.includes("t")) data[country][key][lang].ts = true // timestamp exists
-                }
-              }
-            })     
-          })
-        }
-      })  
-    }
-    return {  
-      statusCode: 200,  
-      headers: {
-        "content-type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "*",
-        "Access-Control-Allow-Methods": "*",
-      },
-      body: JSON.stringify({ data }),
-    }
-  } else if (event.httpMethod === "OPTIONS") {
-    return {  
-      statusCode: 200,
-      headers: {
-        "content-type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "*",
-        "Access-Control-Allow-Methods": "*",
-      },
-    }
-  }
-}
