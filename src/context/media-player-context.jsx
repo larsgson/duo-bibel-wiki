@@ -48,7 +48,9 @@ const MediaPlayerProvider = (props) => {
     const parsePathNLang = async () => {
       const curPathStr = window.location.pathname
       setStateKeyVal("pathname",curPathStr)
+      console.log(curPathStr)
       const resArr = (curPathStr?.split("/"))
+      console.log(!!allLangNames[resArr[1]])
       console.log(!!allLangNames[resArr[2]])
       if ((resArr) && (resArr.length>2) && (!!allLangNames[resArr[1]]) && (!!allLangNames[resArr[2]])) {
           console.log(resArr)        
