@@ -180,6 +180,7 @@ const MediaPlayerProvider = (props) => {
         })
         .then(resText2 => resText2.json())
         .catch(error => console.error(error))
+        console.log(resText2)
         const useVerseText2 = {}
         resText2?.data.forEach(obj => {
           useVerseText2[obj.verse_start] = obj.verse_text

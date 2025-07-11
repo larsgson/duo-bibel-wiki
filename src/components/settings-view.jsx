@@ -85,6 +85,9 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
   } = useMediaPlayer()
   const curCountryLangList = (curCountryJsonStr) && JSON.parse(curCountryJsonStr)
   const langList = (langListJsonStr) && JSON.parse(langListJsonStr)
+  if (langList) {
+    langList["nor"] = { n:"Norsk (bokmål)", en: "Norwegian" }
+  }
   const defaultLang = "eng"
   const activeLangList = activeLangListStr ? JSON.parse(activeLangListStr) : [defaultLang]
   const curCountry = selectedCountry || detectedCountry
@@ -92,8 +95,8 @@ export default function SettingsView({onConfirmClick,initialSettingsMode}) {
 
   const checkTSAvailable = (l) => {
     let retVal = false
-    if ((langData) && (langData[l])) {
-      Object.keys(langData[l].a).forEach(id => {
+    if ((langData) && (langData[l]) && (langData[l]?.a)) {
+      Object.keys(langData[l]?.a).forEach(id => {
         if (langData[l].a[id].ts) retVal = true
       })
     }
