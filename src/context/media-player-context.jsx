@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { apiSetStorage, apiGetStorage, apiObjGetStorage, apiObjSetStorage } from '../utils/api'
 import { unique } from 'shorthash'
 import { useTranslation } from 'react-i18next'
@@ -24,10 +24,42 @@ const MediaPlayerProvider = (props) => {
   const [verseText, setVerseText] = useState({})
   const [verseText2, setVerseText2] = useState({})
   const [curVerse,setCurVerse] = useState(0)
+  const [curLang,setCurLang] = useState()
+  const [imgPosLocal,setImgPosLocal] = useState({})
   const apiURLPath = "https://demo-api-bibel-wiki.netlify.app"
   const apiBasePath = `${apiURLPath}/.netlify/functions`
   const [timestampParamStr, setTimestampParamStr] = useState("")
   const [textParamStr, setTextParamStr] = useState("")
+
+  const localTsLangSet = new Set(["swe","nor"])
+
+  const fetchJSONDataFrom = useCallback(async (lang,inx) => {
+    const response = await fetch(`/data/${lang}/img_pos${inx +1}.csv`, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/csv"
+      }
+    })
+    const csv = await response.text()
+    const lines = csv.split("\n")
+    setImgPosLocal((prev) => ({
+      ...prev,
+      [inx+1]: lines,
+    }))
+  }, [])
+
+  useEffect(() => {
+    const getDataForAllStories = async (lang) => {
+      const maxStories = 21
+      for(let i=0; i < maxStories; i++) {
+        // Wait for each task to finish
+        await fetchJSONDataFrom(lang,i)
+      }      
+    }
+    if (localTsLangSet.has(curLang)) {
+      getDataForAllStories(curLang)
+    }
+  }, [fetchJSONDataFrom,curLang])
 
   useEffect(() => {
     const getLocationData = async () => {
@@ -52,12 +84,14 @@ const MediaPlayerProvider = (props) => {
       if ((resArr) && (resArr.length>2) && (!!allLangNames[resArr[1]]) && (!!allLangNames[resArr[2]])) {
         console.log(resArr)        
         setStateKeyVal("selectedLanguage",resArr[1])
+        setCurLang(resArr[1])
         setStateKeyVal("activeLangListStr",JSON.stringify([resArr[1],resArr[2]]))
         setStateKeyVal("confirmedCountry",true)
       } else {
-        const curLang = await apiGetStorage("selectedLanguage")
-        if (curLang) {
-          setStateKeyVal("selectedLanguage",curLang)
+        const useLang = await apiGetStorage("selectedLanguage")
+        if (useLang) {
+          setCurLang(resArr[1])
+          setStateKeyVal("selectedLanguage",useLang)
         } 
         const curLangs = await apiGetStorage("activeLangListStr")
         if (curLangs) {
@@ -131,11 +165,10 @@ const MediaPlayerProvider = (props) => {
         const fetchTimestampPath = `${apiBasePath}/get-timestamps`
         const curApiParam = JSON.parse(timestampParamStr)
         // const curBook = osisFromFreeAudioId(curApiParam?.bookID)
-        const curBookInx = freeAudioId.findIndex(el => (el === curApiParam?.bookID)) +1
+        // const curBookInx = freeAudioId.findIndex(el => (el === curApiParam?.bookID)) +1
         const curCh = curApiParam?.ch
         let resData
         const activeLangList = state.activeLangListStr ? JSON.parse(state.activeLangListStr) : []
-        const lng = (activeLangList.length>0) ? activeLangList[0] : "eng"
         const resTimestamp = await fetch(fetchTimestampPath, {
           method: 'POST',
           body: timestampParamStr
@@ -144,7 +177,7 @@ const MediaPlayerProvider = (props) => {
         .catch(error => console.error(error))
         resData = resTimestamp?.data
         setVerseTextPosAudio(resData)
-        const timestampPoints = [...Array(versesPerCh[curCh])].map((_,i) => {
+        const timestampPoints = [...Array(versesPerCh[curCh-1])].map((_,i) => {
           return {
             img: getImgSrcString(curCh,i+1) || getImgSrcString(curCh,getValidVerse(curCh,i+1)),
             pos: resData[i]?.timestamp
@@ -244,7 +277,6 @@ const MediaPlayerProvider = (props) => {
         }
       }
     })
-    console.log(filesetID)
     if (!filesetID) {
       // Check other options from all idList entries
       if (idList && idList.length>0) {
@@ -437,8 +469,6 @@ const MediaPlayerProvider = (props) => {
     return retStr
   }
   
-
-
   const onPlaying = (curPos) => {
     const curImgSrc = state?.syncImgSrc
     const curInx = state?.curEp?.id
@@ -500,6 +530,27 @@ const MediaPlayerProvider = (props) => {
         }))
       } else {
         setTimestampParamStr("")
+        if (localTsLangSet.has(curLang)) {
+          const curCh = curEp?.id
+          const timestampPoints = imgPosLocal[curCh].map((_,i) => {
+            const posStr = (i>0) ? imgPosLocal[curCh][i-1] : "0"
+            const pos = parseFloat(posStr)
+            return {
+              img: getImgSrcString(curCh,i+1) || getImgSrcString(curCh,getValidVerse(curCh,i+1)),
+              pos
+            }
+          })
+          setImgPosAudio(timestampPoints)
+          const imgPosList = imgPosLocal[curCh].map((_,i) => {
+            const timestampStr = (i>0) ? imgPosLocal[curCh][i-1] : "0"
+            const timestamp = parseFloat(timestampStr)
+            return {
+              verse_start: i+1,
+              timestamp
+            }
+          })
+          setVerseTextPosAudio(imgPosList)
+        }
       }
     }
     if (!curSerie){ // stop playing
