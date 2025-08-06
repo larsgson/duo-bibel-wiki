@@ -31,7 +31,7 @@ const MediaPlayerProvider = (props) => {
   const [timestampParamStr, setTimestampParamStr] = useState("")
   const [textParamStr, setTextParamStr] = useState("")
 
-  const localTsLangSet = new Set(["swe","nor"])
+  const localTsLangSet = new Set(["swe","nor","hbr","heb"])
 
   const fetchJSONDataFrom = useCallback(async (lang,inx) => {
     const response = await fetch(`/data/${lang}/img_pos${inx +1}.csv`, {
@@ -82,7 +82,6 @@ const MediaPlayerProvider = (props) => {
       setStateKeyVal("pathname",curPathStr)
       const resArr = (curPathStr?.split("/"))
       if ((resArr) && (resArr.length>2) && (!!allLangNames[resArr[1]]) && (!!allLangNames[resArr[2]])) {
-        console.log(resArr)        
         setStateKeyVal("selectedLanguage",resArr[1])
         setCurLang(resArr[1])
         setStateKeyVal("activeLangListStr",JSON.stringify([resArr[1],resArr[2]]))
@@ -213,7 +212,6 @@ const MediaPlayerProvider = (props) => {
         })
         .then(resText2 => resText2.json())
         .catch(error => console.error(error))
-        console.log(resText2)
         const useVerseText2 = {}
         resText2?.data.forEach(obj => {
           useVerseText2[obj.verse_start] = obj.verse_text
@@ -478,7 +476,6 @@ const MediaPlayerProvider = (props) => {
 
     nextImgSrc = updateImgBasedOnPos( "audioBible", curEp, curInx, msPos )
     if (nextImgSrc!==curImgSrc) {
-      console.log(nextImgSrc)
       setStateKeyVal( "syncImgSrc", nextImgSrc )
     }
     let nextText
@@ -567,7 +564,6 @@ const MediaPlayerProvider = (props) => {
       if (curEp!=null){
 //          props.onStartPlay && props.onStartPlay(curSerie,curEp)
         await apiObjSetStorage({curSerie},"curEp",curEp.id)
-        console.log(newPlayObj)
         setStateKeyVal( "curPlay", newPlayObj)
       } else {
         apiObjGetStorage(newPlayObj,"curEp").then((value) => {
