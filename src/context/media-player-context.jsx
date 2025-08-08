@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { apiSetStorage, apiGetStorage, apiObjGetStorage, apiObjSetStorage } from '../utils/api'
+import { pad } from '../utils/obj-functions'
 import { unique } from 'shorthash'
 import { useTranslation } from 'react-i18next'
 import { serieLang, serieNaviType } from '../utils/dynamic-lang'
@@ -26,12 +27,15 @@ const MediaPlayerProvider = (props) => {
   const [curVerse,setCurVerse] = useState(0)
   const [curLang,setCurLang] = useState()
   const [imgPosLocal,setImgPosLocal] = useState({})
+  const [textLocal,setTextLocal] = useState({})
   const apiURLPath = "https://demo-api-bibel-wiki.netlify.app"
   const apiBasePath = `${apiURLPath}/.netlify/functions`
   const [timestampParamStr, setTimestampParamStr] = useState("")
   const [textParamStr, setTextParamStr] = useState("")
 
-  const localTsLangSet = new Set(["swe","nor","hbr","heb"])
+  const localTsLangSet = new Set(["swe","nor","hbr","heb","deu"])
+  const localTextLangSet = new Set(["deu"])
+  const alternativeAudioLangSet = new Set(["deu"])
 
   const fetchJSONDataFrom = useCallback(async (lang,inx) => {
     const response = await fetch(`/data/${lang}/img_pos${inx +1}.csv`, {
@@ -49,7 +53,7 @@ const MediaPlayerProvider = (props) => {
   }, [])
 
   useEffect(() => {
-    const getDataForAllStories = async (lang) => {
+    const getDataForAllChapters = async (lang) => {
       const maxStories = 21
       for(let i=0; i < maxStories; i++) {
         // Wait for each task to finish
@@ -57,9 +61,32 @@ const MediaPlayerProvider = (props) => {
       }      
     }
     if (localTsLangSet.has(curLang)) {
-      getDataForAllStories(curLang)
+      getDataForAllChapters(curLang)
     }
   }, [fetchJSONDataFrom,curLang])
+
+  const fetchTextFrom = useCallback(async (lang,inx) => {
+    const response = await fetch(`/data/${lang}/txt/JHN_${inx +1}.txt`)
+    const curText = await response.text()
+    const lines = curText.split("\n")
+    setTextLocal((prev) => ({
+      ...prev,
+      [inx+1]: lines,
+    }))
+  }, [])
+
+  useEffect(() => {
+    const getTextForAllChapters = async (lang) => {
+      const maxStories = 21
+      for(let i=0; i < maxStories; i++) {
+        // Wait for each task to finish
+        await fetchTextFrom(lang,i)
+      }      
+    }
+    if (localTextLangSet.has(curLang)) {
+      getTextForAllChapters(curLang)
+    }
+  }, [fetchTextFrom,curLang])
 
   useEffect(() => {
     const getLocationData = async () => {
@@ -195,17 +222,19 @@ const MediaPlayerProvider = (props) => {
         const textParamStr1 = JSON.stringify({ ...tempParam })
         const textParamStr2 = JSON.stringify({ ...tempParam, filesetID: tempParam.filesetID2 })
         const fetchTextPath = `${apiBasePath}/get-text`
-        const resText = await fetch(fetchTextPath, {
-          method: 'POST',
-          body: textParamStr1
-        })
-        .then(resText => resText.json())
-        .catch(error => console.error(error))
-        const useVerseText = {}
-        resText?.data.forEach(obj => {
-          useVerseText[obj.verse_start] = obj.verse_text
-        })
-        setVerseText(useVerseText)
+        if (tempParam?.filesetID) {
+          const resText = await fetch(fetchTextPath, {
+            method: 'POST',
+            body: textParamStr1
+          })
+          .then(resText => resText.json())
+          .catch(error => console.error(error))
+          const useVerseText = {}
+          resText?.data.forEach(obj => {
+            useVerseText[obj.verse_start] = obj.verse_text
+          })
+          setVerseText(useVerseText)
+        }
         const resText2 = await fetch(fetchTextPath, {
           method: 'POST',
           body: textParamStr2
@@ -494,24 +523,44 @@ const MediaPlayerProvider = (props) => {
   }
 
   const startPlay = async (topIdStr,inx,curSerie,curEp) => {
+    const lang = serieLang(topIdStr)
     if (curSerie.bbProjectType) {
-      const fetchPath = `${apiBasePath}/get-audio-url`
-      const audioFilesetID = getAudioFilesetId(curSerie.langID)
-      console.log(audioFilesetID)
-       const response = await fetch(fetchPath, {
-        method: 'POST',
-        body: JSON.stringify({
-          filesetID: audioFilesetID,
-          bookID: freeAudioIdOsisMap[curEp?.bk],
-          ch: curEp?.id,
-          query: ["path"]
-        })
-      }).then(response => response.json())
-      curSerie.curPath = response?.data?.path
+      let audioFilesetID 
+      if (alternativeAudioLangSet.has(lang)) {
+        const chStr = pad(curEp?.id)
+        curSerie.curPath = `https://info2.sermon-online.com/german/DieBibelInDeutscherFassung/430${chStr}-Das_Evangelium_Nach_Johannes_Kapitel-0${chStr}.mp3`
+      } else {
+        const fetchPath = `${apiBasePath}/get-audio-url`
+        audioFilesetID = getAudioFilesetId(curSerie.langID)
+        console.log(audioFilesetID)
+        const response = await fetch(fetchPath, {
+          method: 'POST',
+          body: JSON.stringify({
+            filesetID: audioFilesetID,
+            bookID: freeAudioIdOsisMap[curEp?.bk],
+            ch: curEp?.id,
+            query: ["path"]
+          })
+        }).then(response => response.json())
+        curSerie.curPath = response?.data?.path
+      }
       const activeLangList = JSON.parse(state?.activeLangListStr)
       const tempLangList = (activeLangList) ? activeLangList.slice(0,2) : []
+      let filesetID
+      if (!localTextLangSet.has(curLang)) {
+        filesetID = getTextFilesetId(tempLangList[0],audioFilesetID)
+      } else {
+        const useText = textLocal[curEp?.id]
+        const useVerseText = {}
+        let inx = 1
+        useText?.forEach(str => {
+          useVerseText[inx] = str
+          inx += 1
+        })
+        setVerseText(useVerseText)
+      }
       setTextParamStr(JSON.stringify({
-        filesetID: getTextFilesetId(tempLangList[0],audioFilesetID),
+        filesetID,
         filesetID2: getTextFilesetId(tempLangList[1],audioFilesetID),
         bookID: freeAudioIdOsisMap[curEp?.bk],
         ch: curEp?.id,
@@ -550,7 +599,7 @@ const MediaPlayerProvider = (props) => {
         }
       }
     }
-    if (!curSerie){ // stop playing
+    if (!curSerie) { // stop playing
       let newPlayObj
       setStateKeyVal( "curPlay", newPlayObj)
     } else {
@@ -561,7 +610,7 @@ const MediaPlayerProvider = (props) => {
       }
       // This serie has episodes
       let newPlayObj = {curSerie,curEp}
-      if (curEp!=null){
+      if (curEp!=null) {
 //          props.onStartPlay && props.onStartPlay(curSerie,curEp)
         await apiObjSetStorage({curSerie},"curEp",curEp.id)
         setStateKeyVal( "curPlay", newPlayObj)
@@ -581,7 +630,6 @@ const MediaPlayerProvider = (props) => {
         })
       }
       const curSerId = curSerie.uniqueID || unique(curSerie.title)
-      const lang = serieLang(topIdStr)
       const nType = serieNaviType(topIdStr)
       const langID = curSerie.langID
       const navHistEp = {...tmpEp,topIdStr,lang,langID}
