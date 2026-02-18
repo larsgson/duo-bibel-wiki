@@ -1,6 +1,5 @@
 {
   "listenReveal": "सुनें और प्रकट करें",
-  "listenChoose": "सुनें और चुनें",
   "listenOrder": "वाक्य जारी रखें",
   "listenFill": "रिक्त स्थान भरें",
   "sentenceBuilder": "वाक्य बनाएँ",
@@ -16,7 +15,6 @@
   "buildSentence": "वाक्य बनाएँ",
   "completed": "बहुत बढ़िया!",
   "continue": "आगे बढ़ें",
-  "comingSoon": "जल्द आ रहा है",
   "chapter": "अध्याय",
   "loading": "लोड हो रहा है...",
   "audioOnly": "केवल ऑडियो — इस भाषा के लिए पाठ उपलब्ध नहीं है",
@@ -24,12 +22,15 @@
   "heroTagline": "आसान भाषा सीखना",
   "heroHeadline": "अद्वितीय बहुभाषी सीखने का अनुभव",
   "heroSub": "{primary} भाषाओं में सुनें - {secondary} मातृभाषाओं में अभ्यास के साथ",
-  "heroCta": "यहाँ अपनी मातृभाषा चुनें",
-  "selectMotherTongue": "अपनी मातृभाषा चुनें",
-  "selectLanguageToLearn": "सीखने के लिए एक भाषा चुनें",
+  "selectMotherTongue": "मातृभाषा चुनें",
+  "selectLanguageToLearn": "सीखने की भाषा चुनें",
   "searchPlaceholder": "नाम, स्थानीय नाम या कोड से खोजें...",
   "languageCount": "{count} भाषाएँ",
   "languageCountFiltered": "{total} में से {visible} भाषाएँ",
   "noLanguagesFound": "कोई भाषा नहीं मिली",
-  "motherTongueBadge": "मातृभाषा: {label}"
+  "motherTongueBadge": "मातृभाषा: {label}",
+  "screenshotHeading": "यह कैसे काम करता है",
+  "screenshotSelectStory": "एक कहानी चुनें",
+  "screenshotSelectExercise": "एक अभ्यास चुनें",
+  "screenshotContinue": "आगे बढ़ें"
 }

@@ -1,6 +1,5 @@
 {
   "listenReveal": "استمع واكشف",
-  "listenChoose": "استمع واختر",
   "listenOrder": "أكمل الجملة",
   "listenFill": "املأ الفراغ",
   "sentenceBuilder": "ابنِ الجملة",
@@ -16,7 +15,6 @@
   "buildSentence": "ابنِ الجملة",
   "completed": "!أحسنت",
   "continue": "متابعة",
-  "comingSoon": "قريبًا",
   "chapter": "الفصل",
   "loading": "...جارٍ التحميل",
   "audioOnly": "صوت فقط — لا يتوفر نص لهذه اللغة",
@@ -24,12 +22,15 @@
   "heroTagline": "تعلّم اللغات بسهولة",
   "heroHeadline": "تجربة التعلّم متعدد اللغات الفريدة",
   "heroSub": "استمع بـ {primary} لغة - مع تمارين بـ {secondary} لغة أم",
-  "heroCta": "اختر لغتك الأم هنا",
-  "selectMotherTongue": "اختر لغتك الأم",
-  "selectLanguageToLearn": "اختر لغة لتعلّمها",
+  "selectMotherTongue": "اختيار اللغة الأم",
+  "selectLanguageToLearn": "اختيار لغة للتعلّم",
   "searchPlaceholder": "...ابحث بالاسم أو الاسم المحلي أو الرمز",
   "languageCount": "{count} لغة",
   "languageCountFiltered": "{visible} من {total} لغة",
   "noLanguagesFound": "لم يتم العثور على لغات",
-  "motherTongueBadge": "اللغة الأم: {label}"
+  "motherTongueBadge": "اللغة الأم: {label}",
+  "screenshotHeading": "كيف يعمل",
+  "screenshotSelectStory": "اختر قصة",
+  "screenshotSelectExercise": "اختر تمرينًا",
+  "screenshotContinue": "متابعة"
 }

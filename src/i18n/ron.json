@@ -1,6 +1,5 @@
 {
   "listenReveal": "Ascultă și Dezvăluie",
-  "listenChoose": "Ascultă și Alege",
   "listenOrder": "Continuă propoziția",
   "listenFill": "Completează golurile",
   "sentenceBuilder": "Construiește propoziția",
@@ -16,7 +15,6 @@
   "buildSentence": "Construiește propoziția",
   "completed": "Foarte bine!",
   "continue": "Continuă",
-  "comingSoon": "În curând",
   "chapter": "Capitolul",
   "loading": "Se încarcă...",
   "audioOnly": "Doar audio — text indisponibil pentru această limbă",
@@ -24,12 +22,15 @@
   "heroTagline": "Învățarea ușoară a limbilor",
   "heroHeadline": "Experiența de învățare multilingvă de neegalat",
   "heroSub": "Ascultă în {primary} limbi - cu exerciții în {secondary} limbi materne",
-  "heroCta": "Selectează limba ta maternă aici",
-  "selectMotherTongue": "Selectează limba ta maternă",
-  "selectLanguageToLearn": "Selectează o limbă de învățat",
+  "selectMotherTongue": "Alege limba maternă",
+  "selectLanguageToLearn": "Alege limba de învățat",
   "searchPlaceholder": "Caută după nume, nume vernacular sau cod...",
   "languageCount": "{count} limbi",
   "languageCountFiltered": "{visible} din {total} limbi",
   "noLanguagesFound": "Nicio limbă găsită",
-  "motherTongueBadge": "Limba maternă: {label}"
+  "motherTongueBadge": "Limba maternă: {label}",
+  "screenshotHeading": "Cum funcționează",
+  "screenshotSelectStory": "Selectează o poveste",
+  "screenshotSelectExercise": "Selectează un exercițiu",
+  "screenshotContinue": "Continuă"
 }

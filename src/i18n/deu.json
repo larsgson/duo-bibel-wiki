@@ -1,6 +1,5 @@
 {
   "listenReveal": "Hören & Aufdecken",
-  "listenChoose": "Hören & Wählen",
   "listenOrder": "Satz fortsetzen",
   "listenFill": "Lücke füllen",
   "sentenceBuilder": "Satz bauen",
@@ -16,7 +15,6 @@
   "buildSentence": "Baue den Satz",
   "completed": "Gut gemacht!",
   "continue": "Weiter",
-  "comingSoon": "Demnächst verfügbar",
   "chapter": "Kapitel",
   "loading": "Laden...",
   "audioOnly": "Nur Audio — kein Text für diese Sprache verfügbar",
@@ -24,12 +22,15 @@
   "heroTagline": "Einfaches Sprachenlernen",
   "heroHeadline": "Das unvergleichliche mehrsprachige Lernerlebnis",
   "heroSub": "Höre in {primary} Sprachen - mit Übungen in {secondary} Muttersprachen",
-  "heroCta": "Wähle hier deine Muttersprache",
-  "selectMotherTongue": "Wähle deine Muttersprache",
-  "selectLanguageToLearn": "Wähle eine Sprache zum Lernen",
+  "selectMotherTongue": "Muttersprache wählen",
+  "selectLanguageToLearn": "Lernsprache wählen",
   "searchPlaceholder": "Suche nach Sprachname, Eigenname oder Code...",
   "languageCount": "{count} Sprachen",
   "languageCountFiltered": "{visible} von {total} Sprachen",
   "noLanguagesFound": "Keine Sprachen gefunden",
-  "motherTongueBadge": "Muttersprache: {label}"
+  "motherTongueBadge": "Muttersprache: {label}",
+  "screenshotHeading": "So funktioniert's",
+  "screenshotSelectStory": "Wähle eine Geschichte",
+  "screenshotSelectExercise": "Wähle eine Übung",
+  "screenshotContinue": "Weiter"
 }

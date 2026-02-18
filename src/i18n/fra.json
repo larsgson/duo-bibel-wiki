@@ -1,6 +1,5 @@
 {
   "listenReveal": "Écouter et Révéler",
-  "listenChoose": "Écouter et Choisir",
   "listenOrder": "Continuer la phrase",
   "listenFill": "Combler les trous",
   "sentenceBuilder": "Construire la phrase",
@@ -16,7 +15,6 @@
   "buildSentence": "Construisez la phrase",
   "completed": "Bravo !",
   "continue": "Continuer",
-  "comingSoon": "Bientôt disponible",
   "chapter": "Chapitre",
   "loading": "Chargement...",
   "audioOnly": "Audio uniquement — pas de texte disponible pour cette langue",
@@ -24,12 +22,15 @@
   "heroTagline": "Apprentissage facile des langues",
   "heroHeadline": "L'expérience d'apprentissage multilingue inégalée",
   "heroSub": "Écoutez dans {primary} langues - avec des exercices en {secondary} langues maternelles",
-  "heroCta": "Sélectionnez votre langue maternelle ici",
-  "selectMotherTongue": "Sélectionnez votre langue maternelle",
-  "selectLanguageToLearn": "Sélectionnez une langue à apprendre",
+  "selectMotherTongue": "Choisir la langue maternelle",
+  "selectLanguageToLearn": "Choisir la langue à apprendre",
   "searchPlaceholder": "Rechercher par nom, nom vernaculaire ou code...",
   "languageCount": "{count} langues",
   "languageCountFiltered": "{visible} sur {total} langues",
   "noLanguagesFound": "Aucune langue trouvée",
-  "motherTongueBadge": "Langue maternelle : {label}"
+  "motherTongueBadge": "Langue maternelle : {label}",
+  "screenshotHeading": "Comment ça marche",
+  "screenshotSelectStory": "Choisissez une histoire",
+  "screenshotSelectExercise": "Choisissez un exercice",
+  "screenshotContinue": "Continuez"
 }

@@ -71,7 +71,6 @@ for (const loc of heroLocales) {
         heroSub: t("heroSub")
             .replace("{primary}", String(primaryCount))
             .replace("{secondary}", secondaryCount.toLocaleString("en-US")),
-        heroCta: t("heroCta"),
         selectMotherTongue: t("selectMotherTongue"),
         selectLanguageToLearn: t("selectLanguageToLearn"),
         searchPlaceholder: t("searchPlaceholder"),
@@ -79,6 +78,10 @@ for (const loc of heroLocales) {
         languageCountFiltered: t("languageCountFiltered"),
         noLanguagesFound: t("noLanguagesFound"),
         motherTongueBadge: t("motherTongueBadge"),
+        screenshotHeading: t("screenshotHeading"),
+        screenshotSelectStory: t("screenshotSelectStory"),
+        screenshotSelectExercise: t("screenshotSelectExercise"),
+        screenshotContinue: t("screenshotContinue"),
     };
 }
 const heroJSON = JSON.stringify(heroTranslations);
@@ -301,33 +304,24 @@ const langDataJSON = JSON.stringify({
                 display: flex;
                 gap: 1.5rem;
                 justify-content: center;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                padding-bottom: 1rem;
             }
             .screenshot-card {
                 flex: 0 0 auto;
                 width: 220px;
-                scroll-snap-align: center;
             }
-            .screenshot-placeholder {
+            .screenshot-img {
                 width: 100%;
-                aspect-ratio: 9 / 16;
-                background: rgba(255, 255, 255, 0.06);
-                border: 2px dashed rgba(255, 255, 255, 0.15);
                 border-radius: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: rgba(255, 255, 255, 0.2);
-                font-size: 0.85rem;
+                display: block;
             }
             .screenshot-caption {
                 text-align: center;
                 margin-top: 0.75rem;
                 font-size: 0.9rem;
                 color: rgba(255, 255, 255, 0.5);
+            }
+            .carousel-steps {
+                display: none;
             }
 
             /* ── Modal overlay ── */
@@ -590,10 +584,61 @@ const langDataJSON = JSON.stringify({
                     padding: 1.5rem 1rem 2rem;
                 }
                 .screenshots {
-                    padding: 1.5rem 1rem 3rem;
+                    padding: 1.5rem 0 3rem;
+                    overflow: hidden;
+                }
+                .screenshots-row {
+                    gap: 0;
+                    justify-content: flex-start;
+                    transition: transform 0.4s ease;
+                    will-change: transform;
                 }
                 .screenshot-card {
-                    width: 180px;
+                    width: 65%;
+                    flex-shrink: 0;
+                    transition:
+                        transform 0.4s ease,
+                        opacity 0.4s ease;
+                    opacity: 0.4;
+                    transform: scale(0.85);
+                }
+                .screenshot-card.active {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                .screenshot-caption {
+                    opacity: 0;
+                    transition: opacity 0.4s ease;
+                }
+                .screenshot-card.active .screenshot-caption {
+                    opacity: 1;
+                }
+                .carousel-steps {
+                    display: flex;
+                    justify-content: center;
+                    gap: 1.25rem;
+                    margin-top: 1.25rem;
+                }
+                .carousel-step {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    background: transparent;
+                    color: rgba(255, 255, 255, 0.4);
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                    padding: 0;
+                }
+                .carousel-step.active {
+                    border-color: #5b9bd5;
+                    background: #5b9bd5;
+                    color: #fff;
                 }
                 .modal-overlay {
                     padding: 1rem 0.5rem;
@@ -648,9 +693,7 @@ const langDataJSON = JSON.stringify({
                     {secondaryCount.toLocaleString("en-US")} mother-tongues
                 </p>
                 <button class="hero-cta" id="hero-cta">
-                    <span id="hero-cta-text"
-                        >Select your mother-tongue here</span
-                    >
+                    <span id="hero-cta-text">Select mother-tongue</span>
                     <span>&rarr;</span>
                 </button>
             </section>
@@ -683,20 +726,47 @@ const langDataJSON = JSON.stringify({
 
             <!-- Screenshots -->
             <section class="screenshots">
-                <p class="screenshots-heading">How it works</p>
+                <p class="screenshots-heading" id="screenshots-heading">
+                    How it works
+                </p>
                 <div class="screenshots-row">
                     <div class="screenshot-card">
-                        <div class="screenshot-placeholder">Screenshot 1</div>
-                        <p class="screenshot-caption">Choose your language</p>
+                        <img
+                            class="screenshot-img"
+                            src="/screenshots/step1.png"
+                            alt="Select a story"
+                        />
+                        <p class="screenshot-caption" id="caption-1">
+                            Select a story
+                        </p>
                     </div>
                     <div class="screenshot-card">
-                        <div class="screenshot-placeholder">Screenshot 2</div>
-                        <p class="screenshot-caption">Pick a second language</p>
+                        <img
+                            class="screenshot-img"
+                            src="/screenshots/step2.png"
+                            alt="Select an exercise"
+                        />
+                        <p class="screenshot-caption" id="caption-2">
+                            Select an exercise
+                        </p>
                     </div>
                     <div class="screenshot-card">
-                        <div class="screenshot-placeholder">Screenshot 3</div>
-                        <p class="screenshot-caption">Start learning</p>
+                        <img
+                            class="screenshot-img"
+                            src="/screenshots/step3.png"
+                            alt="Continue"
+                        />
+                        <p class="screenshot-caption" id="caption-3">
+                            Continue
+                        </p>
                     </div>
+                </div>
+                <div class="carousel-steps" id="carousel-steps">
+                    <button class="carousel-step active" data-slide="0"
+                        >1</button
+                    >
+                    <button class="carousel-step" data-slide="1">2</button>
+                    <button class="carousel-step" data-slide="2">3</button>
                 </div>
             </section>
         </div><!-- end landing-content -->
@@ -778,7 +848,16 @@ const langDataJSON = JSON.stringify({
                     document.getElementById("hero-sub")!.textContent =
                         ui.heroSub;
                     document.getElementById("hero-cta-text")!.textContent =
-                        ui.heroCta;
+                        ui.selectMotherTongue;
+                    document.getElementById(
+                        "screenshots-heading",
+                    )!.textContent = ui.screenshotHeading;
+                    document.getElementById("caption-1")!.textContent =
+                        ui.screenshotSelectStory;
+                    document.getElementById("caption-2")!.textContent =
+                        ui.screenshotSelectExercise;
+                    document.getElementById("caption-3")!.textContent =
+                        ui.screenshotContinue;
                 }
             } catch (e) {}
 
@@ -880,14 +959,13 @@ const langDataJSON = JSON.stringify({
                     "Search by language name, vernacular, or code...";
                 if (step === 1) {
                     modalTitle.textContent =
-                        ui.selectMotherTongue || "Select your mother-tongue";
+                        ui.selectMotherTongue || "Select mother-tongue";
                     backBtn.style.display = "none";
                     selectedBadge.style.display = "none";
                     renderGrid(secondaryLangs);
                 } else {
                     modalTitle.textContent =
-                        ui.selectLanguageToLearn ||
-                        "Select a language to learn";
+                        ui.selectLanguageToLearn || "Select language to learn";
                     backBtn.style.display = "";
                     selectedBadge.style.display = "";
                     const label = selectedSecondary!.vernacular
@@ -1020,6 +1098,90 @@ const langDataJSON = JSON.stringify({
 
             // ── Initialize grid for direct page load (modal closed) ──
             renderGrid(secondaryLangs);
+
+            // ── Screenshot carousel (mobile) ──
+            (() => {
+                const row = document.querySelector(
+                    ".screenshots-row",
+                ) as HTMLElement;
+                const cards = [
+                    ...document.querySelectorAll<HTMLElement>(
+                        ".screenshot-card",
+                    ),
+                ];
+                const steps = document.getElementById("carousel-steps")!;
+                const stepBtns = [
+                    ...steps.querySelectorAll<HTMLButtonElement>(
+                        ".carousel-step",
+                    ),
+                ];
+                if (!row || cards.length === 0) return;
+
+                let current = 0;
+                const isMobile = () =>
+                    window.matchMedia("(max-width: 768px)").matches;
+
+                function goTo(idx: number) {
+                    current = Math.max(0, Math.min(idx, cards.length - 1));
+                    cards.forEach((c, i) =>
+                        c.classList.toggle("active", i === current),
+                    );
+                    stepBtns.forEach((b, i) =>
+                        b.classList.toggle("active", i === current),
+                    );
+                    // Center the active card: offset = (container - cardWidth) / 2 - card position
+                    const containerW = row.parentElement!.clientWidth;
+                    const cardW = containerW * 0.65; // matches CSS width: 65%
+                    const offset = (containerW - cardW) / 2 - current * cardW;
+                    row.style.transform = `translateX(${offset}px)`;
+                }
+
+                stepBtns.forEach((btn) => {
+                    btn.addEventListener("click", () =>
+                        goTo(Number(btn.dataset.slide)),
+                    );
+                });
+
+                // Touch swipe support
+                let startX = 0;
+                let startY = 0;
+                let dragging = false;
+                row.addEventListener(
+                    "touchstart",
+                    (e) => {
+                        if (!isMobile()) return;
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                        dragging = true;
+                    },
+                    { passive: true },
+                );
+                row.addEventListener(
+                    "touchend",
+                    (e) => {
+                        if (!dragging || !isMobile()) return;
+                        dragging = false;
+                        const dx = e.changedTouches[0].clientX - startX;
+                        const dy = e.changedTouches[0].clientY - startY;
+                        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+                            goTo(current + (dx < 0 ? 1 : -1));
+                        }
+                    },
+                    { passive: true },
+                );
+
+                // Initialize on mobile
+                function init() {
+                    if (isMobile()) {
+                        goTo(0);
+                    } else {
+                        row.style.transform = "";
+                        cards.forEach((c) => c.classList.remove("active"));
+                    }
+                }
+                init();
+                window.addEventListener("resize", init);
+            })();
         </script>
     </body>
 </html>

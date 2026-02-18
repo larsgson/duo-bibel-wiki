@@ -71,7 +71,6 @@ const backHref =
 const t = useTranslations(secondaryCode);
 const uiLabels = JSON.stringify({
     listenReveal: t("listenReveal"),
-    listenChoose: t("listenChoose"),
     listenOrder: t("listenOrder"),
     listenFill: t("listenFill"),
     sentenceBuilder: t("sentenceBuilder"),
@@ -87,7 +86,6 @@ const uiLabels = JSON.stringify({
     buildSentence: t("buildSentence"),
     completed: t("completed"),
     continue: t("continue"),
-    comingSoon: t("comingSoon"),
     audioOnly: t("audioOnly"),
     textNotAvailable: t("textNotAvailable"),
 });
@@ -1028,13 +1026,6 @@ const uiLabels = JSON.stringify({
             color: #5cb85c;
         }
 
-        .listen-choose-placeholder {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.95rem;
-        }
-
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .learn-verse-main {
@@ -1839,9 +1830,6 @@ const uiLabels = JSON.stringify({
                 case "sentence-builder":
                     renderSentenceBuilder();
                     break;
-                case "listen-choose":
-                    renderListenChoose();
-                    break;
                 default:
                     exerciseArea.innerHTML = "";
             }
@@ -2113,10 +2101,6 @@ const uiLabels = JSON.stringify({
                 ${headerHTML}
                 <div class="sentence-builder-answer"${rtlAttr}>${answerHTML}</div>${bankHTML}
                 <div class="sentence-builder-actions">${actionsHTML}</div></div>`;
-        }
-
-        function renderListenChoose() {
-            exerciseArea.innerHTML = `<div class="listen-choose-placeholder">${t("listenChoose")} — ${t("comingSoon")}</div>`;
         }
 
         // ══════════════════════════════════════════

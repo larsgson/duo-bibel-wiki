@@ -1,6 +1,5 @@
 {
   "listenReveal": "Слушать и Открывать",
-  "listenChoose": "Слушать и Выбирать",
   "listenOrder": "Продолжить предложение",
   "listenFill": "Заполнить пропуски",
   "sentenceBuilder": "Собрать предложение",
@@ -16,7 +15,6 @@
   "buildSentence": "Постройте предложение",
   "completed": "Отлично!",
   "continue": "Продолжить",
-  "comingSoon": "Скоро будет",
   "chapter": "Глава",
   "loading": "Загрузка...",
   "audioOnly": "Только аудио — текст недоступен для этого языка",
@@ -24,12 +22,15 @@
   "heroTagline": "Простое изучение языков",
   "heroHeadline": "Непревзойдённый многоязычный опыт обучения",
   "heroSub": "Слушайте на {primary} языках - с упражнениями на {secondary} родных языках",
-  "heroCta": "Выберите свой родной язык здесь",
-  "selectMotherTongue": "Выберите свой родной язык",
-  "selectLanguageToLearn": "Выберите язык для изучения",
+  "selectMotherTongue": "Выбрать родной язык",
+  "selectLanguageToLearn": "Выбрать язык для изучения",
   "searchPlaceholder": "Поиск по названию, местному названию или коду...",
   "languageCount": "{count} языков",
   "languageCountFiltered": "{visible} из {total} языков",
   "noLanguagesFound": "Языки не найдены",
-  "motherTongueBadge": "Родной язык: {label}"
+  "motherTongueBadge": "Родной язык: {label}",
+  "screenshotHeading": "Как это работает",
+  "screenshotSelectStory": "Выберите историю",
+  "screenshotSelectExercise": "Выберите упражнение",
+  "screenshotContinue": "Продолжить"
 }

@@ -1,6 +1,5 @@
 {
   "listenReveal": "Listen & Reveal",
-  "listenChoose": "Listen & Choose",
   "listenOrder": "Continue Sentence",
   "listenFill": "Fill Gap",
   "sentenceBuilder": "Build Sentence",
@@ -16,7 +15,6 @@
   "buildSentence": "Build the sentence",
   "completed": "Well done!",
   "continue": "Continue",
-  "comingSoon": "Coming soon",
   "chapter": "Chapter",
   "loading": "Loading...",
   "audioOnly": "Audio only — no text available for this language",
@@ -24,12 +22,15 @@
   "heroTagline": "Easy language learning",
   "heroHeadline": "The unmatched multilingual learning experience",
   "heroSub": "Listen to any of {primary} languages - with exercises in {secondary} mother-tongues",
-  "heroCta": "Select your mother-tongue here",
-  "selectMotherTongue": "Select your mother-tongue",
-  "selectLanguageToLearn": "Select a language to learn",
+  "selectMotherTongue": "Select mother-tongue",
+  "selectLanguageToLearn": "Select language to learn",
   "searchPlaceholder": "Search by language name, vernacular, or code...",
   "languageCount": "{count} languages",
   "languageCountFiltered": "{visible} of {total} languages",
   "noLanguagesFound": "No languages found",
-  "motherTongueBadge": "Mother-tongue: {label}"
+  "motherTongueBadge": "Mother-tongue: {label}",
+  "screenshotHeading": "How it works",
+  "screenshotSelectStory": "Select a story",
+  "screenshotSelectExercise": "Select an exercise",
+  "screenshotContinue": "Continue"
 }
