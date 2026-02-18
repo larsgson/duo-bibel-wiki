@@ -1,0 +1,39 @@
+[images]
+  remote_images = ["https://bibel\\.wiki/img/.*"]
+
+[build]
+  command = "node scripts/build-story-locales.js && pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[dev]
+  framework = "#auto"
+  targetPort = 4321
+
+# Cache headers for static template files
+[[headers]]
+  for = "/templates/*/*.toml"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/templates/*/*/*.toml"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/templates/*/locales/*.toml"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/templates/**/*.md"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/templates/**/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"

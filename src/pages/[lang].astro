@@ -1,0 +1,337 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import Layout from "../layouts/Layout.astro";
+import langsData from "../data/ALL-langs-compact.json";
+
+export function getStaticPaths() {
+    const base = "src/data/ALL-langs-data/nt";
+    const dirs = ["with-timecode", "audio-with-timecode"];
+    const codes = new Set<string>();
+
+    for (const dir of dirs) {
+        const fullPath = path.resolve(base, dir);
+        if (fs.existsSync(fullPath)) {
+            for (const entry of fs.readdirSync(fullPath)) {
+                if (/^[a-z]{3}$/.test(entry)) {
+                    codes.add(entry);
+                }
+            }
+        }
+    }
+
+    const wt = langsData.canons.nt["with-timecode"] as Record<
+        string,
+        { n?: string; v?: string }
+    >;
+    const awt = langsData.canons.nt["audio-with-timecode"] as Record<
+        string,
+        { n?: string; v?: string }
+    >;
+
+    return [...codes].sort().map((code) => {
+        const info = wt[code] || awt[code] || {};
+        return {
+            params: { lang: code },
+            props: {
+                code,
+                nameEnglish: info.n || code,
+                nameVernacular: info.v || "",
+            },
+        };
+    });
+}
+
+interface Props {
+    code: string;
+    nameEnglish: string;
+    nameVernacular: string;
+}
+
+const { code, nameEnglish, nameVernacular } = Astro.props;
+
+// Collect ALL languages from ALL-langs-compact.json for secondary selector
+const allLangs: { code: string; name: string; vernacular: string }[] = [];
+const seen = new Set<string>();
+for (const canon of ["nt", "ot"] as const) {
+    const canonData = (langsData.canons as any)[canon];
+    if (!canonData) continue;
+    for (const cat of Object.keys(canonData)) {
+        const catData = canonData[cat] as Record<
+            string,
+            { n?: string; v?: string }
+        >;
+        for (const [lc, info] of Object.entries(catData)) {
+            if (!seen.has(lc)) {
+                seen.add(lc);
+                allLangs.push({
+                    code: lc,
+                    name: info.n || lc,
+                    vernacular: info.v || "",
+                });
+            }
+        }
+    }
+}
+allLangs.sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<Layout
+    title={`${nameEnglish} (${code})`}
+    langCode={code}
+    langName={nameEnglish}
+    backHref="/"
+>
+    <style>
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .primary-info {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .lang-heading {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+        }
+        .vernacular {
+            font-style: italic;
+            color: #6ea8fe;
+            font-size: 1.15rem;
+            margin: 0.25rem 0;
+        }
+        .code-label {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.95rem;
+            font-family: monospace;
+            margin: 0;
+        }
+        .secondary-heading {
+            text-align: center;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1rem;
+        }
+        .search-section {
+            max-width: 500px;
+            margin: 0 auto 1rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e0e0;
+        }
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .search-input:focus {
+            border-color: #6ea8fe;
+        }
+        .count {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            margin: 0.5rem 0 1.25rem;
+            font-size: 0.95rem;
+        }
+        .no-results {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 3rem 1rem;
+            font-size: 1.1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.5rem;
+        }
+        .lang-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.6rem 0.85rem;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: background 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .lang-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(110, 168, 254, 0.3);
+        }
+        .lang-code {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+            font-family: monospace;
+            flex-shrink: 0;
+        }
+        .lang-name {
+            font-weight: 500;
+        }
+        .lang-vernacular {
+            color: #6ea8fe;
+            font-size: 0.85rem;
+        }
+        .highlight {
+            background: rgba(110, 168, 254, 0.25);
+            color: #6ea8fe;
+            border-radius: 2px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            color: #6ea8fe;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .page {
+                padding: 1rem;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <div class="page">
+        <div class="primary-info">
+            <h2 class="lang-heading">{nameEnglish}</h2>
+            {nameVernacular && <p class="vernacular">{nameVernacular}</p>}
+            <p class="code-label">[{code}]</p>
+        </div>
+
+        <p class="secondary-heading">Select a secondary language</p>
+
+        <div class="search-section">
+            <input
+                id="search"
+                class="search-input"
+                type="text"
+                placeholder="Search by language name, vernacular, or code..."
+                autofocus
+            />
+        </div>
+        <p class="count" id="count">{allLangs.length} languages</p>
+
+        <div class="grid" id="grid">
+            {
+                allLangs.map((lang) => (
+                    <a
+                        class="lang-item"
+                        href={`/${code}/${lang.code}`}
+                        data-code={lang.code}
+                        data-name={lang.name}
+                        data-vernacular={lang.vernacular}
+                    >
+                        <span class="lang-code">{lang.code}</span>
+                        <span class="lang-name">{lang.name}</span>
+                        {lang.vernacular && (
+                            <span class="lang-vernacular">
+                                {" "}
+                                - {lang.vernacular}
+                            </span>
+                        )}
+                    </a>
+                ))
+            }
+        </div>
+        <p class="no-results" id="no-results" style="display:none">
+            No languages found
+        </p>
+    </div>
+
+    <script>
+        const search = document.getElementById("search") as HTMLInputElement;
+        const grid = document.getElementById("grid")!;
+        const countEl = document.getElementById("count")!;
+        const noResults = document.getElementById("no-results")!;
+        const items = [
+            ...grid.querySelectorAll<HTMLAnchorElement>(".lang-item"),
+        ];
+        const total = items.length;
+
+        function escapeRegex(s: string) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+
+        function highlightText(text: string, regex: RegExp | null): string {
+            if (!regex) return text;
+            return text.replace(
+                regex,
+                (m) => `<span class="highlight">${m}</span>`,
+            );
+        }
+
+        search.addEventListener("input", () => {
+            const term = search.value.trim().toLowerCase();
+
+            if (!term) {
+                items.forEach((el) => {
+                    el.style.display = "";
+                    const code = el.dataset.code!;
+                    const name = el.dataset.name!;
+                    const vernacular = el.dataset.vernacular!;
+                    el.querySelector(".lang-code")!.textContent = code;
+                    el.querySelector(".lang-name")!.textContent = name;
+                    const vEl = el.querySelector(".lang-vernacular");
+                    if (vEl) vEl.textContent = ` - ${vernacular}`;
+                });
+                countEl.textContent = `${total} languages`;
+                noResults.style.display = "none";
+                grid.style.display = "";
+                return;
+            }
+
+            const regex = new RegExp(`(${escapeRegex(term)})`, "gi");
+            let visible = 0;
+
+            items.forEach((el) => {
+                const code = el.dataset.code!;
+                const name = el.dataset.name!;
+                const vernacular = el.dataset.vernacular || "";
+
+                const match =
+                    code.toLowerCase().includes(term) ||
+                    name.toLowerCase().includes(term) ||
+                    vernacular.toLowerCase().includes(term);
+
+                if (match) {
+                    el.style.display = "";
+                    visible++;
+                    el.querySelector(".lang-code")!.innerHTML = highlightText(
+                        code,
+                        regex,
+                    );
+                    el.querySelector(".lang-name")!.innerHTML = highlightText(
+                        name,
+                        regex,
+                    );
+                    const vEl = el.querySelector(".lang-vernacular");
+                    if (vEl)
+                        vEl.innerHTML = ` - ${highlightText(vernacular, regex)}`;
+                } else {
+                    el.style.display = "none";
+                }
+            });
+
+            countEl.textContent = `${visible} of ${total} languages`;
+            noResults.style.display = visible === 0 ? "" : "none";
+            grid.style.display = visible === 0 ? "none" : "";
+        });
+    </script>
+</Layout>

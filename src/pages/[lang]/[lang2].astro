@@ -1,0 +1,40 @@
+---
+export const prerender = false;
+
+import langsData from "../../data/ALL-langs-compact.json";
+
+const { lang, lang2 } = Astro.params;
+
+// Validate primary language
+const wt = langsData.canons.nt["with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+const awt = langsData.canons.nt["audio-with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+if (!wt[lang!] && !awt[lang!]) {
+    return Astro.redirect("/");
+}
+
+// Validate secondary language
+let found = false;
+for (const canon of ["nt", "ot"] as const) {
+    const canonData = (langsData.canons as any)[canon];
+    if (!canonData) continue;
+    for (const cat of Object.keys(canonData)) {
+        if (canonData[cat][lang2!]) {
+            found = true;
+            break;
+        }
+    }
+    if (found) break;
+}
+if (!found) {
+    return Astro.redirect(`/${lang}`);
+}
+
+// Redirect to chapter picker
+return Astro.redirect(`/${lang}/${lang2}/john/`);
+---

@@ -1,0 +1,329 @@
+---
+export const prerender = false;
+
+import Layout from "../../../../layouts/Layout.astro";
+import langsData from "../../../../data/ALL-langs-compact.json";
+import storyLocales from "../../../../generated/story-locales.json";
+import { BOOK_MAP } from "../../../../utils/chapterData";
+
+const { lang, lang2, book } = Astro.params;
+
+const bookInfo = BOOK_MAP[book!.toLowerCase()];
+if (!bookInfo) {
+    return Astro.redirect(`/${lang}/${lang2}`);
+}
+
+// ── Validate languages ──
+const wt = langsData.canons.nt["with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+const awt = langsData.canons.nt["audio-with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+const pInfo = wt[lang!] || awt[lang!];
+if (!pInfo) return Astro.redirect("/");
+const primaryCode = lang!;
+const primaryEnglish = pInfo.n || primaryCode;
+
+let sInfo: { n?: string; v?: string } | undefined;
+for (const canon of ["nt", "ot"] as const) {
+    const canonData = (langsData.canons as any)[canon];
+    if (!canonData) continue;
+    for (const cat of Object.keys(canonData)) {
+        if (canonData[cat][lang2!]) {
+            sInfo = canonData[cat][lang2!];
+            break;
+        }
+    }
+    if (sInfo) break;
+}
+if (!sInfo) return Astro.redirect(`/${primaryCode}`);
+const secondaryCode = lang2!;
+const secondaryEnglish = sInfo.n || secondaryCode;
+
+// ── Build categories data for client ──
+const locales = (storyLocales as any).locales;
+const categoriesRaw = (storyLocales as any).categories;
+const locale = locales[secondaryCode] || locales["eng"] || {};
+const engLocale = locales["eng"] || {};
+
+const bookTitle =
+    locale.title || locale.longTitle || engLocale.title || bookInfo.img;
+
+const categoriesData: Array<{
+    id: string;
+    title: string;
+    description: string;
+    image: string | null;
+    stories: Array<{ chapter: number; title: string; image: string | null }>;
+}> = [];
+
+for (const [catId, cat] of Object.entries(categoriesRaw) as [string, any][]) {
+    const catLocale = locale[catId] || engLocale[catId] || {};
+    const stories = cat.stories.map((s: any) => {
+        const storyLocale =
+            locale[catId]?.[s.id] || engLocale[catId]?.[s.id] || {};
+        return {
+            chapter: s.chapter,
+            title: storyLocale.title || `Chapter ${s.chapter}`,
+            image: s.image || null,
+        };
+    });
+    categoriesData.push({
+        id: catId,
+        title: catLocale.title || `Part ${catId}`,
+        description: catLocale.description || "",
+        image: cat.image || null,
+        stories,
+    });
+}
+
+const categoriesJSON = JSON.stringify(categoriesData);
+const backHref = `/${primaryCode}`;
+---
+
+<Layout
+    title={`${bookTitle} — ${primaryEnglish} + ${secondaryEnglish}`}
+    backHref={backHref}
+>
+    <style is:global>
+        .chapter-picker {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 1rem 1rem 2rem;
+        }
+        .chapter-picker-title {
+            text-align: center;
+            color: #ccc;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0 0 1.25rem;
+        }
+
+        /* ── Accordion ── */
+        .accordion-item {
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: #ddd;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: left;
+            transition: background 0.2s;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .accordion-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .accordion-info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .accordion-title {
+            display: block;
+        }
+        .accordion-desc {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .accordion-chevron {
+            font-size: 1.1rem;
+            color: #777;
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .accordion-item.open .accordion-chevron {
+            transform: rotate(90deg);
+        }
+
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+        .accordion-item.open .accordion-body {
+            max-height: 2000px;
+        }
+        .accordion-body-inner {
+            padding: 0 12px 16px;
+        }
+
+        /* ── Chapter grid ── */
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 500px) {
+            .chapter-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+        }
+        @media (max-width: 360px) {
+            .chapter-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+        }
+        .chapter-card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.06);
+            text-decoration: none;
+            color: inherit;
+            transition:
+                transform 0.15s,
+                box-shadow 0.15s;
+        }
+        .chapter-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        .chapter-card-img {
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            object-fit: cover;
+            display: block;
+        }
+        .chapter-card-info {
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .chapter-card-num {
+            font-size: 0.7rem;
+            color: #5b9bd5;
+            font-weight: 600;
+        }
+        .chapter-card-title {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.3;
+        }
+    </style>
+
+    <div class="chapter-picker">
+        <h1 class="chapter-picker-title" id="book-title"></h1>
+        <div id="accordion-container"></div>
+    </div>
+
+    <script define:vars={{ categoriesJSON, bookTitle, book }}>
+        const categories = JSON.parse(categoriesJSON);
+        const bookKey = book.toLowerCase();
+
+        // ── Determine which category to open ──
+        let openCatId = categories[0]?.id || "01";
+        try {
+            const lastChapter = parseInt(
+                localStorage.getItem(`lastVisitedChapter_${bookKey}`),
+                10,
+            );
+            if (lastChapter) {
+                for (const cat of categories) {
+                    if (cat.stories.some((s) => s.chapter === lastChapter)) {
+                        openCatId = cat.id;
+                        break;
+                    }
+                }
+            }
+        } catch (e) {
+            /* localStorage unavailable */
+        }
+
+        function imgProxy(url, w) {
+            if (!url) return url;
+            return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+        }
+
+        // ── Render ──
+        document.getElementById("book-title").textContent = bookTitle;
+
+        const container = document.getElementById("accordion-container");
+        let html = "";
+        for (const cat of categories) {
+            const isOpen = cat.id === openCatId ? " open" : "";
+            const imgTag = cat.image
+                ? `<img class="accordion-thumb" src="${imgProxy(cat.image, 88)}" alt="">`
+                : "";
+
+            let cardsHTML = "";
+            for (const story of cat.stories) {
+                const imgSrc = story.image || cat.image || "";
+                cardsHTML += `<a class="chapter-card" href="./${story.chapter}/">
+                    ${imgSrc ? `<img class="chapter-card-img" src="${imgProxy(imgSrc, 300)}" alt="" loading="lazy">` : ""}
+                    <div class="chapter-card-info">
+                        <span class="chapter-card-num">Chapter ${story.chapter}</span>
+                        <span class="chapter-card-title">${story.title}</span>
+                    </div>
+                </a>`;
+            }
+
+            html += `<div class="accordion-item${isOpen}" data-cat="${cat.id}">
+                <button class="accordion-header">
+                    ${imgTag}
+                    <div class="accordion-info">
+                        <span class="accordion-title">${cat.title}</span>
+                        <span class="accordion-desc">${cat.description}</span>
+                    </div>
+                    <span class="accordion-chevron">&#x25B8;</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-body-inner">
+                        <div class="chapter-grid">${cardsHTML}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        container.innerHTML = html;
+
+        // ── Accordion behavior ──
+        container.addEventListener("click", (e) => {
+            const header = e.target.closest(".accordion-header");
+            if (!header) return;
+            const item = header.closest(".accordion-item");
+            const wasOpen = item.classList.contains("open");
+
+            // Close all
+            container
+                .querySelectorAll(".accordion-item.open")
+                .forEach((el) => el.classList.remove("open"));
+
+            // Open clicked (unless it was already open — then it stays closed)
+            if (!wasOpen) {
+                item.classList.add("open");
+            }
+        });
+    </script>
+</Layout>

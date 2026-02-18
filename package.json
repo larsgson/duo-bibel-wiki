@@ -1,0 +1,20 @@
+{
+  "name": "duo-bibel-wiki",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build-image-index": "node scripts/build-image-index.js",
+    "build-story-locales": "node scripts/build-story-locales.js",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/netlify": "^6.6.4",
+    "astro": "^5.17.1"
+  },
+  "devDependencies": {
+    "smol-toml": "^1.6.0"
+  }
+}

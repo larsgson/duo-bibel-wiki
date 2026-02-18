@@ -1,0 +1,606 @@
+---
+interface LangEntry {
+    code: string;
+    name: string;
+    vernacular: string;
+}
+
+interface Props {
+    title: string;
+    langCode?: string;
+    langName?: string;
+    lang2Code?: string;
+    lang2Name?: string;
+    compact?: boolean;
+    flexMode?: boolean;
+    noHeader?: boolean;
+    backHref?: string;
+    primaryLangs?: LangEntry[];
+    secondaryLangs?: LangEntry[];
+    langUrlTemplate?: string;
+    lang2UrlTemplate?: string;
+}
+
+const {
+    title,
+    langCode,
+    langName,
+    lang2Code,
+    lang2Name,
+    compact,
+    flexMode,
+    noHeader,
+    backHref,
+    primaryLangs,
+    secondaryLangs,
+    langUrlTemplate,
+    lang2UrlTemplate,
+} = Astro.props;
+const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
+---
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="dark" />
+        <title>{title}</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                min-height: 100vh;
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+                background: #1a1a2e;
+                color: #e0e0e0;
+            }
+            body.flex-mode {
+                height: 100vh;
+                height: 100dvh;
+                min-height: 0;
+                overflow: hidden;
+            }
+            body.flex-mode .main-content {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            /* Header */
+            .app-header {
+                background: #007bff;
+                color: white;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            }
+            .header-content {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1rem 1.5rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .back-button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
+                text-decoration: none;
+                transition: background 0.2s;
+                flex-shrink: 0;
+            }
+            .back-button:hover {
+                background: rgba(255, 255, 255, 0.25);
+            }
+            .back-button svg {
+                width: 20px;
+                height: 20px;
+            }
+            .app-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+            .app-title a {
+                color: white;
+                text-decoration: none;
+            }
+            .language-button {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.5rem 1rem;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                color: white;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-decoration: none;
+                min-height: 44px;
+            }
+            .language-button:hover {
+                background: rgba(255, 255, 255, 0.18);
+            }
+            .language-icon-wrapper {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.15rem;
+                flex-shrink: 0;
+            }
+            .language-icon {
+                font-size: 1.1rem;
+                line-height: 1;
+            }
+            .language-code-label {
+                font-size: 0.55rem;
+                font-family: monospace;
+                font-weight: 600;
+                text-transform: uppercase;
+                line-height: 1;
+                opacity: 0.8;
+            }
+            .language-text {
+                font-weight: 500;
+                line-height: 1.4;
+            }
+
+            /* Header compact language buttons */
+            .header-langs {
+                display: flex;
+                gap: 0.5rem;
+            }
+            .language-button.compact {
+                padding: 0.4rem 0.6rem;
+                min-height: 36px;
+                gap: 0;
+            }
+            .language-button.compact .language-code-label {
+                font-size: 0.65rem;
+            }
+
+            /* Main content */
+            .main-content {
+                flex: 1;
+                width: 100%;
+            }
+
+            @media (max-width: 768px) {
+                .header-content {
+                    padding: 0.75rem 1rem;
+                }
+                .app-title {
+                    font-size: 1.25rem;
+                }
+                .language-button {
+                    padding: 0.4rem 0.5rem;
+                    font-size: 0.875rem;
+                    gap: 0.5rem;
+                }
+                .language-text {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body class={flexMode ? "flex-mode" : undefined}>
+        {!noHeader && (
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        {
+                            backHref && (
+                                <a
+                                    class="back-button"
+                                    href={backHref}
+                                    aria-label="Back"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <polyline points="15 18 9 12 15 6" />
+                                    </svg>
+                                </a>
+                            )
+                        }
+                        <h1 class="app-title"><a href="/">Duo Bibel Wiki</a></h1>
+                    </div>
+                    {
+                        compact && langCode && lang2Code ? (
+                            <div class="header-langs">
+                                <button
+                                    class="language-button compact"
+                                    data-lang-selector="primary"
+                                >
+                                    <div class="language-icon-wrapper">
+                                        <span class="language-icon">🌐</span>
+                                        <span class="language-code-label">
+                                            {langCode}
+                                        </span>
+                                    </div>
+                                </button>
+                                <button
+                                    class="language-button compact"
+                                    data-lang-selector="secondary"
+                                >
+                                    <div class="language-icon-wrapper">
+                                        <span class="language-icon">🌐</span>
+                                        <span class="language-code-label">
+                                            {lang2Code}
+                                        </span>
+                                    </div>
+                                </button>
+                            </div>
+                        ) : langCode ? (
+                            <a class="language-button" href="/">
+                                <div class="language-icon-wrapper">
+                                    <span class="language-icon">🌐</span>
+                                    <span class="language-code-label">
+                                        {langCode}
+                                    </span>
+                                </div>
+                                <span class="language-text">{langName}</span>
+                            </a>
+                        ) : (
+                            <a class="language-button" href="/">
+                                <span class="language-icon">🌐</span>
+                                <span class="language-text">Select language</span>
+                            </a>
+                        )
+                    }
+                </div>
+            </header>
+        )}
+        <main class="main-content">
+            <slot />
+        </main>
+        {
+            hasSelectorModal && (
+                <>
+                    <style>
+                        .lang-modal-overlay {
+                            display: none;
+                            position: fixed;
+                            inset: 0;
+                            background: rgba(0, 0, 0, 0.7);
+                            z-index: 1000;
+                            align-items: flex-start;
+                            justify-content: center;
+                            padding: 2rem 1rem;
+                            overflow-y: auto;
+                        }
+                        .lang-modal-overlay.open {
+                            display: flex;
+                        }
+                        .lang-modal {
+                            background: #1a1a2e;
+                            border-radius: 12px;
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            width: 100%;
+                            max-width: 900px;
+                            max-height: calc(100vh - 4rem);
+                            max-height: calc(100dvh - 4rem);
+                            display: flex;
+                            flex-direction: column;
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                        }
+                        .lang-modal-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 1rem 1.5rem;
+                            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                            flex-shrink: 0;
+                        }
+                        .lang-modal-header h2 {
+                            font-size: 1.25rem;
+                        }
+                        .lang-modal-close {
+                            background: none;
+                            border: none;
+                            color: rgba(255, 255, 255, 0.5);
+                            font-size: 1.5rem;
+                            cursor: pointer;
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px;
+                            line-height: 1;
+                        }
+                        .lang-modal-close:hover {
+                            color: #e0e0e0;
+                            background: rgba(255, 255, 255, 0.1);
+                        }
+                        .lang-modal-body {
+                            padding: 1rem 1.5rem;
+                            overflow-y: auto;
+                            flex: 1;
+                        }
+                        .lang-modal-search {
+                            width: 100%;
+                            max-width: 500px;
+                            margin: 0 auto 1rem;
+                            display: block;
+                            padding: 0.75rem 1rem;
+                            font-size: 1.1rem;
+                            border: 2px solid rgba(255, 255, 255, 0.15);
+                            border-radius: 8px;
+                            outline: none;
+                            background: rgba(255, 255, 255, 0.08);
+                            color: #e0e0e0;
+                            box-sizing: border-box;
+                        }
+                        .lang-modal-search::placeholder {
+                            color: rgba(255, 255, 255, 0.4);
+                        }
+                        .lang-modal-search:focus {
+                            border-color: #6ea8fe;
+                        }
+                        .lang-modal-count {
+                            text-align: center;
+                            color: rgba(255, 255, 255, 0.4);
+                            margin: 0.5rem 0 1.25rem;
+                            font-size: 0.95rem;
+                        }
+                        .lang-modal-grid {
+                            display: grid;
+                            grid-template-columns: repeat(
+                                auto-fill,
+                                minmax(260px, 1fr)
+                            );
+                            gap: 0.5rem;
+                        }
+                        .lang-modal-item {
+                            display: flex;
+                            align-items: baseline;
+                            gap: 0.5rem;
+                            padding: 0.6rem 0.85rem;
+                            background: rgba(255, 255, 255, 0.06);
+                            border-radius: 6px;
+                            text-decoration: none;
+                            color: #e0e0e0;
+                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            cursor: pointer;
+                        }
+                        .lang-modal-item:hover {
+                            background: rgba(255, 255, 255, 0.12);
+                            border-color: rgba(110, 168, 254, 0.3);
+                        }
+                        .lang-modal-item .lm-code {
+                            color: rgba(255, 255, 255, 0.4);
+                            font-size: 0.8rem;
+                            font-family: monospace;
+                            flex-shrink: 0;
+                        }
+                        .lang-modal-item .lm-name {
+                            font-weight: 500;
+                        }
+                        .lang-modal-item .lm-vern {
+                            color: #6ea8fe;
+                            font-size: 0.85rem;
+                        }
+                        .lang-modal-item .lm-highlight {
+                            background: rgba(110, 168, 254, 0.25);
+                            color: #6ea8fe;
+                            border-radius: 2px;
+                        }
+                        .lang-modal-no-results {
+                            text-align: center;
+                            color: rgba(255, 255, 255, 0.4);
+                            padding: 3rem 1rem;
+                            font-size: 1.1rem;
+                        }
+                        @media (max-width: 768px) {
+                            .lang-modal-overlay {
+                                padding: 1rem 0.5rem;
+                            }
+                            .lang-modal-body {
+                                padding: 1rem;
+                            }
+                            .lang-modal-grid {
+                                grid-template-columns: 1fr;
+                            }
+                        }
+                    </style>
+                    <div class="lang-modal-overlay" id="lang-modal-overlay">
+                        <div class="lang-modal">
+                            <div class="lang-modal-header">
+                                <h2 id="lang-modal-title">Select language</h2>
+                                <button
+                                    class="lang-modal-close"
+                                    id="lang-modal-close"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            <div class="lang-modal-body">
+                                <input
+                                    class="lang-modal-search"
+                                    id="lang-modal-search"
+                                    type="text"
+                                    placeholder="Search by name, vernacular, or code..."
+                                />
+                                <p
+                                    class="lang-modal-count"
+                                    id="lang-modal-count"
+                                />
+                                <div
+                                    class="lang-modal-grid"
+                                    id="lang-modal-grid"
+                                />
+                                <p
+                                    class="lang-modal-no-results"
+                                    id="lang-modal-no-results"
+                                    style="display:none"
+                                >
+                                    No languages found
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <script
+                        define:vars={{
+                            primaryLangs,
+                            secondaryLangs,
+                            langUrlTemplate,
+                            lang2UrlTemplate,
+                        }}
+                    >
+                        const overlay = document.getElementById(
+                            "lang-modal-overlay",
+                        );
+                        const titleEl =
+                            document.getElementById("lang-modal-title");
+                        const closeBtn =
+                            document.getElementById("lang-modal-close");
+                        const searchInput =
+                            document.getElementById("lang-modal-search");
+                        const countEl =
+                            document.getElementById("lang-modal-count");
+                        const grid =
+                            document.getElementById("lang-modal-grid");
+                        const noResults = document.getElementById(
+                            "lang-modal-no-results",
+                        );
+
+                        let currentLangs = [];
+                        let currentTemplate = "";
+
+                        function openLangModal(type) {
+                            if (type === "primary") {
+                                currentLangs = primaryLangs;
+                                currentTemplate = langUrlTemplate;
+                                titleEl.textContent =
+                                    "Select primary language";
+                            } else {
+                                currentLangs = secondaryLangs;
+                                currentTemplate = lang2UrlTemplate;
+                                titleEl.textContent =
+                                    "Select secondary language";
+                            }
+                            searchInput.value = "";
+                            renderGrid("");
+                            overlay.classList.add("open");
+                            searchInput.focus();
+                        }
+
+                        function closeLangModal() {
+                            overlay.classList.remove("open");
+                        }
+
+                        const RTL_RE = /[\u0590-\u05FF\u0600-\u06FF\u0700-\u074F\u0750-\u077F\u0780-\u07BF\u07C0-\u07FF\u08A0-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
+                        function escapeRegex(s) {
+                            return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                        }
+
+                        function hl(text, regex) {
+                            if (!regex) return text;
+                            return text.replace(
+                                regex,
+                                (m) =>
+                                    `<span class="lm-highlight">${m}</span>`,
+                            );
+                        }
+
+                        function renderGrid(term) {
+                            const lc = term.toLowerCase();
+                            const regex = lc
+                                ? new RegExp(
+                                      `(${escapeRegex(lc)})`,
+                                      "gi",
+                                  )
+                                : null;
+                            let visible = 0;
+                            let html = "";
+
+                            for (const lang of currentLangs) {
+                                if (
+                                    lc &&
+                                    !lang.code
+                                        .toLowerCase()
+                                        .includes(lc) &&
+                                    !lang.name
+                                        .toLowerCase()
+                                        .includes(lc) &&
+                                    !(lang.vernacular || "")
+                                        .toLowerCase()
+                                        .includes(lc)
+                                ) {
+                                    continue;
+                                }
+                                visible++;
+                                const url = currentTemplate.replace(
+                                    "{code}",
+                                    lang.code,
+                                );
+                                const vernRtl = lang.vernacular && RTL_RE.test(lang.vernacular) ? ' dir="rtl"' : "";
+                                const vern = lang.vernacular
+                                    ? `<span class="lm-vern"${vernRtl}> - ${hl(lang.vernacular, regex)}</span>`
+                                    : "";
+                                html += `<a class="lang-modal-item" href="${url}"><span class="lm-code">${hl(lang.code, regex)}</span><span class="lm-name">${hl(lang.name, regex)}</span>${vern}</a>`;
+                            }
+
+                            grid.innerHTML = html;
+                            countEl.textContent = lc
+                                ? `${visible} of ${currentLangs.length} languages`
+                                : `${currentLangs.length} languages`;
+                            noResults.style.display =
+                                visible === 0 ? "" : "none";
+                            grid.style.display =
+                                visible === 0 ? "none" : "";
+                        }
+
+                        // Button handlers
+                        document
+                            .querySelectorAll("[data-lang-selector]")
+                            .forEach((btn) => {
+                                btn.addEventListener("click", () => {
+                                    openLangModal(
+                                        btn.dataset.langSelector,
+                                    );
+                                });
+                            });
+
+                        closeBtn.addEventListener("click", closeLangModal);
+                        overlay.addEventListener("click", (e) => {
+                            if (e.target === overlay) closeLangModal();
+                        });
+                        document.addEventListener("keydown", (e) => {
+                            if (
+                                e.key === "Escape" &&
+                                overlay.classList.contains("open")
+                            )
+                                closeLangModal();
+                        });
+                        searchInput.addEventListener("input", () => {
+                            renderGrid(searchInput.value.trim());
+                        });
+                    </script>
+                </>
+            )
+        }
+    </body>
+</html>

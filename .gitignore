@@ -1,0 +1,41 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# local image assets (served from bibel.wiki, not deployed)
+assets/john-pics/
+
+# generated at build time from src/data/templates/ (see scripts/)
+# image-index.json is committed because its source (assets/john-pics/) is gitignored
+src/generated/story-locales.json
+
+# macOS-specific files
+.DS_Store
+
+# reference React app (read-only, not part of the Astro build)
+example/
+
+# AI assistant config
+CLAUDE.md
+
+# editor/tool settings
+.idea/
+.claude/
+
+# Local Netlify folder
+.netlify

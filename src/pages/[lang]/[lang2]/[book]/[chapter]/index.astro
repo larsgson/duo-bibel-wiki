@@ -1,0 +1,2599 @@
+---
+export const prerender = false;
+
+import Layout from "../../../../../layouts/Layout.astro";
+import {
+    validateParams,
+    findTimingData,
+    getFilesetInfo,
+    buildVerseEntries,
+    getChapterImageData,
+    buildChapterData,
+} from "../../../../../utils/chapterData";
+
+const { lang, lang2, book, chapter } = Astro.params;
+
+const validated = validateParams({ lang, lang2, book, chapter });
+if (!validated) {
+    return Astro.redirect(`/${lang}/${lang2}`);
+}
+
+const { bookInfo, chapterNum, primary, secondary } = validated;
+const primaryCode = primary.code;
+const primaryEnglish = primary.english;
+const primaryIsRTL = primary.isRTL;
+const secondaryCode = secondary.code;
+const secondaryEnglish = secondary.english;
+const secondaryIsRTL = secondary.isRTL;
+
+// ── Load timing data ──
+const primaryTiming = findTimingData(primaryCode);
+const secondaryTiming = findTimingData(secondaryCode);
+
+if (!primaryTiming || !primaryTiming.timingData[String(chapterNum)]) {
+    return Astro.redirect(`/${primaryCode}/${secondaryCode}`);
+}
+
+const chapterTiming = primaryTiming.timingData[String(chapterNum)];
+const verseEntries = buildVerseEntries(chapterTiming);
+
+// ── Secondary timing for this chapter ──
+let secondaryChapterTiming: Record<string, number[]> = {};
+if (secondaryTiming) {
+    const secChapter = secondaryTiming.timingData[String(chapterNum)];
+    if (secChapter) {
+        secondaryChapterTiming = secChapter;
+    }
+}
+
+// ── Fileset IDs & image data ──
+const primaryFileset = getFilesetInfo(primaryCode);
+const secondaryFileset = getFilesetInfo(secondaryCode);
+const chapterImageData = getChapterImageData(bookInfo.img, chapterNum);
+
+// ── Data to pass to client ──
+const chapterData = buildChapterData({
+    bookInfo,
+    chapterNum,
+    verseEntries,
+    primaryFileset,
+    secondaryFileset,
+    chapterImageData,
+    secondaryChapterTiming,
+});
+
+const backHref =
+    chapterNum === 1
+        ? `/${primaryCode}`
+        : `/${primaryCode}/${secondaryCode}/${book}/1/`;
+---
+
+<Layout
+    title={`${bookInfo.img} ${chapterNum} — ${primaryEnglish} + ${secondaryEnglish}`}
+    flexMode={true}
+    noHeader={true}
+>
+    <style is:global>
+        /* ── Desktop layout ── */
+        .exercise-desktop-layout {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 0;
+            flex: 1;
+        }
+        @media (min-width: 769px) {
+            .exercise-desktop-layout {
+                flex-direction: row;
+            }
+        }
+
+        /* ── Chapter content (scrollable area) ── */
+        .chapter-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Verse view container ── */
+        .learn-verse-view {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0.75rem 1rem;
+        }
+        .learn-verse-main {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* ── Image ── */
+        .learn-verse-image-container {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .learn-verse-image-container.playing {
+            border-color: #4caf50;
+            animation: image-glow 1.5s ease-in-out infinite;
+        }
+        @keyframes image-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 4px rgba(76, 175, 80, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 14px rgba(76, 175, 80, 0.5);
+            }
+        }
+        .learn-verse-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .learn-verse-image-play-icon {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            transition: background 0.2s;
+        }
+        .learn-verse-image-container:hover .learn-verse-image-play-icon {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .learn-verse-image-container.playing .learn-verse-image-play-icon {
+            background: rgba(76, 175, 80, 0.7);
+        }
+
+        /* ── Back button ── */
+        .learn-back-btn {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .learn-back-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .learn-back-btn svg {
+            width: 16px;
+            height: 16px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+        }
+
+        /* ── Navigation arrows ── */
+        .learn-nav-edge {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+            width: 20px;
+            height: 60px;
+            border-radius: 4px;
+            z-index: 2;
+            text-decoration: none;
+        }
+        .learn-nav-edge svg {
+            width: 16px;
+            height: 16px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+        }
+        .learn-nav-prev {
+            left: 0;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+        }
+        .learn-nav-next {
+            right: 0;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+        }
+        .learn-nav-edge:hover {
+            background: rgba(0, 0, 0, 0.45);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .learn-nav-edge.hidden {
+            display: none;
+        }
+
+        /* ── Info bar (reference + controls on one line) ── */
+        .verse-info-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.15rem 0;
+        }
+        .verse-info-ref {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: monospace;
+            white-space: nowrap;
+        }
+        .verse-info-counter {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.25);
+            white-space: nowrap;
+        }
+        .verse-info-spacer {
+            flex: 1;
+        }
+        .verse-info-btn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 7px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.65rem;
+            font-family: monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition:
+                color 0.2s,
+                border-color 0.2s,
+                background 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .verse-info-btn:hover {
+            color: rgba(255, 255, 255, 0.7);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .verse-info-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+        .verse-info-btn.peek-btn {
+            color: rgba(255, 255, 255, 0.35);
+        }
+        .verse-info-btn.peek-btn:hover {
+            color: rgba(255, 255, 255, 0.6);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ── Text peek overlay ── */
+        .text-peek-overlay {
+            display: none;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid #6ea8fe;
+        }
+        .text-peek-overlay.visible {
+            display: block;
+        }
+        .text-peek-content {
+            margin: 0;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        /* ── Secondary language text ── */
+        .learn-verse-lang-section {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .learn-verse-lang-section.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+        }
+        .lang-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+        .learn-verse-lang-code {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+        }
+        .sec-play-btn {
+            background: none;
+            border: none;
+            padding: 2px;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.35);
+            transition: color 0.2s;
+        }
+        .sec-play-btn:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .sec-play-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        .sec-play-btn.playing {
+            color: #4caf50;
+        }
+        .learn-verse-content {
+            margin: 0;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        /* ── No text message ── */
+        .no-text-message {
+            text-align: center;
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+
+        /* ══════════════════════════════════════════
+           EXERCISE TAB BAR
+           ══════════════════════════════════════════ */
+        .exercise-tab-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 56px;
+            flex-shrink: 0;
+            background: #1a1a2e;
+            border-top: 1px solid #333;
+            z-index: 900;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .exercise-tab-bar.desktop-sidebar {
+            display: none;
+        }
+        @media (min-width: 769px) {
+            .exercise-tab-bar.mobile-bar {
+                display: none;
+            }
+            .exercise-tab-bar.desktop-sidebar {
+                display: flex;
+                position: static;
+                flex-direction: column;
+                justify-content: flex-start;
+                width: 170px;
+                min-width: 170px;
+                height: auto;
+                border-top: none;
+                border-right: 1px solid #333;
+                padding: 0.75rem 0;
+                gap: 2px;
+            }
+        }
+
+        .exercise-tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #777;
+            font: inherit;
+            font-size: 0.6rem;
+            transition: color 0.2s;
+            min-width: 0;
+            flex: 1;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+        .exercise-tab-item.active {
+            color: #5b9bd5;
+        }
+        .exercise-tab-item:hover {
+            color: #aaa;
+        }
+        .exercise-tab-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .exercise-tab-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70px;
+        }
+        @media (min-width: 769px) {
+            .desktop-sidebar .exercise-tab-item {
+                flex-direction: row;
+                gap: 8px;
+                padding: 10px 14px;
+                font-size: 0.8rem;
+                border-radius: 6px;
+                width: 100%;
+                flex: none;
+                justify-content: flex-start;
+            }
+            .desktop-sidebar .exercise-tab-item.active {
+                background: rgba(91, 155, 213, 0.1);
+            }
+            .desktop-sidebar .exercise-tab-label {
+                max-width: none;
+            }
+        }
+
+        .exercise-tab-more-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        @media (min-width: 769px) {
+            .exercise-tab-more-wrapper {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+        .exercise-more-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 0;
+            min-width: 180px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            z-index: 910;
+            overflow: hidden;
+        }
+        @media (min-width: 769px) {
+            .exercise-more-menu {
+                bottom: auto;
+                top: 0;
+                left: calc(100% + 4px);
+                right: auto;
+            }
+        }
+        .exercise-more-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 0.85rem;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .exercise-more-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .exercise-more-item.active {
+            color: #5b9bd5;
+            background: rgba(91, 155, 213, 0.1);
+        }
+
+        /* ══════════════════════════════════════════
+           WORD TILE
+           ══════════════════════════════════════════ */
+        .word-tile {
+            display: inline-block;
+            padding: 6px 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .word-tile:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: #5b9bd5;
+        }
+        .word-tile:active {
+            transform: scale(0.95);
+        }
+        .word-tile.placed {
+            background: rgba(91, 155, 213, 0.15);
+            border-color: #5b9bd5;
+        }
+        .word-tile.word-correct {
+            border: 2px solid #5cb85c;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e0e0;
+            cursor: default;
+        }
+        .word-tile.word-wrong {
+            background: #d9534f;
+            border-color: #d9534f;
+            color: #1a1a1a;
+            cursor: default;
+        }
+        .word-tile.word-displaced {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #444;
+            color: rgba(255, 255, 255, 0.3);
+            cursor: default;
+            opacity: 0.7;
+        }
+        .word-tile.prefilled {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #444;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: default;
+            opacity: 0.7;
+        }
+        .word-tile.prefilled:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #444;
+        }
+        .word-tile.used {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        /* ══════════════════════════════════════════
+           EXERCISE AREA
+           ══════════════════════════════════════════ */
+        .exercise-area {
+            width: 100%;
+        }
+
+        /* ── Continue button (after exercise completion) ── */
+        .exercise-continue-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            background: #5cb85c;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition:
+                background 0.2s,
+                transform 0.1s;
+        }
+        .exercise-continue-btn:hover {
+            background: #4caf50;
+        }
+        .exercise-continue-btn:active {
+            transform: scale(0.97);
+        }
+        .exercise-complete-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        .exercise-complete-text {
+            color: #5cb85c;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        .exercise-reset-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .exercise-reset-btn:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .exercise-dismiss-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            margin-left: auto;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .exercise-dismiss-btn:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ── Listen & Reveal ── */
+        .listen-reveal {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            width: 100%;
+        }
+        .listen-reveal-words {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border-left: 3px solid #5b9bd5;
+            min-height: 60px;
+            align-items: center;
+        }
+        .listen-reveal-word {
+            display: inline-block;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .listen-reveal-word.revealed {
+            color: #e0e0e0;
+        }
+        .listen-reveal-word.hidden {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+            color: transparent;
+            min-width: 30px;
+            height: 1.4em;
+            border: 1.5px dashed rgba(255, 255, 255, 0.35);
+        }
+        .listen-reveal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2px;
+        }
+        .listen-reveal-eye-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+            padding: 2px 4px;
+            transition: color 0.2s;
+        }
+        .listen-reveal-eye-btn:hover {
+            color: #aaa;
+        }
+
+        /* ── Listen & Order (Continue Sentence) ── */
+        .listen-order {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .listen-order-instruction {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+            text-align: center;
+        }
+        .listen-order-verse {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #e0e0e0;
+        }
+        .listen-order-given-word {
+            color: #e0e0e0;
+        }
+        .listen-order-placed {
+            transition: all 0.15s;
+        }
+        .listen-order-placed.correct {
+            color: #5cb85c;
+        }
+        .listen-order-placed.incorrect {
+            background: #d9534f;
+            color: #1a1a1a;
+            cursor: pointer;
+            border-radius: 3px;
+            padding: 1px 3px;
+        }
+        .listen-order-slot {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.85em;
+        }
+        .listen-order-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 40px;
+            padding: 0.5rem;
+            align-items: center;
+        }
+        .listen-order-bank.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .listen-order-actions {
+            display: flex;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .listen-order-feedback {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 6px 0;
+        }
+        .listen-order-feedback.correct {
+            color: #5cb85c;
+        }
+
+        /* ── Fill Gap ── */
+        .listen-fill-gap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .listen-fill-instruction {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+            text-align: center;
+        }
+        .listen-fill-verse {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border-left: 3px solid #5b9bd5;
+            align-items: baseline;
+            line-height: 2;
+        }
+        .listen-fill-word {
+            font-size: 1rem;
+            color: #e0e0e0;
+        }
+        .listen-fill-blank {
+            display: inline-block;
+            padding: 2px 10px;
+            border-bottom: 2px solid #5b9bd5;
+            font-size: 1rem;
+            color: #5b9bd5;
+            cursor: pointer;
+            min-width: 50px;
+            text-align: center;
+            transition: all 0.15s;
+            border-radius: 3px;
+        }
+        .listen-fill-blank.filled {
+            background: rgba(91, 155, 213, 0.12);
+        }
+        .listen-fill-blank.correct {
+            border-bottom-color: #5cb85c;
+            color: #5cb85c;
+            background: rgba(92, 184, 92, 0.08);
+        }
+        .listen-fill-blank.incorrect {
+            border-bottom-color: #d9534f;
+            color: #1a1a1a;
+            background: #d9534f;
+        }
+        .listen-fill-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0.5rem;
+            justify-content: center;
+        }
+        .listen-fill-actions {
+            display: flex;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .listen-fill-check-btn {
+            padding: 8px 24px;
+            border: 2px solid #5b9bd5;
+            background: #5b9bd5;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .listen-fill-check-btn:hover {
+            background: #4a8ac4;
+        }
+        .listen-fill-feedback {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 6px 0;
+        }
+        .listen-fill-feedback.correct {
+            color: #5cb85c;
+        }
+        .listen-fill-feedback.incorrect {
+            color: #d9534f;
+        }
+        .listen-fill-feedback-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .listen-fill-reset-btn,
+        .sentence-builder-reset-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #444;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            color: #aaa;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Sentence Builder ── */
+        .sentence-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .sentence-builder-hint-wrapper {
+            position: relative;
+        }
+        .sentence-builder-instruction {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .sentence-builder-hint-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1.5px solid #666;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .sentence-builder-hint-btn:hover {
+            border-color: #5b9bd5;
+            color: #5b9bd5;
+        }
+        .sentence-builder-hint-overlay {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 60, 0.96);
+            border-left: 3px solid #5b9bd5;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            animation: hintFadeIn 0.2s ease-out;
+        }
+        @keyframes hintFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .sentence-builder-hint-text {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        .sentence-builder-answer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 48px;
+            padding: 0.5rem;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            align-items: center;
+        }
+        .sentence-builder-placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            padding: 4px 8px;
+        }
+        .sentence-builder-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 40px;
+            padding: 0.5rem;
+            align-items: center;
+        }
+        .sentence-builder-actions {
+            display: flex;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .sentence-builder-check-btn {
+            padding: 8px 24px;
+            border: 2px solid #5b9bd5;
+            background: #5b9bd5;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sentence-builder-check-btn:hover {
+            background: #4a8ac4;
+        }
+        .sentence-builder-feedback {
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 6px 0;
+        }
+        .sentence-builder-feedback.correct {
+            color: #5cb85c;
+        }
+
+        .listen-choose-placeholder {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.95rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .learn-verse-main {
+                padding: 0.5rem;
+            }
+            .learn-verse-content {
+                font-size: 1rem;
+            }
+        }
+        @media (min-width: 769px) {
+            .learn-nav-edge {
+                width: 36px;
+                height: 100px;
+            }
+            .learn-nav-edge svg {
+                width: 24px;
+                height: 24px;
+            }
+        }
+    </style>
+
+    <div class="chapter-content">
+        <div class="learn-verse-view">
+            <div class="exercise-desktop-layout">
+                <nav
+                    class="exercise-tab-bar desktop-sidebar"
+                    id="tab-bar-desktop"
+                >
+                </nav>
+
+                <div class="learn-verse-main" id="verse-main">
+                    <div
+                        class="learn-verse-image-container"
+                        id="image-container"
+                    >
+                        <a
+                            class="learn-back-btn"
+                            href={backHref}
+                            aria-label="Back"
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </a>
+                        <img
+                            class="learn-verse-image"
+                            id="verse-image"
+                            src=""
+                            alt=""
+                        />
+                        <span class="learn-verse-image-play-icon" id="play-icon"
+                            >&#9654;</span
+                        >
+                        <a
+                            class="learn-nav-edge learn-nav-prev hidden"
+                            id="nav-prev"
+                            href="#"
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </a>
+                        <a
+                            class="learn-nav-edge learn-nav-next hidden"
+                            id="nav-next"
+                            href="#"
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="verse-info-bar">
+                        <span class="verse-info-ref" id="verse-reference"
+                        ></span>
+                        <span class="verse-info-spacer"></span>
+                        <button
+                            class="verse-info-btn peek-btn"
+                            id="peek-btn"
+                            aria-label="Peek at primary text"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                ></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        <span class="verse-info-spacer"></span>
+                        <span class="verse-info-counter" id="verse-counter"
+                        ></span>
+                    </div>
+
+                    <div class="text-peek-overlay" id="peek-overlay">
+                        <p
+                            class="text-peek-content"
+                            id="peek-text"
+                            dir={primaryIsRTL ? "rtl" : undefined}
+                        >
+                        </p>
+                    </div>
+
+                    <div class="learn-verse-lang-section secondary">
+                        <div class="lang-section-header">
+                            <span class="learn-verse-lang-code"
+                                >{secondaryCode}</span
+                            >
+                            <button
+                                class="sec-play-btn"
+                                id="secondary-play-btn"
+                                aria-label="Play secondary audio"
+                                style="display:none"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <polygon points="5 3 19 12 5 21 5 3"
+                                    ></polygon>
+                                </svg>
+                            </button>
+                        </div>
+                        <p
+                            class="learn-verse-content"
+                            id="secondary-text"
+                            dir={secondaryIsRTL ? "rtl" : undefined}
+                        >
+                        </p>
+                    </div>
+
+                    <div class="exercise-area" id="exercise-area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="exercise-tab-bar mobile-bar" id="tab-bar-mobile"></nav>
+
+    <script
+        define:vars={{
+            chapterData,
+            primaryCode,
+            secondaryCode,
+            primaryIsRTL,
+            secondaryIsRTL,
+        }}
+    >
+        const CHAPTER = JSON.parse(chapterData);
+
+        // Remember last visited chapter for the chapter picker accordion
+        try {
+            localStorage.setItem(
+                `lastVisitedChapter_${CHAPTER.bookImg.toLowerCase()}`,
+                CHAPTER.chapterNum,
+            );
+        } catch (e) {}
+
+        // ══════════════════════════════════════════
+        // LOCALIZATION
+        // ══════════════════════════════════════════
+        const LOCALES = {
+            en: {
+                learnExercises: {
+                    listenReveal: "Listen & Reveal",
+                    listenChoose: "Listen & Choose",
+                    listenOrder: "Continue Sentence",
+                    listenFill: "Fill Gap",
+                    sentenceBuilder: "Build Sentence",
+                    listen: "Listen",
+                    more: "More",
+                    revealAll: "Reveal all",
+                    hideAll: "Hide all",
+                    correct: "Correct!",
+                    incorrect: "Try again",
+                    orderWords: "Continue the sentence",
+                    check: "Check",
+                    fillBlanks: "Fill in the blanks",
+                    buildSentence: "Build the sentence",
+                    completed: "Well done!",
+                    continue: "Continue",
+                    comingSoon: "Coming soon",
+                },
+            },
+            fr: {
+                learnExercises: {
+                    listenReveal: "Écouter et Révéler",
+                    listenChoose: "Écouter et Choisir",
+                    listenOrder: "Continuer la phrase",
+                    listenFill: "Combler les trous",
+                    sentenceBuilder: "Construire la phrase",
+                    listen: "Écouter",
+                    more: "Plus",
+                    revealAll: "Tout révéler",
+                    hideAll: "Tout masquer",
+                    correct: "Correct !",
+                    incorrect: "Réessayez",
+                    orderWords: "Continuez la phrase",
+                    check: "Vérifier",
+                    fillBlanks: "Remplissez les blancs",
+                    buildSentence: "Construisez la phrase",
+                    completed: "Bravo !",
+                    continue: "Continuer",
+                    comingSoon: "Bientôt disponible",
+                },
+            },
+        };
+        const LOCALE_MAP = {
+            eng: "en",
+            fra: "fr",
+            frd: "fr",
+            deu: "de",
+            spa: "es",
+            por: "pt",
+            rus: "ru",
+            hin: "hi",
+            arb: "ar",
+            ron: "ro",
+        };
+        const uiLocale = LOCALE_MAP[secondaryCode] || "en";
+        const activeLocale = LOCALES[uiLocale] || LOCALES.en;
+
+        function t(key) {
+            const parts = key.split(".");
+            let obj = activeLocale;
+            for (const p of parts) {
+                if (!obj || typeof obj !== "object") return key;
+                obj = obj[p];
+            }
+            return obj || key;
+        }
+
+        // ══════════════════════════════════════════
+        // UTILITIES
+        // ══════════════════════════════════════════
+        const rtlAttr = primaryIsRTL ? ' dir="rtl"' : "";
+
+        function shuffleArray(arr) {
+            const result = [...arr];
+            for (let i = result.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [result[i], result[j]] = [result[j], result[i]];
+            }
+            return result;
+        }
+
+        function normalizeWord(w) {
+            return w
+                .normalize("NFC")
+                .replace(/[\p{P}\p{S}]/gu, "")
+                .toLowerCase();
+        }
+
+        function wordsMatch(a, b) {
+            return normalizeWord(a) === normalizeWord(b);
+        }
+
+        function pickGapWords(words, count) {
+            const contentIndices = words
+                .map((w, i) => ({ w, i }))
+                .filter(({ w }) => normalizeWord(w).length > 3)
+                .map(({ i }) => i);
+            const pool =
+                contentIndices.length > 0
+                    ? shuffleArray(contentIndices)
+                    : shuffleArray(words.map((_, i) => i));
+            // Pick indices whose normalized words are unique
+            const picked = [];
+            const usedNorms = new Set();
+            for (const idx of pool) {
+                const norm = normalizeWord(words[idx]);
+                if (!usedNorms.has(norm)) {
+                    usedNorms.add(norm);
+                    picked.push(idx);
+                    if (picked.length >= count) break;
+                }
+            }
+            return picked;
+        }
+
+        // ══════════════════════════════════════════
+        // IMAGE URL LOOKUP (client-side)
+        // ══════════════════════════════════════════
+        function findBestImage(ch, v) {
+            const prefix = `VB-${CHAPTER.bookImg}${ch}v`;
+            const chData = CHAPTER.chapterImageData;
+
+            function has(verse, filename) {
+                return (chData[String(verse)] || []).includes(filename);
+            }
+            function getFiles(verse) {
+                return chData[String(verse)] || [];
+            }
+
+            if (has(v, `${prefix}${v}.jpg`))
+                return `https://bibel.wiki/img/john-pics/${prefix}${v}.jpg`;
+            if (has(v, `${prefix}${v}a.jpg`))
+                return `https://bibel.wiki/img/john-pics/${prefix}${v}a.jpg`;
+            if (has(v, `${prefix}${v}b.jpg`))
+                return `https://bibel.wiki/img/john-pics/${prefix}${v}b.jpg`;
+            if (has(v, `${prefix}${v}alt.jpg`))
+                return `https://bibel.wiki/img/john-pics/${prefix}${v}alt.jpg`;
+
+            const rangeEndRe = new RegExp(
+                `^VB-${CHAPTER.bookImg}${ch}v(\\d+)-${v}\\.jpg$`,
+            );
+            const rangeEnd = getFiles(v).find((f) => rangeEndRe.test(f));
+            if (rangeEnd) return `https://bibel.wiki/img/john-pics/${rangeEnd}`;
+
+            const rangeStartRe = new RegExp(
+                `^VB-${CHAPTER.bookImg}${ch}v${v}-(\\d+)\\.jpg$`,
+            );
+            const rangeStart = getFiles(v).find((f) => rangeStartRe.test(f));
+            if (rangeStart)
+                return `https://bibel.wiki/img/john-pics/${rangeStart}`;
+
+            if (v > 1 && has(v - 1, `${prefix}${v - 1}alt.jpg`))
+                return `https://bibel.wiki/img/john-pics/${prefix}${v - 1}alt.jpg`;
+
+            if (v > 1) {
+                for (const suffix of ["d", "c", "b"]) {
+                    if (has(v - 1, `${prefix}${v - 1}${suffix}.jpg`))
+                        return `https://bibel.wiki/img/john-pics/${prefix}${v - 1}${suffix}.jpg`;
+                }
+            }
+
+            for (let prev = v - 1; prev >= 1; prev--) {
+                const files = getFiles(prev);
+                if (files.length === 0) continue;
+                if (files.includes(`${prefix}${prev}.jpg`))
+                    return `https://bibel.wiki/img/john-pics/${prefix}${prev}.jpg`;
+                if (files.includes(`${prefix}${prev}a.jpg`))
+                    return `https://bibel.wiki/img/john-pics/${prefix}${prev}a.jpg`;
+                if (files.includes(`${prefix}${prev}alt.jpg`))
+                    return `https://bibel.wiki/img/john-pics/${prefix}${prev}alt.jpg`;
+                return `https://bibel.wiki/img/john-pics/${files[0]}`;
+            }
+
+            return `https://bibel.wiki/img/john-pics/${prefix}${v}.jpg`;
+        }
+
+        function imgProxy(url, w) {
+            if (!url) return url;
+            return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+        }
+
+        // ══════════════════════════════════════════
+        // CLIENT-SIDE DATA FETCHING (cached)
+        // ══════════════════════════════════════════
+        let cachedPrimaryTexts = null;
+        let cachedSecondaryTexts = null;
+        let cachedPrimaryAudioUrl = null;
+        let cachedSecondaryAudioUrl = null;
+
+        async function fetchChapterText(filesetId) {
+            const verses = new Map();
+            if (!filesetId || !CHAPTER.apiKey) return verses;
+            try {
+                let url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                let resp = await fetch(url);
+                if (!resp.ok && resp.status === 404) {
+                    url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}_ET/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                    resp = await fetch(url);
+                }
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.data && Array.isArray(data.data)) {
+                        for (const v of data.data) {
+                            const num = parseInt(v.verse_start, 10);
+                            verses.set(num, v.verse_text?.trim() || "");
+                        }
+                    }
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return verses;
+        }
+
+        async function fetchAudioUrl(audioFilesetId) {
+            if (!audioFilesetId || !CHAPTER.apiKey) return "";
+            try {
+                const url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${audioFilesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.data?.[0]?.path) return data.data[0].path;
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return "";
+        }
+
+        async function ensureChapterData() {
+            if (cachedPrimaryTexts !== null) return;
+            const [pt, st, pa, sa] = await Promise.all([
+                fetchChapterText(CHAPTER.primaryTextFilesetId),
+                fetchChapterText(CHAPTER.secondaryTextFilesetId),
+                fetchAudioUrl(CHAPTER.primaryAudioFilesetId),
+                fetchAudioUrl(CHAPTER.secondaryAudioFilesetId),
+            ]);
+            cachedPrimaryTexts = pt;
+            cachedSecondaryTexts = st;
+            cachedPrimaryAudioUrl = pa;
+            cachedSecondaryAudioUrl = sa;
+        }
+
+        function getTextForVerse(texts, entry) {
+            const parts = [];
+            for (let v = entry.verseStart; v <= entry.verseEnd; v++) {
+                const t = texts.get(v);
+                if (t) parts.push(t);
+            }
+            return parts.join(" ") || "";
+        }
+
+        // ══════════════════════════════════════════
+        // EXERCISE REGISTRY + ICONS
+        // ══════════════════════════════════════════
+        const EXERCISES = [
+            {
+                id: "listen-reveal",
+                localeKey: "learnExercises.listenReveal",
+                icon: "ear-reveal",
+                showInTabs: true,
+                tabOrder: 0,
+            },
+            {
+                id: "listen-fill",
+                localeKey: "learnExercises.listenFill",
+                icon: "ear-blank",
+                showInTabs: true,
+                tabOrder: 2,
+            },
+            {
+                id: "listen-order",
+                localeKey: "learnExercises.listenOrder",
+                icon: "ear-sort",
+                showInTabs: true,
+                tabOrder: 3,
+            },
+            {
+                id: "listen",
+                localeKey: "learnExercises.listen",
+                icon: "ear-check",
+                showInTabs: true,
+                tabOrder: 4,
+                href: "./listen",
+            },
+            {
+                id: "sentence-builder",
+                localeKey: "learnExercises.sentenceBuilder",
+                icon: "puzzle",
+                showInTabs: false,
+                tabOrder: 99,
+            },
+        ];
+        const ICON_SVGS = {
+            "ear-reveal":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><circle cx="12" cy="14" r="1.5" fill="currentColor" stroke="none"/><path d="M1 12s4-6 8-6" opacity="0.5"/></svg>',
+            "ear-sort":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 14h8M9 17h6M10 11h4" opacity="0.7"/></svg>',
+            "ear-blank":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 15h3M13 15h3" stroke-width="2.5" opacity="0.6"/></svg>',
+            "ear-check":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 13l2.5 2.5L16 10" stroke-width="2"/></svg>',
+            puzzle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h3v3a2 2 0 0 1 4 0v0a2 2 0 0 1-4 0v3H7a2 2 0 0 0 0 4h0a2 2 0 0 0 0-4H4V7z"/><path d="M14 14h3a2 2 0 0 1 0 4h0a2 2 0 0 1 0-4h3V7h-3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h-3v7z"/></svg>',
+            more: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+        };
+
+        // ══════════════════════════════════════════
+        // STATE
+        // ══════════════════════════════════════════
+        let isPlaying = false;
+        let peekTimer = null;
+        const VALID_EXERCISES = new Set(EXERCISES.map((e) => e.id));
+        const savedExercise = localStorage.getItem("activeExercise");
+        let activeExercise =
+            savedExercise && VALID_EXERCISES.has(savedExercise)
+                ? savedExercise
+                : "listen-reveal";
+        let moreMenuOpen = false;
+        let exState = {};
+        const audio = new Audio();
+
+        // Current verse data (set by loadVerse)
+        let VERSE = {
+            primaryText: "",
+            secondaryText: "",
+            primaryAudioUrl: "",
+            secondaryAudioUrl: "",
+            startTime: 0,
+            endTime: 0,
+            secondaryStartTime: 0,
+            secondaryEndTime: 0,
+            imageUrl: "",
+            reference: "",
+            versePosition: 0,
+            totalVerses: CHAPTER.verseEntries.length,
+        };
+        let currentIdx = 0;
+
+        // Persist state for landing page resume
+        function saveLastState() {
+            localStorage.setItem(
+                "lastState",
+                JSON.stringify({
+                    lang: primaryCode,
+                    lang2: secondaryCode,
+                    url: window.location.pathname + window.location.hash,
+                    imageUrl: VERSE.imageUrl,
+                    reference: VERSE.reference,
+                    exercise: activeExercise,
+                }),
+            );
+        }
+
+        // DOM
+        const imageContainer = document.getElementById("image-container");
+        const verseImage = document.getElementById("verse-image");
+        const playIcon = document.getElementById("play-icon");
+        const navPrev = document.getElementById("nav-prev");
+        const navNext = document.getElementById("nav-next");
+        const verseReference = document.getElementById("verse-reference");
+        const peekBtn = document.getElementById("peek-btn");
+        const peekOverlay = document.getElementById("peek-overlay");
+        const peekText = document.getElementById("peek-text");
+        const secondaryTextEl = document.getElementById("secondary-text");
+        const secPlayBtn = document.getElementById("secondary-play-btn");
+        const exerciseArea = document.getElementById("exercise-area");
+        const verseCounter = document.getElementById("verse-counter");
+        const tabBarDesktop = document.getElementById("tab-bar-desktop");
+        const tabBarMobile = document.getElementById("tab-bar-mobile");
+
+        // ══════════════════════════════════════════
+        // VERSE LOADING (hash-based)
+        // ══════════════════════════════════════════
+        function getVerseFromHash() {
+            const hash = window.location.hash.slice(1);
+            const num = parseInt(hash, 10);
+            if (isNaN(num) || num < 1)
+                return CHAPTER.verseEntries[0]?.verseStart || 1;
+            return num;
+        }
+
+        async function loadVerse(verseNum) {
+            await ensureChapterData();
+
+            const entries = CHAPTER.verseEntries;
+            const idx = entries.findIndex(
+                (e) => verseNum >= e.verseStart && verseNum <= e.verseEnd,
+            );
+            if (idx === -1) {
+                // Default to first verse
+                if (entries.length > 0) {
+                    window.location.hash = "#" + entries[0].verseStart;
+                }
+                return;
+            }
+
+            currentIdx = idx;
+            const entry = entries[idx];
+            const prevEntry = idx > 0 ? entries[idx - 1] : null;
+            const nextEntry =
+                idx < entries.length - 1 ? entries[idx + 1] : null;
+
+            // Get text
+            const primaryText = getTextForVerse(cachedPrimaryTexts, entry);
+            const secondaryText = getTextForVerse(cachedSecondaryTexts, entry);
+
+            // Image (600px = max content width)
+            const imageUrl = imgProxy(
+                findBestImage(CHAPTER.chapterNum, entry.verseStart),
+                600,
+            );
+
+            // Secondary timing
+            let secondaryStartTime = entry.startTime;
+            let secondaryEndTime = entry.endTime;
+            const secTiming = CHAPTER.secondaryChapterTiming;
+            if (secTiming) {
+                for (const [ref, times] of Object.entries(secTiming)) {
+                    const colonIdx = ref.indexOf(":");
+                    const vs = ref.substring(colonIdx + 1);
+                    const parts = vs.split("-");
+                    const vs1 = parseInt(parts[0], 10);
+                    const vs2 =
+                        parts.length > 1
+                            ? parseInt(parts[parts.length - 1], 10)
+                            : vs1;
+                    if (verseNum >= vs1 && verseNum <= vs2) {
+                        secondaryStartTime = times[0];
+                        secondaryEndTime = times[times.length - 1];
+                        break;
+                    }
+                }
+            }
+
+            // Reference
+            const bookDisplay = CHAPTER.bookImg;
+            const verseDisplay =
+                entry.verseStart === entry.verseEnd
+                    ? String(entry.verseStart)
+                    : `${entry.verseStart}-${entry.verseEnd}`;
+            const reference = `${bookDisplay} ${CHAPTER.chapterNum}:${verseDisplay}`;
+
+            // Update VERSE state
+            VERSE = {
+                primaryText,
+                secondaryText,
+                primaryAudioUrl: cachedPrimaryAudioUrl,
+                secondaryAudioUrl: cachedSecondaryAudioUrl,
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+                secondaryStartTime,
+                secondaryEndTime,
+                imageUrl,
+                reference,
+                versePosition: idx + 1,
+                totalVerses: entries.length,
+            };
+
+            // Stop any playing audio
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                imageContainer.classList.remove("playing");
+                playIcon.innerHTML = "&#9654;";
+            }
+            if (secPlaying) stopSecondary();
+
+            // Update DOM
+            verseImage.src = imageUrl;
+            verseImage.alt = reference;
+            verseReference.textContent = reference;
+            peekText.textContent = primaryText || "Text not available";
+            secondaryTextEl.textContent = secondaryText || "Text not available";
+            verseCounter.textContent = `${idx + 1} / ${entries.length}`;
+
+            // Nav arrows
+            if (prevEntry) {
+                navPrev.href = "#" + prevEntry.verseStart;
+                navPrev.classList.remove("hidden");
+            } else {
+                navPrev.classList.add("hidden");
+            }
+            if (nextEntry) {
+                navNext.href = "#" + nextEntry.verseStart;
+                navNext.classList.remove("hidden");
+            } else {
+                navNext.classList.add("hidden");
+            }
+
+            // Secondary play button visibility
+            if (cachedSecondaryAudioUrl) {
+                secPlayBtn.style.display = "";
+            } else {
+                secPlayBtn.style.display = "none";
+            }
+
+            // Reset exercise state and render
+            exState = {};
+            renderExercise();
+
+            // Save state
+            saveLastState();
+
+            // Prefetch adjacent images
+            if (prevEntry) {
+                const img = new Image();
+                img.src = imgProxy(
+                    findBestImage(CHAPTER.chapterNum, prevEntry.verseStart),
+                    600,
+                );
+            }
+            if (nextEntry) {
+                const img = new Image();
+                img.src = imgProxy(
+                    findBestImage(CHAPTER.chapterNum, nextEntry.verseStart),
+                    600,
+                );
+            }
+        }
+
+        // ══════════════════════════════════════════
+        // TAB BAR
+        // ══════════════════════════════════════════
+        function getExerciseLabel(ex) {
+            return t(ex.localeKey) || ex.id;
+        }
+
+        function tabItemHTML(ex) {
+            const cls = `exercise-tab-item${activeExercise === ex.id ? " active" : ""}`;
+            const inner = `<span class="exercise-tab-icon">${ICON_SVGS[ex.icon]}</span>
+                        <span class="exercise-tab-label">${getExerciseLabel(ex)}</span>`;
+            if (ex.href) {
+                return `<a class="${cls}" href="${ex.href}">${inner}</a>`;
+            }
+            return `<button class="${cls}" data-exercise="${ex.id}">${inner}</button>`;
+        }
+
+        function buildTabBarHTML(isDesktop) {
+            const allSorted = [...EXERCISES].sort(
+                (a, b) => a.tabOrder - b.tabOrder,
+            );
+            if (isDesktop) {
+                return allSorted.map(tabItemHTML).join("");
+            }
+            const tabExercises = allSorted.filter((e) => e.showInTabs);
+            const overflowExercises = allSorted.filter((e) => !e.showInTabs);
+            if (overflowExercises.length <= 1) {
+                return allSorted.map(tabItemHTML).join("");
+            }
+            let html = tabExercises.map(tabItemHTML).join("");
+            const moreActive = overflowExercises.some(
+                (e) => e.id === activeExercise,
+            );
+            html += `<div class="exercise-tab-more-wrapper">
+                <button class="exercise-tab-item${moreActive ? " active" : ""}" data-more="true">
+                    <span class="exercise-tab-icon">${ICON_SVGS.more}</span>
+                    <span class="exercise-tab-label">${t("learnExercises.more")}</span>
+                </button>
+                ${
+                    moreMenuOpen
+                        ? `<div class="exercise-more-menu">${overflowExercises
+                              .map(
+                                  (ex) =>
+                                      `<button class="exercise-more-item${activeExercise === ex.id ? " active" : ""}" data-exercise="${ex.id}">
+                        <span class="exercise-tab-icon">${ICON_SVGS[ex.icon]}</span>
+                        <span>${getExerciseLabel(ex)}</span>
+                    </button>`,
+                              )
+                              .join("")}</div>`
+                        : ""
+                }
+            </div>`;
+            return html;
+        }
+
+        function renderTabBars() {
+            tabBarDesktop.innerHTML = buildTabBarHTML(true);
+            tabBarMobile.innerHTML = buildTabBarHTML(false);
+        }
+
+        function handleTabClick(e) {
+            const moreBtn = e.target.closest("[data-more]");
+            if (moreBtn) {
+                moreMenuOpen = !moreMenuOpen;
+                renderTabBars();
+                return;
+            }
+            const btn = e.target.closest("[data-exercise]");
+            if (btn) {
+                const id = btn.dataset.exercise;
+                if (id !== activeExercise) {
+                    activeExercise = id;
+                    localStorage.setItem("activeExercise", id);
+                    saveLastState();
+                    moreMenuOpen = false;
+                    exState = {};
+                    renderTabBars();
+                    renderExercise();
+                }
+            }
+        }
+        tabBarDesktop.addEventListener("click", handleTabClick);
+        tabBarMobile.addEventListener("click", handleTabClick);
+        document.addEventListener("mousedown", (e) => {
+            if (!moreMenuOpen) return;
+            if (!e.target.closest(".exercise-tab-more-wrapper")) {
+                moreMenuOpen = false;
+                renderTabBars();
+            }
+        });
+
+        // ══════════════════════════════════════════
+        // EXERCISE RENDERING
+        // ══════════════════════════════════════════
+        function getPrimaryWords() {
+            return (VERSE.primaryText || "").split(/\s+/).filter(Boolean);
+        }
+
+        function completionHTML() {
+            const hasNext = currentIdx < CHAPTER.verseEntries.length - 1;
+            const btnHTML = hasNext
+                ? `<button class="exercise-continue-btn" data-action="continue-next">${t("learnExercises.continue")} &rarr;</button>`
+                : "";
+            return `<div class="exercise-complete-bar"><button class="exercise-reset-btn" data-action="exercise-reset" title="Try again">&#8635;</button><span class="exercise-complete-text">${t("learnExercises.completed")}</span>${btnHTML}<button class="exercise-dismiss-btn" data-action="exercise-reset" title="Dismiss">&times;</button></div>`;
+        }
+
+        function renderExercise() {
+            if (!exerciseArea || !VERSE.primaryText) {
+                if (exerciseArea)
+                    exerciseArea.innerHTML =
+                        '<div class="no-text-message">No text data available for exercises</div>';
+                return;
+            }
+            switch (activeExercise) {
+                case "listen-reveal":
+                    renderListenReveal();
+                    break;
+                case "listen-order":
+                    renderListenOrder();
+                    break;
+                case "listen-fill":
+                    renderListenFill();
+                    break;
+                case "sentence-builder":
+                    renderSentenceBuilder();
+                    break;
+                case "listen-choose":
+                    renderListenChoose();
+                    break;
+                default:
+                    exerciseArea.innerHTML = "";
+            }
+        }
+
+        function renderListenReveal() {
+            const words = getPrimaryWords();
+            if (!exState.revealedSet) exState.revealedSet = new Set();
+            const rev = exState.revealedSet;
+            const allRevealed = rev.size >= words.length;
+            const wordsHTML = words
+                .map((w, i) => {
+                    if (rev.has(i))
+                        return `<span class="listen-reveal-word revealed" data-idx="${i}">${w}</span>`;
+                    return `<span class="listen-reveal-word hidden" data-idx="${i}">${"\u00A0".repeat(Math.max(w.length, 3))}</span>`;
+                })
+                .join("");
+            const eyeSvg = allRevealed
+                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+            exerciseArea.innerHTML = `<div class="listen-reveal">
+                <div class="listen-reveal-words"${rtlAttr}>${wordsHTML}</div>
+                <div class="listen-reveal-actions">
+                    <button class="listen-reveal-eye-btn" data-action="toggle-all" title="${allRevealed ? t("learnExercises.hideAll") : t("learnExercises.revealAll")}">${eyeSvg}</button>
+                </div></div>`;
+        }
+
+        function renderListenOrder() {
+            const words = getPrimaryWords();
+            const prefillCount = Math.floor(words.length / 2);
+            if (!exState.filledWords) {
+                exState.filledWords = [];
+                exState.gapIndices = Array.from(
+                    { length: words.length - prefillCount },
+                    (_, i) => prefillCount + i,
+                );
+                exState.tiles = shuffleArray(
+                    exState.gapIndices.map((i) => ({ id: i, text: words[i] })),
+                );
+            }
+            const { filledWords, gapIndices, tiles } = exState;
+            const usedIds = new Set(filledWords.map((fw) => fw.id));
+            const remainingTiles = tiles.filter(
+                (tile) => !usedIds.has(tile.id),
+            );
+            const allCorrect =
+                filledWords.length === gapIndices.length &&
+                filledWords.every((fw, n) =>
+                    wordsMatch(fw.text, words[gapIndices[n]]),
+                );
+            const lastIdx = filledWords.length - 1;
+            const lastIsWrong =
+                lastIdx >= 0 &&
+                !wordsMatch(
+                    filledWords[lastIdx].text,
+                    words[gapIndices[lastIdx]],
+                );
+            // Build one continuous verse line
+            const verseHTML = words
+                .map((w, i) => {
+                    if (i < prefillCount) {
+                        return `<span class="listen-order-given-word">${w}</span>`;
+                    }
+                    const gapPos = gapIndices.indexOf(i);
+                    if (gapPos < filledWords.length) {
+                        const fw = filledWords[gapPos];
+                        const isCorrect = wordsMatch(fw.text, words[i]);
+                        const isLast = gapPos === lastIdx;
+                        const isRemovable = isLast && !isCorrect;
+                        let cls = "listen-order-placed";
+                        if (isCorrect) cls += " correct";
+                        else cls += " incorrect";
+                        return `<span class="${cls}" ${isRemovable ? 'data-action="remove-last"' : ""}>${fw.text}</span>`;
+                    }
+                    return `<span class="listen-order-slot">____</span>`;
+                })
+                .join(" ");
+            // When last word is wrong, show it back in the bank as available
+            const effectiveTiles = lastIsWrong
+                ? tiles.filter(
+                      (tile) =>
+                          !usedIds.has(tile.id) ||
+                          tile.id === filledWords[lastIdx].id,
+                  )
+                : remainingTiles;
+            const bankHTML = effectiveTiles
+                .map(
+                    (tile) =>
+                        `<button class="word-tile" data-action="place-word" data-id="${tile.id}">${tile.text}</button>`,
+                )
+                .join("");
+            const headerHTML = allCorrect
+                ? completionHTML()
+                : `<p class="listen-order-instruction">${t("learnExercises.orderWords")}</p>`;
+            exerciseArea.innerHTML = `<div class="listen-order">
+                ${headerHTML}
+                <div class="listen-order-verse"${rtlAttr}>${verseHTML}</div>
+                <div class="listen-order-bank"${rtlAttr}>${bankHTML}</div></div>`;
+        }
+
+        function getAdjacentVerseWords() {
+            const entries = CHAPTER.verseEntries;
+            const words = [];
+            const nearby = [currentIdx - 1, currentIdx + 1];
+            for (const ni of nearby) {
+                if (ni >= 0 && ni < entries.length && cachedPrimaryTexts) {
+                    const text = getTextForVerse(
+                        cachedPrimaryTexts,
+                        entries[ni],
+                    );
+                    if (text) words.push(...text.split(/\s+/).filter(Boolean));
+                }
+            }
+            return words;
+        }
+
+        function renderListenFill() {
+            const words = getPrimaryWords();
+            if (!exState.filledWords) {
+                const gaps = pickGapWords(words, 2).sort((a, b) => a - b);
+                const correctWords = gaps.map((i) => words[i]);
+                const seen = new Set(correctWords.map(normalizeWord));
+                // Collect distractor words from current verse
+                const otherWords = words
+                    .filter((_, i) => !gaps.includes(i))
+                    .filter((w) => {
+                        const n = normalizeWord(w);
+                        if (n.length <= 2 || seen.has(n)) return false;
+                        seen.add(n);
+                        return true;
+                    });
+                // If not enough distractors, pull from adjacent verses
+                if (otherWords.length < 2) {
+                    const adjWords = getAdjacentVerseWords();
+                    for (const w of adjWords) {
+                        const n = normalizeWord(w);
+                        if (n.length <= 2 || seen.has(n)) continue;
+                        seen.add(n);
+                        otherWords.push(w);
+                        if (otherWords.length >= 4) break;
+                    }
+                }
+                exState.gapIndices = gaps;
+                exState.bankWords = shuffleArray([
+                    ...correctWords,
+                    ...shuffleArray(otherWords).slice(0, 2),
+                ]);
+                exState.filledWords = [];
+            }
+            const { gapIndices, bankWords, filledWords } = exState;
+            const allCorrect =
+                filledWords.length === gapIndices.length &&
+                filledWords.every((fw, n) =>
+                    wordsMatch(fw.text, words[gapIndices[n]]),
+                );
+            const lastIdx = filledWords.length - 1;
+            const lastIsWrong =
+                lastIdx >= 0 &&
+                !wordsMatch(
+                    filledWords[lastIdx].text,
+                    words[gapIndices[lastIdx]],
+                );
+            const verseHTML = words
+                .map((w, i) => {
+                    if (gapIndices.includes(i)) {
+                        const gapPos = gapIndices.indexOf(i);
+                        const filled = filledWords[gapPos];
+                        if (filled) {
+                            const isCorrect = wordsMatch(filled.text, words[i]);
+                            const isLast = gapPos === lastIdx;
+                            const isRemovable = isLast && !isCorrect;
+                            let cls = "listen-fill-blank filled";
+                            if (isCorrect) cls += " correct";
+                            else cls += " incorrect";
+                            return `<span class="${cls}" ${isRemovable ? 'data-action="remove-last" style="cursor:pointer"' : ""}>${filled.text}</span>`;
+                        }
+                        return `<span class="listen-fill-blank">____</span>`;
+                    }
+                    return `<span class="listen-fill-word">${w}</span>`;
+                })
+                .join("");
+            // When last word is wrong, exclude it from used so it's available again
+            const effectiveUsed = lastIsWrong
+                ? filledWords.slice(0, -1).map((fw) => fw.text)
+                : filledWords.map((fw) => fw.text);
+            const bankHTML = bankWords
+                .map((w) => {
+                    const isUsed = effectiveUsed.includes(w);
+                    return `<button class="word-tile${isUsed ? " used" : ""}" data-action="fill-bank" data-word="${w}" ${isUsed ? "disabled" : ""}>${w}</button>`;
+                })
+                .join("");
+            const headerHTML = allCorrect
+                ? completionHTML()
+                : `<p class="listen-fill-instruction">${t("learnExercises.fillBlanks")}</p>`;
+            exerciseArea.innerHTML = `<div class="listen-fill-gap">
+                ${headerHTML}
+                <div class="listen-fill-verse"${rtlAttr}>${verseHTML}</div>
+                <div class="listen-fill-bank"${rtlAttr}>${bankHTML}</div></div>`;
+        }
+
+        function renderSentenceBuilder() {
+            const words = getPrimaryWords();
+            if (!exState.sbTiles) {
+                exState.sbTiles = shuffleArray(
+                    words.map((w, i) => ({ id: i, text: w })),
+                );
+                exState.sbPlacedIds = [];
+                exState.sbChecked = false;
+                exState.sbResult = null;
+                exState.sbHintVisible = false;
+            }
+            const { sbTiles, sbPlacedIds, sbChecked, sbResult, sbHintVisible } =
+                exState;
+            const remainingTiles = sbTiles.filter(
+                (tile) => !sbPlacedIds.includes(tile.id),
+            );
+            const allPlaced = sbPlacedIds.length === words.length;
+            const allCorrect =
+                sbChecked &&
+                sbResult &&
+                sbResult.every((r) => r.status === "correct");
+            const hintHTML = sbHintVisible
+                ? `<div class="sentence-builder-hint-overlay" data-action="sb-hide-hint"><p class="sentence-builder-hint-text">${VERSE.secondaryText}</p></div>`
+                : "";
+            let answerHTML = "";
+            if (!sbChecked) {
+                answerHTML =
+                    sbPlacedIds.length === 0
+                        ? '<span class="sentence-builder-placeholder">...</span>'
+                        : sbPlacedIds
+                              .map(
+                                  (id) =>
+                                      `<button class="word-tile placed" data-action="sb-remove" data-id="${id}">${words[id]}</button>`,
+                              )
+                              .join("");
+            } else if (sbResult) {
+                answerHTML = sbResult
+                    .map((entry) => {
+                        let cls = "word-tile placed";
+                        if (entry.status === "correct") cls += " word-correct";
+                        else if (entry.status === "displaced")
+                            cls += " word-displaced";
+                        else cls += " word-wrong";
+                        return `<span class="${cls}">${entry.word}</span>`;
+                    })
+                    .join("");
+            }
+            let bankHTML = !sbChecked
+                ? `<div class="sentence-builder-bank"${rtlAttr}>${remainingTiles
+                      .map(
+                          (tile) =>
+                              `<button class="word-tile" data-action="sb-place" data-id="${tile.id}">${tile.text}</button>`,
+                      )
+                      .join("")}</div>`
+                : "";
+            let actionsHTML = "";
+            if (allPlaced && !sbChecked)
+                actionsHTML = `<button class="sentence-builder-check-btn" data-action="sb-check">${t("learnExercises.check")}</button>`;
+            else if (allCorrect) actionsHTML = "";
+            else if (sbChecked && !allCorrect)
+                actionsHTML = `<button class="sentence-builder-reset-btn" data-action="sb-reset">\u21BB</button>`;
+            const headerHTML = allCorrect
+                ? completionHTML()
+                : `<div class="sentence-builder-hint-wrapper">
+                    <p class="sentence-builder-instruction">${t("learnExercises.buildSentence")}
+                        <button class="sentence-builder-hint-btn" data-action="sb-hint">?</button></p>${hintHTML}
+                </div>`;
+            exerciseArea.innerHTML = `<div class="sentence-builder">
+                ${headerHTML}
+                <div class="sentence-builder-answer"${rtlAttr}>${answerHTML}</div>${bankHTML}
+                <div class="sentence-builder-actions">${actionsHTML}</div></div>`;
+        }
+
+        function renderListenChoose() {
+            exerciseArea.innerHTML = `<div class="listen-choose-placeholder">${t("learnExercises.listenChoose")} — ${t("learnExercises.comingSoon")}</div>`;
+        }
+
+        // ══════════════════════════════════════════
+        // SENTENCE BUILDER CHECK
+        // ══════════════════════════════════════════
+        function checkSentenceBuilder() {
+            const words = getPrimaryWords();
+            const placedIds = exState.sbPlacedIds;
+            const result = [];
+            let userIdx = 0;
+            let expectedPos = 0;
+            const handled = new Set();
+            const wrongIds = new Set();
+            while (expectedPos < words.length) {
+                if (wrongIds.has(expectedPos)) {
+                    let peekIdx = userIdx;
+                    while (
+                        peekIdx < placedIds.length &&
+                        handled.has(placedIds[peekIdx])
+                    )
+                        peekIdx++;
+                    if (
+                        peekIdx < placedIds.length &&
+                        placedIds[peekIdx] === expectedPos
+                    ) {
+                        result.push({
+                            id: expectedPos,
+                            word: words[expectedPos],
+                            status: "correct",
+                        });
+                        handled.add(expectedPos);
+                        userIdx = peekIdx + 1;
+                    } else {
+                        result.push({
+                            id: expectedPos,
+                            word: words[expectedPos],
+                            status: "displaced",
+                        });
+                    }
+                    expectedPos++;
+                    continue;
+                }
+                while (
+                    userIdx < placedIds.length &&
+                    handled.has(placedIds[userIdx])
+                )
+                    userIdx++;
+                if (userIdx >= placedIds.length) {
+                    result.push({
+                        id: expectedPos,
+                        word: words[expectedPos],
+                        status: "missing",
+                    });
+                    expectedPos++;
+                    continue;
+                }
+                const userId = placedIds[userIdx];
+                if (userId === expectedPos) {
+                    result.push({
+                        id: expectedPos,
+                        word: words[expectedPos],
+                        status: "correct",
+                    });
+                    handled.add(expectedPos);
+                    userIdx++;
+                    expectedPos++;
+                } else {
+                    let foundLater = false;
+                    for (let j = userIdx + 1; j < placedIds.length; j++) {
+                        if (
+                            !handled.has(placedIds[j]) &&
+                            placedIds[j] === expectedPos
+                        ) {
+                            foundLater = true;
+                            break;
+                        }
+                    }
+                    if (foundLater) {
+                        result.push({
+                            id: userId,
+                            word: words[userId],
+                            status: "wrong",
+                        });
+                        handled.add(userId);
+                        wrongIds.add(userId);
+                        userIdx++;
+                        let peekIdx = userIdx;
+                        while (
+                            peekIdx < placedIds.length &&
+                            handled.has(placedIds[peekIdx])
+                        )
+                            peekIdx++;
+                        if (
+                            peekIdx < placedIds.length &&
+                            placedIds[peekIdx] === expectedPos
+                        ) {
+                            result.push({
+                                id: expectedPos,
+                                word: words[expectedPos],
+                                status: "correct",
+                            });
+                            handled.add(expectedPos);
+                            userIdx = peekIdx + 1;
+                        } else {
+                            result.push({
+                                id: expectedPos,
+                                word: words[expectedPos],
+                                status: "displaced",
+                            });
+                        }
+                    } else {
+                        result.push({
+                            id: expectedPos,
+                            word: words[expectedPos],
+                            status: "missing",
+                        });
+                    }
+                    expectedPos++;
+                }
+            }
+            for (let i = userIdx; i < placedIds.length; i++) {
+                if (!handled.has(placedIds[i]))
+                    result.push({
+                        id: placedIds[i],
+                        word: words[placedIds[i]],
+                        status: "wrong",
+                    });
+            }
+            return result;
+        }
+
+        // ══════════════════════════════════════════
+        // EXERCISE EVENT DELEGATION
+        // ══════════════════════════════════════════
+        if (exerciseArea) {
+            exerciseArea.addEventListener("click", (e) => {
+                const target = e.target.closest("[data-action]");
+                if (!target) return;
+                const action = target.dataset.action;
+
+                // Reset exercise (shared across all exercises)
+                if (action === "exercise-reset") {
+                    exState = {};
+                    renderExercise();
+                    return;
+                }
+
+                // Continue to next verse (shared across all exercises)
+                if (action === "continue-next") {
+                    const entries = CHAPTER.verseEntries;
+                    if (currentIdx < entries.length - 1) {
+                        window.location.hash =
+                            "#" + entries[currentIdx + 1].verseStart;
+                        // Autoplay after hash change triggers loadVerse
+                        setTimeout(() => playVerse(), 300);
+                    }
+                    return;
+                }
+
+                if (
+                    activeExercise === "listen-reveal" &&
+                    action === "toggle-all"
+                ) {
+                    const words = getPrimaryWords();
+                    exState.revealedSet =
+                        exState.revealedSet.size >= words.length
+                            ? new Set()
+                            : new Set(words.map((_, i) => i));
+                    renderListenReveal();
+                    return;
+                }
+                if (activeExercise === "listen-order") {
+                    if (action === "place-word") {
+                        const id = parseInt(target.dataset.id);
+                        const tile = exState.tiles.find((t) => t.id === id);
+                        if (tile) {
+                            // If the last word was wrong, remove it first
+                            const words = getPrimaryWords();
+                            const gapIndices = exState.gapIndices;
+                            const fw = exState.filledWords;
+                            const lastIdx = fw.length - 1;
+                            const lastIsWrong =
+                                lastIdx >= 0 &&
+                                !wordsMatch(
+                                    fw[lastIdx].text,
+                                    words[gapIndices[lastIdx]],
+                                );
+                            const base = lastIsWrong ? fw.slice(0, -1) : fw;
+                            exState.filledWords = [
+                                ...base,
+                                { id: tile.id, text: tile.text },
+                            ];
+                        }
+                        renderListenOrder();
+                        return;
+                    }
+                    if (action === "remove-last") {
+                        exState.filledWords = exState.filledWords.slice(0, -1);
+                        renderListenOrder();
+                        return;
+                    }
+                }
+                if (activeExercise === "listen-fill") {
+                    if (action === "fill-bank") {
+                        const word = target.dataset.word;
+                        // If the last word was wrong, remove it first
+                        const words = getPrimaryWords();
+                        const gapIndices = exState.gapIndices;
+                        const fw = exState.filledWords;
+                        const lastIdx = fw.length - 1;
+                        const lastIsWrong =
+                            lastIdx >= 0 &&
+                            !wordsMatch(
+                                fw[lastIdx].text,
+                                words[gapIndices[lastIdx]],
+                            );
+                        const base = lastIsWrong ? fw.slice(0, -1) : fw;
+                        exState.filledWords = [...base, { text: word }];
+                        renderListenFill();
+                        return;
+                    }
+                    if (action === "remove-last") {
+                        exState.filledWords = exState.filledWords.slice(0, -1);
+                        renderListenFill();
+                        return;
+                    }
+                }
+                if (activeExercise === "sentence-builder") {
+                    if (action === "sb-place") {
+                        exState.sbPlacedIds = [
+                            ...exState.sbPlacedIds,
+                            parseInt(target.dataset.id),
+                        ];
+                        exState.sbChecked = false;
+                        renderSentenceBuilder();
+                        return;
+                    }
+                    if (action === "sb-remove") {
+                        exState.sbPlacedIds = exState.sbPlacedIds.filter(
+                            (pid) => pid !== parseInt(target.dataset.id),
+                        );
+                        exState.sbChecked = false;
+                        renderSentenceBuilder();
+                        return;
+                    }
+                    if (action === "sb-check") {
+                        exState.sbResult = checkSentenceBuilder();
+                        exState.sbChecked = true;
+                        renderSentenceBuilder();
+                        return;
+                    }
+                    if (action === "sb-reset") {
+                        exState.sbPlacedIds = [];
+                        exState.sbChecked = false;
+                        exState.sbResult = null;
+                        renderSentenceBuilder();
+                        return;
+                    }
+                    if (action === "sb-hint") {
+                        exState.sbHintVisible = !exState.sbHintVisible;
+                        renderSentenceBuilder();
+                        if (exState.sbHintVisible)
+                            setTimeout(() => {
+                                exState.sbHintVisible = false;
+                                if (activeExercise === "sentence-builder")
+                                    renderSentenceBuilder();
+                            }, 3000);
+                        return;
+                    }
+                    if (action === "sb-hide-hint") {
+                        exState.sbHintVisible = false;
+                        renderSentenceBuilder();
+                        return;
+                    }
+                }
+            });
+
+            exerciseArea.addEventListener("click", (e) => {
+                if (activeExercise !== "listen-reveal") return;
+                const wordEl = e.target.closest(".listen-reveal-word");
+                if (!wordEl) return;
+                const idx = parseInt(wordEl.dataset.idx);
+                if (isNaN(idx)) return;
+                if (exState.revealedSet.has(idx))
+                    exState.revealedSet.delete(idx);
+                else exState.revealedSet.add(idx);
+                renderListenReveal();
+            });
+        }
+
+        // ══════════════════════════════════════════
+        // AUDIO
+        // ══════════════════════════════════════════
+        const secAudio = new Audio();
+        let secPlaying = false;
+
+        function stopSecondary() {
+            secAudio.pause();
+            secPlaying = false;
+            if (secPlayBtn) secPlayBtn.classList.remove("playing");
+        }
+
+        function playVerse() {
+            if (!VERSE.primaryAudioUrl) return;
+            if (secPlaying) stopSecondary();
+            const seekAndPlay = () => {
+                audio.currentTime = VERSE.startTime;
+                audio.play().catch(() => {});
+                isPlaying = true;
+                imageContainer.classList.add("playing");
+                playIcon.innerHTML = "&#9208;";
+            };
+            if (audio.src && audio.src === VERSE.primaryAudioUrl) {
+                seekAndPlay();
+            } else {
+                audio.src = VERSE.primaryAudioUrl;
+                audio.addEventListener("loadeddata", seekAndPlay, {
+                    once: true,
+                });
+                audio.load();
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                imageContainer.classList.remove("playing");
+                playIcon.innerHTML = "&#9654;";
+            } else {
+                playVerse();
+            }
+        }
+
+        audio.addEventListener("timeupdate", () => {
+            if (audio.currentTime >= VERSE.endTime) {
+                audio.pause();
+                isPlaying = false;
+                imageContainer.classList.remove("playing");
+                playIcon.innerHTML = "&#9654;";
+            }
+        });
+        audio.addEventListener("ended", () => {
+            isPlaying = false;
+            imageContainer.classList.remove("playing");
+            playIcon.innerHTML = "&#9654;";
+        });
+
+        // ── Secondary audio ──
+        if (secPlayBtn) {
+            secPlayBtn.addEventListener("click", () => {
+                if (secPlaying) {
+                    stopSecondary();
+                    return;
+                }
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    imageContainer.classList.remove("playing");
+                    playIcon.innerHTML = "&#9654;";
+                }
+                if (!VERSE.secondaryAudioUrl) return;
+                const seekAndPlay = () => {
+                    secAudio.currentTime = VERSE.secondaryStartTime;
+                    secAudio.play().catch(() => {});
+                    secPlaying = true;
+                    secPlayBtn.classList.add("playing");
+                };
+                if (secAudio.src && secAudio.src === VERSE.secondaryAudioUrl) {
+                    seekAndPlay();
+                } else {
+                    secAudio.src = VERSE.secondaryAudioUrl;
+                    secAudio.addEventListener("loadeddata", seekAndPlay, {
+                        once: true,
+                    });
+                    secAudio.load();
+                }
+            });
+
+            secAudio.addEventListener("timeupdate", () => {
+                if (secAudio.currentTime >= VERSE.secondaryEndTime)
+                    stopSecondary();
+            });
+            secAudio.addEventListener("ended", () => stopSecondary());
+        }
+
+        // Click image to play
+        imageContainer.addEventListener("click", (e) => {
+            if (
+                e.target.closest(".learn-nav-edge") ||
+                e.target.closest(".learn-back-btn")
+            )
+                return;
+            togglePlay();
+        });
+
+        // Swipe on image for navigation
+        let touchStartX = null;
+        imageContainer.addEventListener("touchstart", (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        imageContainer.addEventListener("touchend", (e) => {
+            if (touchStartX === null) return;
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            touchStartX = null;
+            if (Math.abs(diff) < 80) return;
+            const entries = CHAPTER.verseEntries;
+            if (diff > 0 && currentIdx < entries.length - 1) {
+                window.location.hash = "#" + entries[currentIdx + 1].verseStart;
+            } else if (diff < 0 && currentIdx > 0) {
+                window.location.hash = "#" + entries[currentIdx - 1].verseStart;
+            }
+        });
+
+        // Peek
+        peekBtn.addEventListener("click", () => {
+            if (peekTimer) clearTimeout(peekTimer);
+            peekOverlay.classList.add("visible");
+            peekTimer = setTimeout(() => {
+                peekOverlay.classList.remove("visible");
+                peekTimer = null;
+            }, 3000);
+        });
+
+        // Keyboard
+        document.addEventListener("keydown", (e) => {
+            const entries = CHAPTER.verseEntries;
+            if (e.key === "ArrowRight" && currentIdx < entries.length - 1) {
+                window.location.hash = "#" + entries[currentIdx + 1].verseStart;
+            } else if (e.key === "ArrowLeft" && currentIdx > 0) {
+                window.location.hash = "#" + entries[currentIdx - 1].verseStart;
+            } else if (e.key === " ") {
+                e.preventDefault();
+                togglePlay();
+            }
+        });
+
+        // ══════════════════════════════════════════
+        // HASH NAVIGATION
+        // ══════════════════════════════════════════
+        window.addEventListener("hashchange", () => {
+            const verseNum = getVerseFromHash();
+            loadVerse(verseNum);
+        });
+
+        // ══════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════
+        renderTabBars();
+
+        // Set default hash if none
+        if (!window.location.hash || window.location.hash === "#") {
+            const firstVerse = CHAPTER.verseEntries[0]?.verseStart || 1;
+            history.replaceState(null, "", "#" + firstVerse);
+        }
+
+        // Load initial verse
+        loadVerse(getVerseFromHash());
+    </script>
+</Layout>

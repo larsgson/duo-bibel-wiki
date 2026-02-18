@@ -1,0 +1,1169 @@
+---
+export const prerender = false;
+
+import Layout from "../../../../../layouts/Layout.astro";
+import storyLocales from "../../../../../generated/story-locales.json";
+import {
+    validateParams,
+    findTimingData,
+    getFilesetInfo,
+    buildVerseEntries,
+    getChapterImageData,
+    buildChapterData,
+} from "../../../../../utils/chapterData";
+
+const { lang, lang2, book, chapter } = Astro.params;
+
+const validated = validateParams({ lang, lang2, book, chapter });
+if (!validated) {
+    return Astro.redirect(`/${lang}/${lang2}`);
+}
+
+const { bookInfo, chapterNum, primary, secondary } = validated;
+const primaryCode = primary.code;
+const primaryEnglish = primary.english;
+const primaryIsRTL = primary.isRTL;
+const secondaryCode = secondary.code;
+const secondaryEnglish = secondary.english;
+const secondaryIsRTL = secondary.isRTL;
+
+// ── Load timing data ──
+const primaryTiming = findTimingData(primaryCode);
+const secondaryTiming = findTimingData(secondaryCode);
+
+if (!primaryTiming || !primaryTiming.timingData[String(chapterNum)]) {
+    return Astro.redirect(`/${primaryCode}/${secondaryCode}`);
+}
+
+const chapterTiming = primaryTiming.timingData[String(chapterNum)];
+const verseEntries = buildVerseEntries(chapterTiming);
+
+let secondaryChapterTiming: Record<string, number[]> = {};
+if (secondaryTiming) {
+    const secChapter = secondaryTiming.timingData[String(chapterNum)];
+    if (secChapter) {
+        secondaryChapterTiming = secChapter;
+    }
+}
+
+const primaryFileset = getFilesetInfo(primaryCode);
+const secondaryFileset = getFilesetInfo(secondaryCode);
+const chapterImageData = getChapterImageData(bookInfo.img, chapterNum);
+
+const chapterData = buildChapterData({
+    bookInfo,
+    chapterNum,
+    verseEntries,
+    primaryFileset,
+    secondaryFileset,
+    chapterImageData,
+    secondaryChapterTiming,
+});
+
+// ── Story locale data for section headers ──
+// Find which category/story this chapter belongs to
+let storyMeta: {
+    title?: string;
+    description?: string;
+    headers: Record<string, string>;
+} = { headers: {} };
+const categories = (storyLocales as any).categories;
+const locales = (storyLocales as any).locales;
+
+for (const [catId, cat] of Object.entries(categories) as [string, any][]) {
+    const story = cat.stories.find((s: any) => s.chapter === chapterNum);
+    if (story) {
+        // Try secondary language locale, fallback to eng
+        const locale = locales[secondaryCode] || locales["eng"] || {};
+        const storyData = locale[catId]?.[story.id];
+        if (storyData) {
+            storyMeta.title = storyData.title || "";
+            storyMeta.description = storyData.description || "";
+            // Collect section headers keyed by verse number
+            for (const [key, val] of Object.entries(storyData)) {
+                if (
+                    key !== "title" &&
+                    key !== "description" &&
+                    (val as any).p_hd
+                ) {
+                    storyMeta.headers[key] = (val as any).p_hd;
+                }
+            }
+        }
+        break;
+    }
+}
+
+const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
+---
+
+<Layout
+    title={`Listen — ${bookInfo.img} ${chapterNum} — ${primaryEnglish} + ${secondaryEnglish}`}
+    flexMode={true}
+    noHeader={true}
+>
+    <style is:global>
+        /* ── Desktop layout ── */
+        .exercise-desktop-layout {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 0;
+            flex: 1;
+        }
+        @media (min-width: 769px) {
+            .exercise-desktop-layout {
+                flex-direction: row;
+            }
+        }
+
+        .chapter-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Tab bar ── */
+        .exercise-tab-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 56px;
+            flex-shrink: 0;
+            background: #1a1a2e;
+            border-top: 1px solid #333;
+            z-index: 900;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .exercise-tab-bar.desktop-sidebar {
+            display: none;
+        }
+        @media (min-width: 769px) {
+            .exercise-tab-bar.mobile-bar {
+                display: none;
+            }
+            .exercise-tab-bar.desktop-sidebar {
+                display: flex;
+                position: static;
+                flex-direction: column;
+                justify-content: flex-start;
+                width: 170px;
+                min-width: 170px;
+                height: auto;
+                border-top: none;
+                border-right: 1px solid #333;
+                padding: 0.75rem 0;
+                gap: 2px;
+            }
+        }
+
+        .exercise-tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #777;
+            font: inherit;
+            font-size: 0.6rem;
+            transition: color 0.2s;
+            min-width: 0;
+            flex: 1;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+        .exercise-tab-item.active {
+            color: #5b9bd5;
+        }
+        .exercise-tab-item:hover {
+            color: #aaa;
+        }
+        .exercise-tab-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .exercise-tab-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70px;
+        }
+        @media (min-width: 769px) {
+            .desktop-sidebar .exercise-tab-item {
+                flex-direction: row;
+                gap: 8px;
+                padding: 10px 14px;
+                font-size: 0.8rem;
+                border-radius: 6px;
+                width: 100%;
+                flex: none;
+                justify-content: flex-start;
+            }
+            .desktop-sidebar .exercise-tab-item.active {
+                background: rgba(91, 155, 213, 0.1);
+            }
+            .desktop-sidebar .exercise-tab-label {
+                max-width: none;
+            }
+        }
+
+        /* ── Listen scrollable area ── */
+        .listen-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+            padding-bottom: 200px; /* space for floating player */
+            position: relative;
+        }
+
+        .listen-verse-list {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .listen-story-header {
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+        .listen-story-title {
+            color: #5b9bd5;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+        }
+        .listen-story-description {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .listen-section-header {
+            color: #7ab8e0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.75rem 0 0.25rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 0.5rem;
+        }
+
+        .listen-verse-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .listen-verse-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .listen-verse-card.active {
+            background: rgba(91, 155, 213, 0.1);
+            border-left: 3px solid #5b9bd5;
+            padding-left: calc(0.5rem - 3px);
+        }
+
+        .listen-verse-images {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .listen-verse-images img {
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .listen-verse-ref {
+            color: #5b9bd5;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .listen-verse-text-primary {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .listen-verse-text-secondary {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .listen-loading {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 3rem 1rem;
+        }
+
+        /* ── Floating player card ── */
+        .listen-player {
+            position: fixed;
+            bottom: 72px; /* above mobile tab bar */
+            right: 16px;
+            width: 280px;
+            height: 160px;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            overflow: hidden;
+        }
+        .listen-player:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+            border-color: #1a4d7a;
+        }
+        @media (min-width: 769px) {
+            .listen-player {
+                bottom: 16px;
+            }
+        }
+        @media (max-width: 640px) {
+            .listen-player {
+                width: 240px;
+                height: 140px;
+                bottom: 68px;
+                right: 12px;
+            }
+        }
+        @media (max-width: 400px) {
+            .listen-player {
+                width: 200px;
+                height: 120px;
+                bottom: 64px;
+                right: 8px;
+            }
+        }
+
+        .listen-player-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .listen-player-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .listen-player-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: radial-gradient(
+                circle,
+                rgba(0, 0, 0, 0.3) 0%,
+                rgba(0, 0, 0, 0.1) 70%,
+                transparent 100%
+            );
+            z-index: 2;
+        }
+
+        .listen-player-content {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 12px 16px;
+            gap: 12px;
+        }
+        @media (max-width: 640px) {
+            .listen-player-content {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+        }
+        @media (max-width: 400px) {
+            .listen-player-content {
+                padding: 8px 10px;
+            }
+        }
+
+        .listen-player-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .listen-player-title {
+            color: #eee;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+        @media (max-width: 640px) {
+            .listen-player-title {
+                font-size: 10px;
+            }
+        }
+        @media (max-width: 400px) {
+            .listen-player-title {
+                font-size: 9px;
+            }
+        }
+
+        .listen-player-lang {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 9px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            margin-top: 2px;
+        }
+
+        .listen-player-btn {
+            background: rgba(15, 52, 96, 0.85);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+            padding: 2px;
+            outline: none;
+        }
+        .listen-player-btn svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .listen-player-btn:hover {
+            background: rgba(26, 77, 122, 0.95);
+            transform: scale(1.1);
+        }
+        .listen-player-btn:active {
+            transform: scale(0.95);
+        }
+        @media (max-width: 640px) {
+            .listen-player-btn {
+                width: 22px;
+                height: 22px;
+                min-width: 22px;
+                min-height: 22px;
+            }
+            .listen-player-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+        @media (max-width: 400px) {
+            .listen-player-btn {
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+            }
+            .listen-player-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        .listen-player-pulse {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e94560 0%, #ff6b7a 100%);
+            animation: listen-pulse 2s ease-in-out infinite;
+            z-index: 3;
+        }
+        @keyframes listen-pulse {
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scaleX(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+        }
+    </style>
+
+    <div class="chapter-content">
+        <div class="exercise-desktop-layout">
+            <nav class="exercise-tab-bar desktop-sidebar" id="tab-bar-desktop">
+            </nav>
+
+            <div class="listen-scroll-area" id="listen-scroll">
+                <div class="listen-verse-list" id="verse-list">
+                    <div class="listen-loading" id="listen-loading">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating player card -->
+    <div class="listen-player" id="listen-player" style="display:none;">
+        <div class="listen-player-image" id="player-image"></div>
+        <div class="listen-player-overlay">
+            <div class="listen-player-content">
+                <div class="listen-player-info">
+                    <div class="listen-player-title" id="player-title">—</div>
+                    <div class="listen-player-lang" id="player-lang"></div>
+                </div>
+                <button
+                    class="listen-player-btn"
+                    id="player-btn"
+                    aria-label="Play"
+                >
+                    <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style="display:block"
+                    >
+                        <path d="M8 5v14l11-7z" fill="#fff"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div
+            class="listen-player-pulse"
+            id="player-pulse"
+            style="display:none;"
+        >
+        </div>
+    </div>
+
+    <nav class="exercise-tab-bar mobile-bar" id="tab-bar-mobile"></nav>
+
+    <script
+        define:vars={{
+            chapterData,
+            primaryCode,
+            secondaryCode,
+            primaryIsRTL,
+            secondaryIsRTL,
+            storyMeta,
+        }}
+    >
+        const CHAPTER = JSON.parse(chapterData);
+
+        // Remember last visited chapter for the chapter picker accordion
+        try {
+            localStorage.setItem(
+                `lastVisitedChapter_${CHAPTER.bookImg.toLowerCase()}`,
+                CHAPTER.chapterNum,
+            );
+        } catch (e) {}
+
+        // ══════════════════════════════════════════
+        // TAB BAR (same as placeholder)
+        // ══════════════════════════════════════════
+        const EXERCISES = [
+            {
+                id: "listen-reveal",
+                label: "Listen & Reveal",
+                icon: "ear-reveal",
+                showInTabs: true,
+                tabOrder: 0,
+            },
+            {
+                id: "listen-fill",
+                label: "Fill Gap",
+                icon: "ear-blank",
+                showInTabs: true,
+                tabOrder: 2,
+            },
+            {
+                id: "listen-order",
+                label: "Continue Sentence",
+                icon: "ear-sort",
+                showInTabs: true,
+                tabOrder: 3,
+            },
+            {
+                id: "listen",
+                label: "Listen",
+                icon: "ear-check",
+                showInTabs: true,
+                tabOrder: 4,
+            },
+            {
+                id: "sentence-builder",
+                label: "Build Sentence",
+                icon: "puzzle",
+                showInTabs: false,
+                tabOrder: 99,
+            },
+        ];
+        const ICON_SVGS = {
+            "ear-reveal":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><circle cx="12" cy="14" r="1.5" fill="currentColor" stroke="none"/><path d="M1 12s4-6 8-6" opacity="0.5"/></svg>',
+            "ear-sort":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 14h8M9 17h6M10 11h4" opacity="0.7"/></svg>',
+            "ear-blank":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 15h3M13 15h3" stroke-width="2.5" opacity="0.6"/></svg>',
+            "ear-check":
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12c0-4 3-7 6-7s6 3 6 7"/><path d="M18 12c0 3-1.5 5-3 6.5S12 21 12 21"/><path d="M8 13l2.5 2.5L16 10" stroke-width="2"/></svg>',
+            puzzle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h3v3a2 2 0 0 1 4 0v0a2 2 0 0 1-4 0v3H7a2 2 0 0 0 0 4h0a2 2 0 0 0 0-4H4V7z"/><path d="M14 14h3a2 2 0 0 1 0 4h0a2 2 0 0 1 0-4h3V7h-3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h-3v7z"/></svg>',
+            more: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+        };
+        const LOCALE_MAP = { eng: "en", fra: "fr", frd: "fr" };
+        const LABELS = {
+            en: {
+                "listen-reveal": "Listen & Reveal",
+                "listen-fill": "Fill Gap",
+                "listen-order": "Continue Sentence",
+                listen: "Listen",
+                "sentence-builder": "Build Sentence",
+                more: "More",
+            },
+            fr: {
+                "listen-reveal": "Écouter et Révéler",
+                "listen-fill": "Combler les trous",
+                "listen-order": "Continuer la phrase",
+                listen: "Écouter",
+                "sentence-builder": "Construire la phrase",
+                more: "Plus",
+            },
+        };
+        const uiLocale = LOCALE_MAP[secondaryCode] || "en";
+        const labels = LABELS[uiLocale] || LABELS.en;
+        function getLabel(ex) {
+            return labels[ex.id] || ex.label;
+        }
+        function tabItemHTML(ex) {
+            const isActive = ex.id === "listen";
+            const cls = `exercise-tab-item${isActive ? " active" : ""}`;
+            const inner = `<span class="exercise-tab-icon">${ICON_SVGS[ex.icon]}</span><span class="exercise-tab-label">${getLabel(ex)}</span>`;
+            if (isActive) return `<span class="${cls}">${inner}</span>`;
+            return `<a class="${cls}" href="./">${inner}</a>`;
+        }
+        function buildTabBarHTML(isDesktop) {
+            const allSorted = [...EXERCISES].sort(
+                (a, b) => a.tabOrder - b.tabOrder,
+            );
+            if (isDesktop) return allSorted.map(tabItemHTML).join("");
+            const tabExercises = allSorted.filter((e) => e.showInTabs);
+            const overflowExercises = allSorted.filter((e) => !e.showInTabs);
+            if (overflowExercises.length <= 1)
+                return allSorted.map(tabItemHTML).join("");
+            let html = tabExercises.map(tabItemHTML).join("");
+            html += `<div class="exercise-tab-more-wrapper"><button class="exercise-tab-item" data-more="true"><span class="exercise-tab-icon">${ICON_SVGS.more}</span><span class="exercise-tab-label">${labels.more || "More"}</span></button></div>`;
+            return html;
+        }
+        document.getElementById("tab-bar-desktop").innerHTML =
+            buildTabBarHTML(true);
+        document.getElementById("tab-bar-mobile").innerHTML =
+            buildTabBarHTML(false);
+
+        // ══════════════════════════════════════════
+        // IMAGE URL LOOKUP
+        // ══════════════════════════════════════════
+        const IMG_BASE = "https://bibel.wiki/img/john-pics/";
+
+        function findBestImage(ch, v) {
+            const prefix = `VB-${CHAPTER.bookImg}${ch}v`;
+            const chData = CHAPTER.chapterImageData;
+            function has(verse, filename) {
+                return (chData[String(verse)] || []).includes(filename);
+            }
+            function getFiles(verse) {
+                return chData[String(verse)] || [];
+            }
+
+            if (has(v, `${prefix}${v}.jpg`))
+                return `${IMG_BASE}${prefix}${v}.jpg`;
+            if (has(v, `${prefix}${v}a.jpg`))
+                return `${IMG_BASE}${prefix}${v}a.jpg`;
+            if (has(v, `${prefix}${v}b.jpg`))
+                return `${IMG_BASE}${prefix}${v}b.jpg`;
+            if (has(v, `${prefix}${v}alt.jpg`))
+                return `${IMG_BASE}${prefix}${v}alt.jpg`;
+
+            const rangeEndRe = new RegExp(
+                `^VB-${CHAPTER.bookImg}${ch}v(\\d+)-${v}\\.jpg$`,
+            );
+            const rangeEnd = getFiles(v).find((f) => rangeEndRe.test(f));
+            if (rangeEnd) return `${IMG_BASE}${rangeEnd}`;
+
+            const rangeStartRe = new RegExp(
+                `^VB-${CHAPTER.bookImg}${ch}v${v}-(\\d+)\\.jpg$`,
+            );
+            const rangeStart = getFiles(v).find((f) => rangeStartRe.test(f));
+            if (rangeStart) return `${IMG_BASE}${rangeStart}`;
+
+            if (v > 1 && has(v - 1, `${prefix}${v - 1}alt.jpg`))
+                return `${IMG_BASE}${prefix}${v - 1}alt.jpg`;
+            if (v > 1) {
+                for (const suffix of ["d", "c", "b"]) {
+                    if (has(v - 1, `${prefix}${v - 1}${suffix}.jpg`))
+                        return `${IMG_BASE}${prefix}${v - 1}${suffix}.jpg`;
+                }
+            }
+            for (let prev = v - 1; prev >= 1; prev--) {
+                const files = getFiles(prev);
+                if (files.length === 0) continue;
+                if (files.includes(`${prefix}${prev}.jpg`))
+                    return `${IMG_BASE}${prefix}${prev}.jpg`;
+                if (files.includes(`${prefix}${prev}a.jpg`))
+                    return `${IMG_BASE}${prefix}${prev}a.jpg`;
+                if (files.includes(`${prefix}${prev}alt.jpg`))
+                    return `${IMG_BASE}${prefix}${prev}alt.jpg`;
+                return `${IMG_BASE}${files[0]}`;
+            }
+            return `${IMG_BASE}${prefix}${v}.jpg`;
+        }
+
+        function findAllImages(ch, v) {
+            const chData = CHAPTER.chapterImageData;
+            const files = chData[String(v)] || [];
+            if (files.length > 0) return files.map((f) => `${IMG_BASE}${f}`);
+            // Fallback: use findBestImage for a single result
+            return [findBestImage(ch, v)];
+        }
+
+        function imgProxy(url, w) {
+            if (!url) return url;
+            return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+        }
+
+        // ══════════════════════════════════════════
+        // DATA FETCHING
+        // ══════════════════════════════════════════
+        let cachedPrimaryTexts = null;
+        let cachedSecondaryTexts = null;
+        let cachedPrimaryAudioUrl = null;
+        let cachedSecondaryAudioUrl = null;
+
+        async function fetchChapterText(filesetId) {
+            const verses = new Map();
+            if (!filesetId || !CHAPTER.apiKey) return verses;
+            try {
+                let url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                let resp = await fetch(url);
+                if (!resp.ok && resp.status === 404) {
+                    url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}_ET/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                    resp = await fetch(url);
+                }
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.data && Array.isArray(data.data)) {
+                        for (const v of data.data) {
+                            const num = parseInt(v.verse_start, 10);
+                            verses.set(num, v.verse_text?.trim() || "");
+                        }
+                    }
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return verses;
+        }
+
+        async function fetchAudioUrl(audioFilesetId) {
+            if (!audioFilesetId || !CHAPTER.apiKey) return "";
+            try {
+                const url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${audioFilesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.data?.[0]?.path) return data.data[0].path;
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return "";
+        }
+
+        async function ensureData() {
+            if (cachedPrimaryTexts !== null) return;
+            const [pt, st, pa, sa] = await Promise.all([
+                fetchChapterText(CHAPTER.primaryTextFilesetId),
+                fetchChapterText(CHAPTER.secondaryTextFilesetId),
+                fetchAudioUrl(CHAPTER.primaryAudioFilesetId),
+                fetchAudioUrl(CHAPTER.secondaryAudioFilesetId),
+            ]);
+            cachedPrimaryTexts = pt;
+            cachedSecondaryTexts = st;
+            cachedPrimaryAudioUrl = pa;
+            cachedSecondaryAudioUrl = sa;
+        }
+
+        function getTextForVerse(texts, entry) {
+            const parts = [];
+            for (let v = entry.verseStart; v <= entry.verseEnd; v++) {
+                const t = texts.get(v);
+                if (t) parts.push(t);
+            }
+            return parts.join(" ") || "";
+        }
+
+        // ══════════════════════════════════════════
+        // RENDER VERSE LIST
+        // ══════════════════════════════════════════
+        const verseListEl = document.getElementById("verse-list");
+        const loadingEl = document.getElementById("listen-loading");
+        const bookDisplay = CHAPTER.bookImg;
+        const ch = CHAPTER.chapterNum;
+        const priRtlAttr = primaryIsRTL ? ' dir="rtl"' : "";
+        const secRtlAttr = secondaryIsRTL ? ' dir="rtl"' : "";
+
+        async function renderVerseList() {
+            await ensureData();
+            loadingEl.style.display = "none";
+
+            let html = "";
+
+            // Story header
+            if (storyMeta.title) {
+                html += `<div class="listen-story-header">
+                    <h2 class="listen-story-title">${storyMeta.title}</h2>
+                    ${storyMeta.description ? `<p class="listen-story-description">${storyMeta.description}</p>` : ""}
+                </div>`;
+            }
+
+            const entries = CHAPTER.verseEntries;
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const verseDisplay =
+                    entry.verseStart === entry.verseEnd
+                        ? String(entry.verseStart)
+                        : `${entry.verseStart}-${entry.verseEnd}`;
+                const reference = `${bookDisplay} ${ch}:${verseDisplay}`;
+
+                // Section header?
+                const headerText = storyMeta.headers[String(entry.verseStart)];
+                if (headerText) {
+                    html += `<div class="listen-section-header">${headerText}</div>`;
+                }
+
+                // All images for this verse
+                const images = findAllImages(ch, entry.verseStart);
+                const imagesHTML = images
+                    .map(
+                        (url) =>
+                            `<img src="${imgProxy(url, 600)}" alt="${reference}" loading="lazy">`,
+                    )
+                    .join("");
+
+                const primaryText = getTextForVerse(cachedPrimaryTexts, entry);
+                const secondaryText = getTextForVerse(
+                    cachedSecondaryTexts,
+                    entry,
+                );
+
+                html += `<div class="listen-verse-card" data-verse-idx="${i}" id="verse-${i}">
+                    ${imagesHTML ? `<div class="listen-verse-images">${imagesHTML}</div>` : ""}
+                    <div class="listen-verse-ref">${reference}</div>
+                    <div class="listen-verse-text-primary"${priRtlAttr}>${primaryText || "..."}</div>
+                    <div class="listen-verse-text-secondary"${secRtlAttr}>${secondaryText || "..."}</div>
+                </div>`;
+            }
+
+            verseListEl.innerHTML = html;
+
+            // Attach click handlers
+            verseListEl
+                .querySelectorAll(".listen-verse-card")
+                .forEach((card) => {
+                    card.addEventListener("click", () => {
+                        const idx = parseInt(card.dataset.verseIdx, 10);
+                        jumpToVerse(idx);
+                    });
+                });
+
+            // Show player and start from first verse
+            document.getElementById("listen-player").style.display = "";
+            updatePlayerCard(0);
+        }
+
+        // ══════════════════════════════════════════
+        // AUDIO STATE MACHINE
+        // ══════════════════════════════════════════
+        const primaryAudio = new Audio();
+        const secondaryAudio = new Audio();
+        primaryAudio.preload = "auto";
+        secondaryAudio.preload = "auto";
+
+        // States: "idle" | "playing_primary" | "playing_secondary"
+        let audioState = "idle";
+        let currentVerseIdx = 0;
+
+        function getSecondaryTiming(entry) {
+            const secTiming = CHAPTER.secondaryChapterTiming;
+            if (!secTiming || Object.keys(secTiming).length === 0) return null;
+            // Find matching key for this verse
+            for (const [ref, times] of Object.entries(secTiming)) {
+                const colonIdx = ref.indexOf(":");
+                const verseSpec = ref.substring(colonIdx + 1);
+                const parts = verseSpec.split("-");
+                const vs = parseInt(parts[0], 10);
+                if (vs === entry.verseStart) {
+                    return {
+                        startTime: times[0],
+                        endTime: times[times.length - 1],
+                    };
+                }
+            }
+            return null;
+        }
+
+        function playVerseFromPrimary(idx) {
+            if (idx >= CHAPTER.verseEntries.length) {
+                stopAll();
+                return;
+            }
+            currentVerseIdx = idx;
+            const entry = CHAPTER.verseEntries[idx];
+            audioState = "playing_primary";
+
+            highlightVerse(idx);
+            updatePlayerCard(idx, "primary");
+            showPulse(true);
+
+            if (!cachedPrimaryAudioUrl) {
+                // No primary audio: try secondary directly
+                playVerseSecondary(idx);
+                return;
+            }
+
+            primaryAudio.currentTime = entry.startTime;
+            primaryAudio.play().catch(() => {});
+        }
+
+        function playVerseSecondary(idx) {
+            const entry = CHAPTER.verseEntries[idx];
+            const secTiming = getSecondaryTiming(entry);
+
+            if (!cachedSecondaryAudioUrl || !secTiming) {
+                // No secondary: advance to next verse
+                advanceToNextVerse();
+                return;
+            }
+
+            audioState = "playing_secondary";
+            updatePlayerCard(idx, "secondary");
+
+            secondaryAudio.currentTime = secTiming.startTime;
+            secondaryAudio.play().catch(() => {});
+        }
+
+        function advanceToNextVerse() {
+            const nextIdx = currentVerseIdx + 1;
+            if (nextIdx >= CHAPTER.verseEntries.length) {
+                stopAll();
+                return;
+            }
+            playVerseFromPrimary(nextIdx);
+            scrollToVerse(nextIdx);
+        }
+
+        // Primary audio timeupdate: check if reached end of verse
+        primaryAudio.addEventListener("timeupdate", () => {
+            if (audioState !== "playing_primary") return;
+            const entry = CHAPTER.verseEntries[currentVerseIdx];
+            if (primaryAudio.currentTime >= entry.endTime) {
+                primaryAudio.pause();
+                playVerseSecondary(currentVerseIdx);
+            }
+        });
+
+        // Secondary audio timeupdate: check if reached end
+        secondaryAudio.addEventListener("timeupdate", () => {
+            if (audioState !== "playing_secondary") return;
+            const entry = CHAPTER.verseEntries[currentVerseIdx];
+            const secTiming = getSecondaryTiming(entry);
+            if (secTiming && secondaryAudio.currentTime >= secTiming.endTime) {
+                secondaryAudio.pause();
+                advanceToNextVerse();
+            }
+        });
+
+        function stopAll() {
+            primaryAudio.pause();
+            secondaryAudio.pause();
+            audioState = "idle";
+            showPulse(false);
+        }
+
+        function jumpToVerse(idx) {
+            stopAll();
+            playVerseFromPrimary(idx);
+            scrollToVerse(idx);
+        }
+
+        // Play/Pause toggle
+        let pausedState = null; // { state, verseIdx }
+        const playerBtn = document.getElementById("player-btn");
+
+        playerBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (audioState === "idle") {
+                if (pausedState) {
+                    // Resume
+                    resumePlayback();
+                } else {
+                    // Start from beginning
+                    loadAudioAndStart();
+                }
+            } else {
+                // Pause
+                pausePlayback();
+            }
+        });
+
+        function pausePlayback() {
+            pausedState = { state: audioState, verseIdx: currentVerseIdx };
+            if (audioState === "playing_primary") {
+                primaryAudio.pause();
+            } else if (audioState === "playing_secondary") {
+                secondaryAudio.pause();
+            }
+            audioState = "idle";
+            showPulse(false);
+            updateBtnIcon(false);
+        }
+
+        function resumePlayback() {
+            if (!pausedState) return;
+            audioState = pausedState.state;
+            currentVerseIdx = pausedState.verseIdx;
+            pausedState = null;
+            showPulse(true);
+            updateBtnIcon(true);
+            if (audioState === "playing_primary") {
+                primaryAudio.play().catch(() => {});
+            } else if (audioState === "playing_secondary") {
+                secondaryAudio.play().catch(() => {});
+            }
+        }
+
+        async function loadAudioAndStart() {
+            await ensureData();
+            if (cachedPrimaryAudioUrl) primaryAudio.src = cachedPrimaryAudioUrl;
+            if (cachedSecondaryAudioUrl)
+                secondaryAudio.src = cachedSecondaryAudioUrl;
+            pausedState = null;
+            updateBtnIcon(true);
+            playVerseFromPrimary(0);
+            scrollToVerse(0);
+        }
+
+        // Click anywhere on player card toggles play/pause
+        document
+            .getElementById("listen-player")
+            .addEventListener("click", () => {
+                if (audioState === "idle") {
+                    if (pausedState) {
+                        resumePlayback();
+                    } else {
+                        loadAudioAndStart();
+                    }
+                } else {
+                    pausePlayback();
+                }
+            });
+
+        // ══════════════════════════════════════════
+        // UI HELPERS
+        // ══════════════════════════════════════════
+        const PLAY_SVG =
+            '<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
+        const PAUSE_SVG =
+            '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="#fff"/></svg>';
+
+        function updateBtnIcon(playing) {
+            playerBtn.innerHTML = playing ? PAUSE_SVG : PLAY_SVG;
+            playerBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+        }
+
+        function showPulse(show) {
+            document.getElementById("player-pulse").style.display = show
+                ? ""
+                : "none";
+            updateBtnIcon(show);
+        }
+
+        function highlightVerse(idx) {
+            verseListEl
+                .querySelectorAll(".listen-verse-card.active")
+                .forEach((el) => el.classList.remove("active"));
+            const card = document.getElementById(`verse-${idx}`);
+            if (card) card.classList.add("active");
+        }
+
+        function scrollToVerse(idx) {
+            const card = document.getElementById(`verse-${idx}`);
+            if (card) {
+                card.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        function updatePlayerCard(idx, langKey) {
+            const entry = CHAPTER.verseEntries[idx];
+            if (!entry) return;
+            const verseDisplay =
+                entry.verseStart === entry.verseEnd
+                    ? String(entry.verseStart)
+                    : `${entry.verseStart}-${entry.verseEnd}`;
+            const ref = `${bookDisplay} ${ch}:${verseDisplay}`;
+
+            document.getElementById("player-title").textContent = ref;
+
+            const langLabel =
+                langKey === "secondary" ? secondaryCode : primaryCode;
+            document.getElementById("player-lang").textContent = langKey
+                ? langLabel
+                : "";
+
+            // Player background image: first image for the verse (280px = player card width)
+            const img = imgProxy(findBestImage(ch, entry.verseStart), 280);
+            document.getElementById("player-image").innerHTML =
+                `<img src="${img}" alt="${ref}">`;
+        }
+
+        // ══════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════
+        (async function init() {
+            await ensureData();
+            // Set audio sources
+            if (cachedPrimaryAudioUrl) primaryAudio.src = cachedPrimaryAudioUrl;
+            if (cachedSecondaryAudioUrl)
+                secondaryAudio.src = cachedSecondaryAudioUrl;
+            renderVerseList();
+        })();
+    </script>
+</Layout>

@@ -1,0 +1,804 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import langsData from "../data/ALL-langs-compact.json";
+
+const base = "src/data/ALL-langs-data/nt";
+const dirs = ["with-timecode", "audio-with-timecode"];
+const primaryCodes = new Set<string>();
+
+for (const dir of dirs) {
+    const fullPath = path.resolve(base, dir);
+    if (fs.existsSync(fullPath)) {
+        for (const entry of fs.readdirSync(fullPath)) {
+            if (/^[a-z]{3}$/.test(entry)) {
+                primaryCodes.add(entry);
+            }
+        }
+    }
+}
+
+// Count all secondary languages
+const secondaryCodes = new Set<string>();
+for (const canon of ["nt", "ot"] as const) {
+    const canonData = (langsData.canons as any)[canon];
+    if (!canonData) continue;
+    for (const cat of Object.keys(canonData)) {
+        for (const code of Object.keys(canonData[cat])) {
+            secondaryCodes.add(code);
+        }
+    }
+}
+
+const primaryCount = primaryCodes.size;
+const secondaryCount = secondaryCodes.size;
+const combinations = primaryCount * secondaryCount;
+const combinationsFormatted = combinations.toLocaleString("en-US");
+
+const wt = langsData.canons.nt["with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+const awt = langsData.canons.nt["audio-with-timecode"] as Record<
+    string,
+    { n?: string; v?: string }
+>;
+
+const languages = [...primaryCodes].sort().map((code) => {
+    const info = wt[code] || awt[code] || {};
+    return { code, name: info.n || code, vernacular: info.v || "" };
+});
+---
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="dark" />
+        <title>Duo Bibel Wiki</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                min-height: 100vh;
+                min-height: 100dvh;
+                background: #1a1a2e;
+                color: #e0e0e0;
+            }
+
+            /* ── Header ── */
+            .app-header {
+                background: #007bff;
+                color: white;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+            .header-content {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1rem 1.5rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .app-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+            .language-button {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.5rem 1rem;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                color: white;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.2s;
+                min-height: 44px;
+            }
+            .language-button:hover {
+                background: rgba(255, 255, 255, 0.18);
+            }
+            .language-icon {
+                font-size: 1.1rem;
+                line-height: 1;
+            }
+            .language-text {
+                font-weight: 500;
+            }
+
+            /* ── Hero ── */
+            .hero {
+                text-align: center;
+                padding: 4rem 1.5rem 3rem;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            .hero-tagline {
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                color: #6ea8fe;
+                margin-bottom: 1.25rem;
+                font-weight: 600;
+            }
+            .hero-headline {
+                font-size: clamp(2rem, 6vw, 3.5rem);
+                font-weight: 700;
+                line-height: 1.15;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(135deg, #ffffff 0%, #6ea8fe 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            .hero-sub {
+                font-size: clamp(1rem, 2.5vw, 1.25rem);
+                color: rgba(255, 255, 255, 0.6);
+                line-height: 1.6;
+                max-width: 600px;
+                margin: 0 auto 2.5rem;
+            }
+            .hero-cta {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.9rem 2rem;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition:
+                    background 0.2s,
+                    transform 0.1s;
+            }
+            .hero-cta:hover {
+                background: #0056b3;
+            }
+            .hero-cta:active {
+                transform: scale(0.98);
+            }
+
+            /* ── Big number ── */
+            .big-number-section {
+                text-align: center;
+                padding: 2rem 1.5rem 3rem;
+            }
+            .big-number {
+                font-size: clamp(3rem, 10vw, 5.5rem);
+                font-weight: 800;
+                background: linear-gradient(135deg, #6ea8fe 0%, #4caf50 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                line-height: 1.1;
+            }
+            .big-number-label {
+                font-size: clamp(1rem, 2.5vw, 1.3rem);
+                color: rgba(255, 255, 255, 0.5);
+                margin-top: 0.5rem;
+            }
+
+            /* ── Stats row ── */
+            .stats {
+                display: flex;
+                justify-content: center;
+                gap: 2rem;
+                padding: 2rem 1.5rem 3rem;
+                max-width: 700px;
+                margin: 0 auto;
+            }
+            .stat {
+                text-align: center;
+                flex: 1;
+            }
+            .stat-value {
+                font-size: clamp(1.5rem, 4vw, 2.25rem);
+                font-weight: 700;
+                color: #ffffff;
+            }
+            .stat-label {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.4);
+                margin-top: 0.35rem;
+            }
+            .stat-divider {
+                width: 1px;
+                background: rgba(255, 255, 255, 0.1);
+                align-self: stretch;
+            }
+
+            /* ── Screenshots ── */
+            .screenshots {
+                padding: 2rem 1.5rem 4rem;
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+            .screenshots-heading {
+                text-align: center;
+                font-size: 1.1rem;
+                color: rgba(255, 255, 255, 0.4);
+                margin-bottom: 2rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                font-weight: 600;
+            }
+            .screenshots-row {
+                display: flex;
+                gap: 1.5rem;
+                justify-content: center;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 1rem;
+            }
+            .screenshot-card {
+                flex: 0 0 auto;
+                width: 220px;
+                scroll-snap-align: center;
+            }
+            .screenshot-placeholder {
+                width: 100%;
+                aspect-ratio: 9 / 16;
+                background: rgba(255, 255, 255, 0.06);
+                border: 2px dashed rgba(255, 255, 255, 0.15);
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: rgba(255, 255, 255, 0.2);
+                font-size: 0.85rem;
+            }
+            .screenshot-caption {
+                text-align: center;
+                margin-top: 0.75rem;
+                font-size: 0.9rem;
+                color: rgba(255, 255, 255, 0.5);
+            }
+
+            /* ── Modal overlay ── */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 100;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 2rem 1rem;
+                overflow-y: auto;
+            }
+            .modal-overlay.open {
+                display: flex;
+            }
+            .modal {
+                background: #1a1a2e;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                width: 100%;
+                max-width: 900px;
+                max-height: calc(100vh - 4rem);
+                max-height: calc(100dvh - 4rem);
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            }
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                flex-shrink: 0;
+            }
+            .modal-header h2 {
+                font-size: 1.25rem;
+            }
+            .modal-close {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                transition:
+                    color 0.2s,
+                    background 0.2s;
+                line-height: 1;
+            }
+            .modal-close:hover {
+                color: #e0e0e0;
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .modal-body {
+                padding: 1rem 1.5rem;
+                overflow-y: auto;
+                flex: 1;
+            }
+
+            /* ── Language selector (modal) ── */
+            .search-section {
+                max-width: 500px;
+                margin: 0 auto 1rem;
+            }
+            .search-input {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                font-size: 1.1rem;
+                border: 2px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                outline: none;
+                box-sizing: border-box;
+                transition: border-color 0.2s;
+                background: rgba(255, 255, 255, 0.08);
+                color: #e0e0e0;
+            }
+            .search-input::placeholder {
+                color: rgba(255, 255, 255, 0.4);
+            }
+            .search-input:focus {
+                border-color: #6ea8fe;
+            }
+            .count {
+                text-align: center;
+                color: rgba(255, 255, 255, 0.4);
+                margin: 0.5rem 0 1.25rem;
+                font-size: 0.95rem;
+            }
+            .no-results {
+                text-align: center;
+                color: rgba(255, 255, 255, 0.4);
+                padding: 3rem 1rem;
+                font-size: 1.1rem;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                gap: 0.5rem;
+            }
+            .lang-item {
+                display: flex;
+                align-items: baseline;
+                gap: 0.5rem;
+                padding: 0.6rem 0.85rem;
+                background: rgba(255, 255, 255, 0.06);
+                border-radius: 6px;
+                text-decoration: none;
+                color: #e0e0e0;
+                transition: background 0.15s;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .lang-item:hover {
+                background: rgba(255, 255, 255, 0.12);
+                border-color: rgba(110, 168, 254, 0.3);
+            }
+            .lang-code {
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 0.8rem;
+                font-family: monospace;
+                flex-shrink: 0;
+            }
+            .lang-name {
+                font-weight: 500;
+            }
+            .lang-vernacular {
+                color: #6ea8fe;
+                font-size: 0.85rem;
+            }
+            .highlight {
+                background: rgba(110, 168, 254, 0.25);
+                color: #6ea8fe;
+                border-radius: 2px;
+            }
+
+            /* ── Continue view ── */
+            .continue-view {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: calc(100vh - 60px);
+                min-height: calc(100dvh - 60px);
+                padding: 2rem 1rem;
+                text-align: center;
+            }
+            .continue-view.visible {
+                display: flex;
+            }
+            .continue-image-link {
+                display: block;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+                max-width: 500px;
+                width: 100%;
+            }
+            .continue-image-link:hover {
+                transform: scale(1.02);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            }
+            .continue-image-link:active {
+                transform: scale(0.99);
+            }
+            .continue-image-link img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+            .continue-info {
+                margin-top: 1.25rem;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 0.9rem;
+            }
+            .continue-langs {
+                font-weight: 600;
+                color: rgba(255, 255, 255, 0.7);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            .continue-ref {
+                margin-top: 0.25rem;
+            }
+            .continue-reset {
+                margin-top: 2rem;
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.25);
+                font-size: 0.75rem;
+                cursor: pointer;
+                padding: 0.5rem 1rem;
+                transition: color 0.2s;
+            }
+            .continue-reset:hover {
+                color: rgba(255, 255, 255, 0.5);
+            }
+            .landing-content.hidden {
+                display: none;
+            }
+
+            /* ── Responsive ── */
+            @media (max-width: 768px) {
+                .header-content {
+                    padding: 0.75rem 1rem;
+                }
+                .app-title {
+                    font-size: 1.25rem;
+                }
+                .language-button {
+                    padding: 0.4rem 0.5rem;
+                    font-size: 0.875rem;
+                    gap: 0.5rem;
+                }
+                .language-text {
+                    display: none;
+                }
+                .hero {
+                    padding: 3rem 1.25rem 2rem;
+                }
+                .stats {
+                    gap: 1rem;
+                    padding: 1.5rem 1rem 2rem;
+                }
+                .screenshots {
+                    padding: 1.5rem 1rem 3rem;
+                }
+                .screenshot-card {
+                    width: 180px;
+                }
+                .modal-overlay {
+                    padding: 1rem 0.5rem;
+                }
+                .modal-body {
+                    padding: 1rem;
+                }
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Duo Bibel Wiki</h1>
+                <button class="language-button" id="open-lang-selector">
+                    <span class="language-icon">🌐</span>
+                    <span class="language-text">Select language</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Continue view (shown when saved state exists) -->
+        <div class="continue-view" id="continue-view">
+            <a class="continue-image-link" id="continue-link">
+                <img id="continue-image" src="" alt="Continue learning" />
+            </a>
+            <div class="continue-info">
+                <div class="continue-langs" id="continue-langs"></div>
+                <div class="continue-ref" id="continue-ref"></div>
+            </div>
+            <button class="continue-reset" id="continue-reset"
+                >Start fresh</button
+            >
+        </div>
+
+        <!-- Landing content -->
+        <div class="landing-content" id="landing-content">
+            <!-- Hero -->
+            <section class="hero">
+                <p class="hero-tagline">Bible-based language learning</p>
+                <h2 class="hero-headline">
+                    Learn any language from any language
+                </h2>
+                <p class="hero-sub">
+                    Learn any of {primaryCount} languages from {
+                        secondaryCount.toLocaleString("en-US")
+                    } mother-tongue languages for an unmatched multilingual learning
+                    experience.
+                </p>
+                <button class="hero-cta" id="hero-cta">
+                    Get started <span>&rarr;</span>
+                </button>
+            </section>
+
+            <!-- Big number -->
+            <section class="big-number-section">
+                <div class="big-number">{combinationsFormatted}</div>
+                <p class="big-number-label">possible language combinations</p>
+            </section>
+
+            <!-- Stats -->
+            <section class="stats">
+                <div class="stat">
+                    <div class="stat-value">{primaryCount}</div>
+                    <div class="stat-label">primary languages</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <div class="stat-value">
+                        {secondaryCount.toLocaleString("en-US")}
+                    </div>
+                    <div class="stat-label">mother-tongue languages</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <div class="stat-value">1.2M+</div>
+                    <div class="stat-label">combinations</div>
+                </div>
+            </section>
+
+            <!-- Screenshots -->
+            <section class="screenshots">
+                <p class="screenshots-heading">How it works</p>
+                <div class="screenshots-row">
+                    <div class="screenshot-card">
+                        <div class="screenshot-placeholder">Screenshot 1</div>
+                        <p class="screenshot-caption">Choose your language</p>
+                    </div>
+                    <div class="screenshot-card">
+                        <div class="screenshot-placeholder">Screenshot 2</div>
+                        <p class="screenshot-caption">Pick a second language</p>
+                    </div>
+                    <div class="screenshot-card">
+                        <div class="screenshot-placeholder">Screenshot 3</div>
+                        <p class="screenshot-caption">Start learning</p>
+                    </div>
+                </div>
+            </section>
+        </div><!-- end landing-content -->
+
+        <!-- Language selector modal -->
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Select a language</h2>
+                    <button
+                        class="modal-close"
+                        id="modal-close"
+                        aria-label="Close">&times;</button
+                    >
+                </div>
+                <div class="modal-body">
+                    <div class="search-section">
+                        <input
+                            id="search"
+                            class="search-input"
+                            type="text"
+                            placeholder="Search by language name, vernacular, or code..."
+                        />
+                    </div>
+                    <p class="count" id="count">
+                        {languages.length} languages
+                    </p>
+                    <div class="grid" id="grid">
+                        {
+                            languages.map((lang) => (
+                                <a
+                                    class="lang-item"
+                                    href={`/${lang.code}`}
+                                    data-code={lang.code}
+                                    data-name={lang.name}
+                                    data-vernacular={lang.vernacular}
+                                >
+                                    <span class="lang-code">{lang.code}</span>
+                                    <span class="lang-name">{lang.name}</span>
+                                    {lang.vernacular && (
+                                        <span class="lang-vernacular">
+                                            {" "}
+                                            - {lang.vernacular}
+                                        </span>
+                                    )}
+                                </a>
+                            ))
+                        }
+                    </div>
+                    <p class="no-results" id="no-results" style="display:none">
+                        No languages found
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Check for saved state and show continue view
+            const lastState = localStorage.getItem("lastState");
+            if (lastState) {
+                try {
+                    const state = JSON.parse(lastState);
+                    if (state.url && state.imageUrl) {
+                        const continueView =
+                            document.getElementById("continue-view")!;
+                        const landingContent =
+                            document.getElementById("landing-content")!;
+                        const continueLink = document.getElementById(
+                            "continue-link",
+                        ) as HTMLAnchorElement;
+                        const continueImage = document.getElementById(
+                            "continue-image",
+                        ) as HTMLImageElement;
+                        const continueLangs =
+                            document.getElementById("continue-langs")!;
+                        const continueRef =
+                            document.getElementById("continue-ref")!;
+                        const continueReset =
+                            document.getElementById("continue-reset")!;
+
+                        continueLink.href = state.url;
+                        continueImage.src = state.imageUrl;
+                        continueLangs.textContent = `${state.lang} \u2194 ${state.lang2}`;
+                        continueRef.textContent = state.reference || "";
+                        continueView.classList.add("visible");
+                        landingContent.classList.add("hidden");
+
+                        continueReset.addEventListener("click", () => {
+                            localStorage.removeItem("lastState");
+                            localStorage.removeItem("activeExercise");
+                            continueView.classList.remove("visible");
+                            landingContent.classList.remove("hidden");
+                        });
+                    }
+                } catch (e) {
+                    localStorage.removeItem("lastState");
+                }
+            }
+
+            // Modal
+            const overlay = document.getElementById("modal-overlay")!;
+            const openBtn = document.getElementById("open-lang-selector")!;
+            const heroCta = document.getElementById("hero-cta")!;
+            const closeBtn = document.getElementById("modal-close")!;
+            const search = document.getElementById(
+                "search",
+            ) as HTMLInputElement;
+
+            function openModal() {
+                overlay.classList.add("open");
+                search.focus();
+            }
+            function closeModal() {
+                overlay.classList.remove("open");
+            }
+
+            openBtn.addEventListener("click", openModal);
+            heroCta.addEventListener("click", openModal);
+            closeBtn.addEventListener("click", closeModal);
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) closeModal();
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeModal();
+            });
+
+            // Search filtering
+            const grid = document.getElementById("grid")!;
+            const countEl = document.getElementById("count")!;
+            const noResults = document.getElementById("no-results")!;
+            const items = [
+                ...grid.querySelectorAll<HTMLAnchorElement>(".lang-item"),
+            ];
+            const total = items.length;
+
+            function escapeRegex(s: string) {
+                return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+            function highlightText(text: string, regex: RegExp | null): string {
+                if (!regex) return text;
+                return text.replace(
+                    regex,
+                    (m) => `<span class="highlight">${m}</span>`,
+                );
+            }
+
+            search.addEventListener("input", () => {
+                const term = search.value.trim().toLowerCase();
+                if (!term) {
+                    items.forEach((el) => {
+                        el.style.display = "";
+                        el.querySelector(".lang-code")!.textContent =
+                            el.dataset.code!;
+                        el.querySelector(".lang-name")!.textContent =
+                            el.dataset.name!;
+                        const vEl = el.querySelector(".lang-vernacular");
+                        if (vEl)
+                            vEl.textContent = ` - ${el.dataset.vernacular!}`;
+                    });
+                    countEl.textContent = `${total} languages`;
+                    noResults.style.display = "none";
+                    grid.style.display = "";
+                    return;
+                }
+
+                const regex = new RegExp(`(${escapeRegex(term)})`, "gi");
+                let visible = 0;
+
+                items.forEach((el) => {
+                    const code = el.dataset.code!;
+                    const name = el.dataset.name!;
+                    const vernacular = el.dataset.vernacular || "";
+                    const match =
+                        code.toLowerCase().includes(term) ||
+                        name.toLowerCase().includes(term) ||
+                        vernacular.toLowerCase().includes(term);
+
+                    if (match) {
+                        el.style.display = "";
+                        visible++;
+                        el.querySelector(".lang-code")!.innerHTML =
+                            highlightText(code, regex);
+                        el.querySelector(".lang-name")!.innerHTML =
+                            highlightText(name, regex);
+                        const vEl = el.querySelector(".lang-vernacular");
+                        if (vEl)
+                            vEl.innerHTML = ` - ${highlightText(vernacular, regex)}`;
+                    } else {
+                        el.style.display = "none";
+                    }
+                });
+
+                countEl.textContent = `${visible} of ${total} languages`;
+                noResults.style.display = visible === 0 ? "" : "none";
+                grid.style.display = visible === 0 ? "none" : "";
+            });
+        </script>
+    </body>
+</html>
