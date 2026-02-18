@@ -1247,6 +1247,39 @@ const uiLabels = JSON.stringify({
             return result;
         }
 
+        // CJK-aware word tokenization using Intl.Segmenter
+        const CJK_REGEX = /[\u2E80-\u9FFF\uF900-\uFAFF\u{20000}-\u{2FA1F}]/u;
+        let _segmenter = null;
+        function getSegmenter() {
+            if (!_segmenter && typeof Intl !== "undefined" && Intl.Segmenter) {
+                _segmenter = new Intl.Segmenter(primaryCode, {
+                    granularity: "word",
+                });
+            }
+            return _segmenter;
+        }
+
+        function tokenizeText(text) {
+            if (!text) return [];
+            const segmenter = getSegmenter();
+            if (segmenter) {
+                return [...segmenter.segment(text)]
+                    .filter((s) => s.isWordLike)
+                    .map((s) => s.segment);
+            }
+            // Fallback: split on whitespace, or per-character for CJK
+            if (CJK_REGEX.test(text)) {
+                return [...text].filter(
+                    (ch) => ch.trim() && !/[\p{P}\p{S}]/u.test(ch),
+                );
+            }
+            return text.split(/\s+/).filter(Boolean);
+        }
+
+        function textUsesSpaces(text) {
+            return /\s/.test(text);
+        }
+
         function normalizeWord(w) {
             return w
                 .normalize("NFC")
@@ -1259,9 +1292,11 @@ const uiLabels = JSON.stringify({
         }
 
         function pickGapWords(words, count) {
+            // For CJK, a single character can be a meaningful word, so lower the threshold
+            const minLen = CJK_REGEX.test(words.join("")) ? 1 : 3;
             const contentIndices = words
                 .map((w, i) => ({ w, i }))
-                .filter(({ w }) => normalizeWord(w).length > 3)
+                .filter(({ w }) => normalizeWord(w).length > minLen)
                 .map(({ i }) => i);
             const pool =
                 contentIndices.length > 0
@@ -1796,7 +1831,7 @@ const uiLabels = JSON.stringify({
         // EXERCISE RENDERING
         // ══════════════════════════════════════════
         function getPrimaryWords() {
-            return (VERSE.primaryText || "").split(/\s+/).filter(Boolean);
+            return tokenizeText(VERSE.primaryText || "");
         }
 
         function completionHTML() {
@@ -1844,7 +1879,10 @@ const uiLabels = JSON.stringify({
                 .map((w, i) => {
                     if (rev.has(i))
                         return `<span class="listen-reveal-word revealed" data-idx="${i}">${w}</span>`;
-                    return `<span class="listen-reveal-word hidden" data-idx="${i}">${"\u00A0".repeat(Math.max(w.length, 3))}</span>`;
+                    const placeholder = CJK_REGEX.test(w)
+                        ? "\u3000".repeat(Math.max(w.length, 2))
+                        : "\u00A0".repeat(Math.max(w.length, 3));
+                    return `<span class="listen-reveal-word hidden" data-idx="${i}">${placeholder}</span>`;
                 })
                 .join("");
             const eyeSvg = allRevealed
@@ -1888,6 +1926,8 @@ const uiLabels = JSON.stringify({
                     words[gapIndices[lastIdx]],
                 );
             // Build one continuous verse line
+            const usesSpaces = textUsesSpaces(VERSE.primaryText || "");
+            const wordJoiner = usesSpaces ? " " : "";
             const verseHTML = words
                 .map((w, i) => {
                     if (i < prefillCount) {
@@ -1906,7 +1946,7 @@ const uiLabels = JSON.stringify({
                     }
                     return `<span class="listen-order-slot">____</span>`;
                 })
-                .join(" ");
+                .join(wordJoiner);
             // When last word is wrong, show it back in the bank as available
             const effectiveTiles = lastIsWrong
                 ? tiles.filter(
@@ -1940,7 +1980,7 @@ const uiLabels = JSON.stringify({
                         cachedPrimaryTexts,
                         entries[ni],
                     );
-                    if (text) words.push(...text.split(/\s+/).filter(Boolean));
+                    if (text) words.push(...tokenizeText(text));
                 }
             }
             return words;
@@ -1952,12 +1992,15 @@ const uiLabels = JSON.stringify({
                 const gaps = pickGapWords(words, 2).sort((a, b) => a - b);
                 const correctWords = gaps.map((i) => words[i]);
                 const seen = new Set(correctWords.map(normalizeWord));
+                const isCJK = CJK_REGEX.test(words.join(""));
+                const minDistractorLen = isCJK ? 0 : 2;
                 // Collect distractor words from current verse
                 const otherWords = words
                     .filter((_, i) => !gaps.includes(i))
                     .filter((w) => {
                         const n = normalizeWord(w);
-                        if (n.length <= 2 || seen.has(n)) return false;
+                        if (n.length <= minDistractorLen || seen.has(n))
+                            return false;
                         seen.add(n);
                         return true;
                     });
@@ -1966,7 +2009,8 @@ const uiLabels = JSON.stringify({
                     const adjWords = getAdjacentVerseWords();
                     for (const w of adjWords) {
                         const n = normalizeWord(w);
-                        if (n.length <= 2 || seen.has(n)) continue;
+                        if (n.length <= minDistractorLen || seen.has(n))
+                            continue;
                         seen.add(n);
                         otherWords.push(w);
                         if (otherWords.length >= 4) break;
