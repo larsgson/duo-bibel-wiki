@@ -5,6 +5,7 @@ import Layout from "../../../../layouts/Layout.astro";
 import langsData from "../../../../data/ALL-langs-compact.json";
 import storyLocales from "../../../../generated/story-locales.json";
 import { BOOK_MAP } from "../../../../utils/chapterData";
+import { useTranslations } from "../../../../i18n";
 
 const { lang, lang2, book } = Astro.params;
 
@@ -52,6 +53,9 @@ const engLocale = locales["eng"] || {};
 const bookTitle =
     locale.title || locale.longTitle || engLocale.title || bookInfo.img;
 
+const t = useTranslations(secondaryCode);
+const chapterLabel = t("chapter");
+
 const categoriesData: Array<{
     id: string;
     title: string;
@@ -67,7 +71,7 @@ for (const [catId, cat] of Object.entries(categoriesRaw) as [string, any][]) {
             locale[catId]?.[s.id] || engLocale[catId]?.[s.id] || {};
         return {
             chapter: s.chapter,
-            title: storyLocale.title || `Chapter ${s.chapter}`,
+            title: storyLocale.title || `${chapterLabel} ${s.chapter}`,
             image: s.image || null,
         };
     });
@@ -239,7 +243,7 @@ const backHref = `/${primaryCode}`;
         <div id="accordion-container"></div>
     </div>
 
-    <script define:vars={{ categoriesJSON, bookTitle, book }}>
+    <script define:vars={{ categoriesJSON, bookTitle, book, chapterLabel }}>
         const categories = JSON.parse(categoriesJSON);
         const bookKey = book.toLowerCase();
 
@@ -284,7 +288,7 @@ const backHref = `/${primaryCode}`;
                 cardsHTML += `<a class="chapter-card" href="./${story.chapter}/">
                     ${imgSrc ? `<img class="chapter-card-img" src="${imgProxy(imgSrc, 300)}" alt="" loading="lazy">` : ""}
                     <div class="chapter-card-info">
-                        <span class="chapter-card-num">Chapter ${story.chapter}</span>
+                        <span class="chapter-card-num">${chapterLabel} ${story.chapter}</span>
                         <span class="chapter-card-title">${story.title}</span>
                     </div>
                 </a>`;

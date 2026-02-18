@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Layout from "../layouts/Layout.astro";
 import langsData from "../data/ALL-langs-compact.json";
+import { useTranslations } from "../i18n";
 
 export function getStaticPaths() {
     const base = "src/data/ALL-langs-data/nt";
@@ -74,6 +75,30 @@ for (const canon of ["nt", "ot"] as const) {
     }
 }
 allLangs.sort((a, b) => a.name.localeCompare(b.name));
+
+const uiLocales = [
+    "eng",
+    "fra",
+    "deu",
+    "spa",
+    "por",
+    "rus",
+    "hin",
+    "arb",
+    "ron",
+];
+const uiTranslations: Record<string, Record<string, string>> = {};
+for (const loc of uiLocales) {
+    const t = useTranslations(loc);
+    uiTranslations[loc] = {
+        selectMotherTongue: t("selectMotherTongue"),
+        searchPlaceholder: t("searchPlaceholder"),
+        languageCount: t("languageCount"),
+        languageCountFiltered: t("languageCountFiltered"),
+        noLanguagesFound: t("noLanguagesFound"),
+    };
+}
+const uiJSON = JSON.stringify(uiTranslations);
 ---
 
 <Layout
@@ -215,18 +240,18 @@ allLangs.sort((a, b) => a.name.localeCompare(b.name));
             <p class="code-label">[{code}]</p>
         </div>
 
-        <p class="secondary-heading">Select a secondary language</p>
+        <p class="secondary-heading" id="secondary-heading"></p>
 
         <div class="search-section">
             <input
                 id="search"
                 class="search-input"
                 type="text"
-                placeholder="Search by language name, vernacular, or code..."
+                placeholder=""
                 autofocus
             />
         </div>
-        <p class="count" id="count">{allLangs.length} languages</p>
+        <p class="count" id="count"></p>
 
         <div class="grid" id="grid">
             {
@@ -250,12 +275,32 @@ allLangs.sort((a, b) => a.name.localeCompare(b.name));
                 ))
             }
         </div>
-        <p class="no-results" id="no-results" style="display:none">
-            No languages found
-        </p>
+        <p class="no-results" id="no-results" style="display:none"></p>
     </div>
 
+    <script id="ui-i18n" type="application/json" set:html={uiJSON} />
     <script>
+        // Localise UI based on browser language
+        const LANG_MAP: Record<string, string> = {
+            en: "eng",
+            fr: "fra",
+            de: "deu",
+            es: "spa",
+            pt: "por",
+            ru: "rus",
+            hi: "hin",
+            ar: "arb",
+            ro: "ron",
+        };
+        const allI18n = JSON.parse(
+            document.getElementById("ui-i18n")!.textContent!,
+        );
+        const browserLang = (navigator.language || "en")
+            .split("-")[0]
+            .toLowerCase();
+        const loc = LANG_MAP[browserLang];
+        const ui = (loc && allI18n[loc]) || allI18n["eng"] || {};
+
         const search = document.getElementById("search") as HTMLInputElement;
         const grid = document.getElementById("grid")!;
         const countEl = document.getElementById("count")!;
@@ -264,6 +309,18 @@ allLangs.sort((a, b) => a.name.localeCompare(b.name));
             ...grid.querySelectorAll<HTMLAnchorElement>(".lang-item"),
         ];
         const total = items.length;
+
+        // Apply localized strings
+        document.getElementById("secondary-heading")!.textContent =
+            ui.selectMotherTongue || "Select your mother-tongue";
+        search.placeholder =
+            ui.searchPlaceholder ||
+            "Search by language name, vernacular, or code...";
+        countEl.textContent = (ui.languageCount || "{count} languages").replace(
+            "{count}",
+            String(total),
+        );
+        noResults.textContent = ui.noLanguagesFound || "No languages found";
 
         function escapeRegex(s: string) {
             return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -291,7 +348,9 @@ allLangs.sort((a, b) => a.name.localeCompare(b.name));
                     const vEl = el.querySelector(".lang-vernacular");
                     if (vEl) vEl.textContent = ` - ${vernacular}`;
                 });
-                countEl.textContent = `${total} languages`;
+                countEl.textContent = (
+                    ui.languageCount || "{count} languages"
+                ).replace("{count}", String(total));
                 noResults.style.display = "none";
                 grid.style.display = "";
                 return;
@@ -329,7 +388,11 @@ allLangs.sort((a, b) => a.name.localeCompare(b.name));
                 }
             });
 
-            countEl.textContent = `${visible} of ${total} languages`;
+            countEl.textContent = (
+                ui.languageCountFiltered || "{visible} of {total} languages"
+            )
+                .replace("{visible}", String(visible))
+                .replace("{total}", String(total));
             noResults.style.display = visible === 0 ? "" : "none";
             grid.style.display = visible === 0 ? "none" : "";
         });

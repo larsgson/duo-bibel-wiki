@@ -11,6 +11,7 @@ import {
     getChapterImageData,
     buildChapterData,
 } from "../../../../../utils/chapterData";
+import { useTranslations } from "../../../../../i18n";
 
 const { lang, lang2, book, chapter } = Astro.params;
 
@@ -95,6 +96,18 @@ for (const [catId, cat] of Object.entries(categories) as [string, any][]) {
 }
 
 const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
+
+const t = useTranslations(secondaryCode);
+const uiLabels = JSON.stringify({
+    listenReveal: t("listenReveal"),
+    listenFill: t("listenFill"),
+    listenOrder: t("listenOrder"),
+    listen: t("listen"),
+    sentenceBuilder: t("sentenceBuilder"),
+    more: t("more"),
+    loading: t("loading"),
+    audioOnly: t("audioOnly"),
+});
 ---
 
 <Layout
@@ -575,6 +588,7 @@ const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
             primaryIsRTL,
             secondaryIsRTL,
             storyMeta,
+            uiLabels,
         }}
     >
         const CHAPTER = JSON.parse(chapterData);
@@ -590,38 +604,45 @@ const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
         // ══════════════════════════════════════════
         // TAB BAR (same as placeholder)
         // ══════════════════════════════════════════
+        const UI = JSON.parse(uiLabels);
+        function t(key) {
+            return UI[key] || key;
+        }
+
+        const secondaryHasText = Boolean(CHAPTER.secondaryTextFilesetId);
+
         const EXERCISES = [
             {
                 id: "listen-reveal",
-                label: "Listen & Reveal",
+                localeKey: "listenReveal",
                 icon: "ear-reveal",
                 showInTabs: true,
                 tabOrder: 0,
             },
             {
                 id: "listen-fill",
-                label: "Fill Gap",
+                localeKey: "listenFill",
                 icon: "ear-blank",
                 showInTabs: true,
                 tabOrder: 2,
             },
             {
                 id: "listen-order",
-                label: "Continue Sentence",
+                localeKey: "listenOrder",
                 icon: "ear-sort",
                 showInTabs: true,
                 tabOrder: 3,
             },
             {
                 id: "listen",
-                label: "Listen",
+                localeKey: "listen",
                 icon: "ear-check",
                 showInTabs: true,
                 tabOrder: 4,
             },
             {
                 id: "sentence-builder",
-                label: "Build Sentence",
+                localeKey: "sentenceBuilder",
                 icon: "puzzle",
                 showInTabs: false,
                 tabOrder: 99,
@@ -639,29 +660,8 @@ const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
             puzzle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h3v3a2 2 0 0 1 4 0v0a2 2 0 0 1-4 0v3H7a2 2 0 0 0 0 4h0a2 2 0 0 0 0-4H4V7z"/><path d="M14 14h3a2 2 0 0 1 0 4h0a2 2 0 0 1 0-4h3V7h-3a2 2 0 0 0 0-4h0a2 2 0 0 0 0 4h-3v7z"/></svg>',
             more: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
         };
-        const LOCALE_MAP = { eng: "en", fra: "fr", frd: "fr" };
-        const LABELS = {
-            en: {
-                "listen-reveal": "Listen & Reveal",
-                "listen-fill": "Fill Gap",
-                "listen-order": "Continue Sentence",
-                listen: "Listen",
-                "sentence-builder": "Build Sentence",
-                more: "More",
-            },
-            fr: {
-                "listen-reveal": "Écouter et Révéler",
-                "listen-fill": "Combler les trous",
-                "listen-order": "Continuer la phrase",
-                listen: "Écouter",
-                "sentence-builder": "Construire la phrase",
-                more: "Plus",
-            },
-        };
-        const uiLocale = LOCALE_MAP[secondaryCode] || "en";
-        const labels = LABELS[uiLocale] || LABELS.en;
         function getLabel(ex) {
-            return labels[ex.id] || ex.label;
+            return t(ex.localeKey);
         }
         function tabItemHTML(ex) {
             const isActive = ex.id === "listen";
@@ -680,7 +680,7 @@ const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
             if (overflowExercises.length <= 1)
                 return allSorted.map(tabItemHTML).join("");
             let html = tabExercises.map(tabItemHTML).join("");
-            html += `<div class="exercise-tab-more-wrapper"><button class="exercise-tab-item" data-more="true"><span class="exercise-tab-icon">${ICON_SVGS.more}</span><span class="exercise-tab-label">${labels.more || "More"}</span></button></div>`;
+            html += `<div class="exercise-tab-more-wrapper"><button class="exercise-tab-item" data-more="true"><span class="exercise-tab-icon">${ICON_SVGS.more}</span><span class="exercise-tab-label">${t("more")}</span></button></div>`;
             return html;
         }
         document.getElementById("tab-bar-desktop").innerHTML =
@@ -884,11 +884,14 @@ const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
                     entry,
                 );
 
+                const secLine = secondaryHasText
+                    ? `<div class="listen-verse-text-secondary"${secRtlAttr}>${secondaryText || "..."}</div>`
+                    : "";
                 html += `<div class="listen-verse-card" data-verse-idx="${i}" id="verse-${i}">
                     ${imagesHTML ? `<div class="listen-verse-images">${imagesHTML}</div>` : ""}
                     <div class="listen-verse-ref">${reference}</div>
                     <div class="listen-verse-text-primary"${priRtlAttr}>${primaryText || "..."}</div>
-                    <div class="listen-verse-text-secondary"${secRtlAttr}>${secondaryText || "..."}</div>
+                    ${secLine}
                 </div>`;
             }
 

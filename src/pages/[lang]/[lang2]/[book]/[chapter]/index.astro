@@ -10,6 +10,7 @@ import {
     getChapterImageData,
     buildChapterData,
 } from "../../../../../utils/chapterData";
+import { useTranslations } from "../../../../../i18n";
 
 const { lang, lang2, book, chapter } = Astro.params;
 
@@ -66,6 +67,30 @@ const backHref =
     chapterNum === 1
         ? `/${primaryCode}`
         : `/${primaryCode}/${secondaryCode}/${book}/1/`;
+
+const t = useTranslations(secondaryCode);
+const uiLabels = JSON.stringify({
+    listenReveal: t("listenReveal"),
+    listenChoose: t("listenChoose"),
+    listenOrder: t("listenOrder"),
+    listenFill: t("listenFill"),
+    sentenceBuilder: t("sentenceBuilder"),
+    listen: t("listen"),
+    more: t("more"),
+    revealAll: t("revealAll"),
+    hideAll: t("hideAll"),
+    correct: t("correct"),
+    incorrect: t("incorrect"),
+    orderWords: t("orderWords"),
+    check: t("check"),
+    fillBlanks: t("fillBlanks"),
+    buildSentence: t("buildSentence"),
+    completed: t("completed"),
+    continue: t("continue"),
+    comingSoon: t("comingSoon"),
+    audioOnly: t("audioOnly"),
+    textNotAvailable: t("textNotAvailable"),
+});
 ---
 
 <Layout
@@ -1194,6 +1219,7 @@ const backHref =
             secondaryCode,
             primaryIsRTL,
             secondaryIsRTL,
+            uiLabels,
         }}
     >
         const CHAPTER = JSON.parse(chapterData);
@@ -1207,78 +1233,14 @@ const backHref =
         } catch (e) {}
 
         // ══════════════════════════════════════════
-        // LOCALIZATION
+        // LOCALIZATION (from src/i18n/*.json)
         // ══════════════════════════════════════════
-        const LOCALES = {
-            en: {
-                learnExercises: {
-                    listenReveal: "Listen & Reveal",
-                    listenChoose: "Listen & Choose",
-                    listenOrder: "Continue Sentence",
-                    listenFill: "Fill Gap",
-                    sentenceBuilder: "Build Sentence",
-                    listen: "Listen",
-                    more: "More",
-                    revealAll: "Reveal all",
-                    hideAll: "Hide all",
-                    correct: "Correct!",
-                    incorrect: "Try again",
-                    orderWords: "Continue the sentence",
-                    check: "Check",
-                    fillBlanks: "Fill in the blanks",
-                    buildSentence: "Build the sentence",
-                    completed: "Well done!",
-                    continue: "Continue",
-                    comingSoon: "Coming soon",
-                },
-            },
-            fr: {
-                learnExercises: {
-                    listenReveal: "Écouter et Révéler",
-                    listenChoose: "Écouter et Choisir",
-                    listenOrder: "Continuer la phrase",
-                    listenFill: "Combler les trous",
-                    sentenceBuilder: "Construire la phrase",
-                    listen: "Écouter",
-                    more: "Plus",
-                    revealAll: "Tout révéler",
-                    hideAll: "Tout masquer",
-                    correct: "Correct !",
-                    incorrect: "Réessayez",
-                    orderWords: "Continuez la phrase",
-                    check: "Vérifier",
-                    fillBlanks: "Remplissez les blancs",
-                    buildSentence: "Construisez la phrase",
-                    completed: "Bravo !",
-                    continue: "Continuer",
-                    comingSoon: "Bientôt disponible",
-                },
-            },
-        };
-        const LOCALE_MAP = {
-            eng: "en",
-            fra: "fr",
-            frd: "fr",
-            deu: "de",
-            spa: "es",
-            por: "pt",
-            rus: "ru",
-            hin: "hi",
-            arb: "ar",
-            ron: "ro",
-        };
-        const uiLocale = LOCALE_MAP[secondaryCode] || "en";
-        const activeLocale = LOCALES[uiLocale] || LOCALES.en;
-
+        const UI = JSON.parse(uiLabels);
         function t(key) {
-            const parts = key.split(".");
-            let obj = activeLocale;
-            for (const p of parts) {
-                if (!obj || typeof obj !== "object") return key;
-                obj = obj[p];
-            }
-            return obj || key;
+            return UI[key] || key;
         }
+
+        const secondaryHasText = Boolean(CHAPTER.secondaryTextFilesetId);
 
         // ══════════════════════════════════════════
         // UTILITIES
@@ -1471,39 +1433,39 @@ const backHref =
         const EXERCISES = [
             {
                 id: "listen-reveal",
-                localeKey: "learnExercises.listenReveal",
+                localeKey: "listenReveal",
                 icon: "ear-reveal",
                 showInTabs: true,
                 tabOrder: 0,
             },
             {
                 id: "listen-fill",
-                localeKey: "learnExercises.listenFill",
+                localeKey: "listenFill",
                 icon: "ear-blank",
                 showInTabs: true,
                 tabOrder: 2,
             },
             {
                 id: "listen-order",
-                localeKey: "learnExercises.listenOrder",
+                localeKey: "listenOrder",
                 icon: "ear-sort",
                 showInTabs: true,
                 tabOrder: 3,
             },
             {
-                id: "listen",
-                localeKey: "learnExercises.listen",
-                icon: "ear-check",
-                showInTabs: true,
-                tabOrder: 4,
-                href: "./listen",
-            },
-            {
                 id: "sentence-builder",
-                localeKey: "learnExercises.sentenceBuilder",
+                localeKey: "sentenceBuilder",
                 icon: "puzzle",
                 showInTabs: false,
+                tabOrder: 4,
+            },
+            {
+                id: "listen",
+                localeKey: "listen",
+                icon: "ear-check",
+                showInTabs: true,
                 tabOrder: 99,
+                href: "./listen",
             },
         ];
         const ICON_SVGS = {
@@ -1521,6 +1483,14 @@ const backHref =
 
         // ══════════════════════════════════════════
         // STATE
+        // Filter exercises when secondary has no text
+        if (!secondaryHasText) {
+            // Keep only the "listen" link (audio-only mode)
+            const listenOnly = EXERCISES.filter((e) => e.id === "listen");
+            EXERCISES.length = 0;
+            EXERCISES.push(...listenOnly);
+        }
+
         // ══════════════════════════════════════════
         let isPlaying = false;
         let peekTimer = null;
@@ -1529,7 +1499,9 @@ const backHref =
         let activeExercise =
             savedExercise && VALID_EXERCISES.has(savedExercise)
                 ? savedExercise
-                : "listen-reveal";
+                : secondaryHasText
+                  ? "listen-reveal"
+                  : "listen";
         let moreMenuOpen = false;
         let exState = {};
         const audio = new Audio();
@@ -1685,7 +1657,12 @@ const backHref =
             verseImage.alt = reference;
             verseReference.textContent = reference;
             peekText.textContent = primaryText || "Text not available";
-            secondaryTextEl.textContent = secondaryText || "Text not available";
+            if (secondaryHasText) {
+                secondaryTextEl.textContent =
+                    secondaryText || t("textNotAvailable");
+            } else {
+                secondaryTextEl.textContent = "";
+            }
             verseCounter.textContent = `${idx + 1} / ${entries.length}`;
 
             // Nav arrows
@@ -1769,7 +1746,7 @@ const backHref =
             html += `<div class="exercise-tab-more-wrapper">
                 <button class="exercise-tab-item${moreActive ? " active" : ""}" data-more="true">
                     <span class="exercise-tab-icon">${ICON_SVGS.more}</span>
-                    <span class="exercise-tab-label">${t("learnExercises.more")}</span>
+                    <span class="exercise-tab-label">${t("more")}</span>
                 </button>
                 ${
                     moreMenuOpen
@@ -1834,16 +1811,19 @@ const backHref =
         function completionHTML() {
             const hasNext = currentIdx < CHAPTER.verseEntries.length - 1;
             const btnHTML = hasNext
-                ? `<button class="exercise-continue-btn" data-action="continue-next">${t("learnExercises.continue")} &rarr;</button>`
+                ? `<button class="exercise-continue-btn" data-action="continue-next">${t("continue")} &rarr;</button>`
                 : "";
-            return `<div class="exercise-complete-bar"><button class="exercise-reset-btn" data-action="exercise-reset" title="Try again">&#8635;</button><span class="exercise-complete-text">${t("learnExercises.completed")}</span>${btnHTML}<button class="exercise-dismiss-btn" data-action="exercise-reset" title="Dismiss">&times;</button></div>`;
+            return `<div class="exercise-complete-bar"><button class="exercise-reset-btn" data-action="exercise-reset" title="Try again">&#8635;</button><span class="exercise-complete-text">${t("completed")}</span>${btnHTML}<button class="exercise-dismiss-btn" data-action="exercise-reset" title="Dismiss">&times;</button></div>`;
         }
 
         function renderExercise() {
-            if (!exerciseArea || !VERSE.primaryText) {
-                if (exerciseArea)
-                    exerciseArea.innerHTML =
-                        '<div class="no-text-message">No text data available for exercises</div>';
+            if (!exerciseArea) return;
+            if (!secondaryHasText) {
+                exerciseArea.innerHTML = `<div class="no-text-message">${t("audioOnly")}</div>`;
+                return;
+            }
+            if (!VERSE.primaryText) {
+                exerciseArea.innerHTML = `<div class="no-text-message">${t("textNotAvailable")}</div>`;
                 return;
             }
             switch (activeExercise) {
@@ -1885,7 +1865,7 @@ const backHref =
             exerciseArea.innerHTML = `<div class="listen-reveal">
                 <div class="listen-reveal-words"${rtlAttr}>${wordsHTML}</div>
                 <div class="listen-reveal-actions">
-                    <button class="listen-reveal-eye-btn" data-action="toggle-all" title="${allRevealed ? t("learnExercises.hideAll") : t("learnExercises.revealAll")}">${eyeSvg}</button>
+                    <button class="listen-reveal-eye-btn" data-action="toggle-all" title="${allRevealed ? t("hideAll") : t("revealAll")}">${eyeSvg}</button>
                 </div></div>`;
         }
 
@@ -1955,7 +1935,7 @@ const backHref =
                 .join("");
             const headerHTML = allCorrect
                 ? completionHTML()
-                : `<p class="listen-order-instruction">${t("learnExercises.orderWords")}</p>`;
+                : `<p class="listen-order-instruction">${t("orderWords")}</p>`;
             exerciseArea.innerHTML = `<div class="listen-order">
                 ${headerHTML}
                 <div class="listen-order-verse"${rtlAttr}>${verseHTML}</div>
@@ -2055,7 +2035,7 @@ const backHref =
                 .join("");
             const headerHTML = allCorrect
                 ? completionHTML()
-                : `<p class="listen-fill-instruction">${t("learnExercises.fillBlanks")}</p>`;
+                : `<p class="listen-fill-instruction">${t("fillBlanks")}</p>`;
             exerciseArea.innerHTML = `<div class="listen-fill-gap">
                 ${headerHTML}
                 <div class="listen-fill-verse"${rtlAttr}>${verseHTML}</div>
@@ -2119,14 +2099,14 @@ const backHref =
                 : "";
             let actionsHTML = "";
             if (allPlaced && !sbChecked)
-                actionsHTML = `<button class="sentence-builder-check-btn" data-action="sb-check">${t("learnExercises.check")}</button>`;
+                actionsHTML = `<button class="sentence-builder-check-btn" data-action="sb-check">${t("check")}</button>`;
             else if (allCorrect) actionsHTML = "";
             else if (sbChecked && !allCorrect)
                 actionsHTML = `<button class="sentence-builder-reset-btn" data-action="sb-reset">\u21BB</button>`;
             const headerHTML = allCorrect
                 ? completionHTML()
                 : `<div class="sentence-builder-hint-wrapper">
-                    <p class="sentence-builder-instruction">${t("learnExercises.buildSentence")}
+                    <p class="sentence-builder-instruction">${t("buildSentence")}
                         <button class="sentence-builder-hint-btn" data-action="sb-hint">?</button></p>${hintHTML}
                 </div>`;
             exerciseArea.innerHTML = `<div class="sentence-builder">
@@ -2136,7 +2116,7 @@ const backHref =
         }
 
         function renderListenChoose() {
-            exerciseArea.innerHTML = `<div class="listen-choose-placeholder">${t("learnExercises.listenChoose")} — ${t("learnExercises.comingSoon")}</div>`;
+            exerciseArea.innerHTML = `<div class="listen-choose-placeholder">${t("listenChoose")} — ${t("comingSoon")}</div>`;
         }
 
         // ══════════════════════════════════════════

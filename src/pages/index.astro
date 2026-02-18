@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import langsData from "../data/ALL-langs-compact.json";
+import { useTranslations } from "../i18n";
 
 const base = "src/data/ALL-langs-data/nt";
 const dirs = ["with-timecode", "audio-with-timecode"];
@@ -18,13 +19,13 @@ for (const dir of dirs) {
     }
 }
 
-// Count all secondary languages
+// Count secondary languages: must have at least one non-failed NT category
 const secondaryCodes = new Set<string>();
-for (const canon of ["nt", "ot"] as const) {
-    const canonData = (langsData.canons as any)[canon];
-    if (!canonData) continue;
-    for (const cat of Object.keys(canonData)) {
-        for (const code of Object.keys(canonData[cat])) {
+const ntCanon = (langsData.canons as any).nt;
+if (ntCanon) {
+    for (const cat of Object.keys(ntCanon)) {
+        if (cat === "failed") continue;
+        for (const code of Object.keys(ntCanon[cat])) {
             secondaryCodes.add(code);
         }
     }
@@ -47,6 +48,64 @@ const awt = langsData.canons.nt["audio-with-timecode"] as Record<
 const languages = [...primaryCodes].sort().map((code) => {
     const info = wt[code] || awt[code] || {};
     return { code, name: info.n || code, vernacular: info.v || "" };
+});
+
+// Build hero translations for all supported UI locales
+const heroLocales = [
+    "eng",
+    "fra",
+    "deu",
+    "spa",
+    "por",
+    "rus",
+    "hin",
+    "arb",
+    "ron",
+];
+const heroTranslations: Record<string, Record<string, string>> = {};
+for (const loc of heroLocales) {
+    const t = useTranslations(loc);
+    heroTranslations[loc] = {
+        heroTagline: t("heroTagline"),
+        heroHeadline: t("heroHeadline"),
+        heroSub: t("heroSub")
+            .replace("{primary}", String(primaryCount))
+            .replace("{secondary}", secondaryCount.toLocaleString("en-US")),
+        heroCta: t("heroCta"),
+        selectMotherTongue: t("selectMotherTongue"),
+        selectLanguageToLearn: t("selectLanguageToLearn"),
+        searchPlaceholder: t("searchPlaceholder"),
+        languageCount: t("languageCount"),
+        languageCountFiltered: t("languageCountFiltered"),
+        noLanguagesFound: t("noLanguagesFound"),
+        motherTongueBadge: t("motherTongueBadge"),
+    };
+}
+const heroJSON = JSON.stringify(heroTranslations);
+
+// Build secondary languages array for the modal grid
+const secondaryLanguages: { code: string; name: string; vernacular: string }[] =
+    [];
+const seenSec = new Set<string>();
+for (const cat of Object.keys(ntCanon)) {
+    if (cat === "failed") continue;
+    const catData = ntCanon[cat] as Record<string, { n?: string; v?: string }>;
+    for (const [lc, info] of Object.entries(catData)) {
+        if (!seenSec.has(lc)) {
+            seenSec.add(lc);
+            secondaryLanguages.push({
+                code: lc,
+                name: info.n || lc,
+                vernacular: info.v || "",
+            });
+        }
+    }
+}
+secondaryLanguages.sort((a, b) => a.name.localeCompare(b.name));
+
+const langDataJSON = JSON.stringify({
+    primary: languages,
+    secondary: secondaryLanguages,
 });
 ---
 
@@ -308,6 +367,37 @@ const languages = [...primaryCodes].sort().map((code) => {
             }
             .modal-header h2 {
                 font-size: 1.25rem;
+                flex: 1;
+            }
+            .modal-back {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 1.25rem;
+                cursor: pointer;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                transition:
+                    color 0.2s,
+                    background 0.2s;
+                line-height: 1;
+                margin-right: 0.5rem;
+            }
+            .modal-back:hover {
+                color: #e0e0e0;
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .selected-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                background: rgba(110, 168, 254, 0.15);
+                border: 1px solid rgba(110, 168, 254, 0.3);
+                color: #6ea8fe;
+                padding: 0.35rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                margin-bottom: 0.75rem;
             }
             .modal-close {
                 background: none;
@@ -372,36 +462,37 @@ const languages = [...primaryCodes].sort().map((code) => {
                 grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
                 gap: 0.5rem;
             }
-            .lang-item {
+            /* Grid items are JS-generated — need :global */
+            :global(.lang-item) {
                 display: flex;
                 align-items: baseline;
                 gap: 0.5rem;
                 padding: 0.6rem 0.85rem;
                 background: rgba(255, 255, 255, 0.06);
                 border-radius: 6px;
-                text-decoration: none;
                 color: #e0e0e0;
                 transition: background 0.15s;
                 border: 1px solid rgba(255, 255, 255, 0.08);
+                cursor: pointer;
             }
-            .lang-item:hover {
+            :global(.lang-item:hover) {
                 background: rgba(255, 255, 255, 0.12);
                 border-color: rgba(110, 168, 254, 0.3);
             }
-            .lang-code {
+            :global(.lang-code) {
                 color: rgba(255, 255, 255, 0.4);
                 font-size: 0.8rem;
                 font-family: monospace;
                 flex-shrink: 0;
             }
-            .lang-name {
+            :global(.lang-name) {
                 font-weight: 500;
             }
-            .lang-vernacular {
+            :global(.lang-vernacular) {
                 color: #6ea8fe;
                 font-size: 0.85rem;
             }
-            .highlight {
+            :global(.highlight) {
                 background: rgba(110, 168, 254, 0.25);
                 color: #6ea8fe;
                 border-radius: 2px;
@@ -546,18 +637,21 @@ const languages = [...primaryCodes].sort().map((code) => {
         <div class="landing-content" id="landing-content">
             <!-- Hero -->
             <section class="hero">
-                <p class="hero-tagline">Bible-based language learning</p>
-                <h2 class="hero-headline">
-                    Learn any language from any language
+                <p class="hero-tagline" id="hero-tagline">
+                    Easy language learning
+                </p>
+                <h2 class="hero-headline" id="hero-headline">
+                    The unmatched multilingual learning experience
                 </h2>
-                <p class="hero-sub">
-                    Learn any of {primaryCount} languages from {
-                        secondaryCount.toLocaleString("en-US")
-                    } mother-tongue languages for an unmatched multilingual learning
-                    experience.
+                <p class="hero-sub" id="hero-sub">
+                    Listen to any of {primaryCount} languages - with exercises in
+                    {secondaryCount.toLocaleString("en-US")} mother-tongues
                 </p>
                 <button class="hero-cta" id="hero-cta">
-                    Get started <span>&rarr;</span>
+                    <span id="hero-cta-text"
+                        >Select your mother-tongue here</span
+                    >
+                    <span>&rarr;</span>
                 </button>
             </section>
 
@@ -611,7 +705,13 @@ const languages = [...primaryCodes].sort().map((code) => {
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
                 <div class="modal-header">
-                    <h2>Select a language</h2>
+                    <button
+                        class="modal-back"
+                        id="modal-back"
+                        aria-label="Back"
+                        style="display:none">&larr;</button
+                    >
+                    <h2 id="modal-title"></h2>
                     <button
                         class="modal-close"
                         id="modal-close"
@@ -619,47 +719,69 @@ const languages = [...primaryCodes].sort().map((code) => {
                     >
                 </div>
                 <div class="modal-body">
+                    <div
+                        id="selected-badge"
+                        class="selected-badge"
+                        style="display:none"
+                    >
+                    </div>
                     <div class="search-section">
                         <input
                             id="search"
                             class="search-input"
                             type="text"
-                            placeholder="Search by language name, vernacular, or code..."
+                            placeholder=""
                         />
                     </div>
-                    <p class="count" id="count">
-                        {languages.length} languages
-                    </p>
-                    <div class="grid" id="grid">
-                        {
-                            languages.map((lang) => (
-                                <a
-                                    class="lang-item"
-                                    href={`/${lang.code}`}
-                                    data-code={lang.code}
-                                    data-name={lang.name}
-                                    data-vernacular={lang.vernacular}
-                                >
-                                    <span class="lang-code">{lang.code}</span>
-                                    <span class="lang-name">{lang.name}</span>
-                                    {lang.vernacular && (
-                                        <span class="lang-vernacular">
-                                            {" "}
-                                            - {lang.vernacular}
-                                        </span>
-                                    )}
-                                </a>
-                            ))
-                        }
-                    </div>
+                    <p class="count" id="count"></p>
+                    <div class="grid" id="grid"></div>
                     <p class="no-results" id="no-results" style="display:none">
-                        No languages found
                     </p>
                 </div>
             </div>
         </div>
 
+        <script id="hero-i18n" type="application/json" set:html={heroJSON} />
+        <script
+            id="lang-data"
+            type="application/json"
+            set:html={langDataJSON}
+        />
         <script>
+            // Localise UI based on browser language
+            const LANG_MAP: Record<string, string> = {
+                en: "eng",
+                fr: "fra",
+                de: "deu",
+                es: "spa",
+                pt: "por",
+                ru: "rus",
+                hi: "hin",
+                ar: "arb",
+                ro: "ron",
+            };
+            const allI18n = JSON.parse(
+                document.getElementById("hero-i18n")!.textContent!,
+            );
+            const browserLang = (navigator.language || "en")
+                .split("-")[0]
+                .toLowerCase();
+            const loc = LANG_MAP[browserLang];
+            const ui = (loc && allI18n[loc]) || allI18n["eng"] || {};
+
+            try {
+                if (loc && allI18n[loc]) {
+                    document.getElementById("hero-tagline")!.textContent =
+                        ui.heroTagline;
+                    document.getElementById("hero-headline")!.textContent =
+                        ui.heroHeadline;
+                    document.getElementById("hero-sub")!.textContent =
+                        ui.heroSub;
+                    document.getElementById("hero-cta-text")!.textContent =
+                        ui.heroCta;
+                }
+            } catch (e) {}
+
             // Check for saved state and show continue view
             const lastState = localStorage.getItem("lastState");
             if (lastState) {
@@ -702,16 +824,108 @@ const languages = [...primaryCodes].sort().map((code) => {
                 }
             }
 
-            // Modal
+            // ── Language data ──
+            const langData = JSON.parse(
+                document.getElementById("lang-data")!.textContent!,
+            );
+            const primaryLangs = langData.primary;
+            const secondaryLangs = langData.secondary;
+
+            // ── DOM refs ──
             const overlay = document.getElementById("modal-overlay")!;
             const openBtn = document.getElementById("open-lang-selector")!;
             const heroCta = document.getElementById("hero-cta")!;
             const closeBtn = document.getElementById("modal-close")!;
+            const backBtn = document.getElementById("modal-back")!;
+            const modalTitle = document.getElementById("modal-title")!;
+            const selectedBadge = document.getElementById("selected-badge")!;
             const search = document.getElementById(
                 "search",
             ) as HTMLInputElement;
+            const grid = document.getElementById("grid")!;
+            const countEl = document.getElementById("count")!;
+            const noResults = document.getElementById("no-results")!;
+            noResults.textContent = ui.noLanguagesFound || "No languages found";
 
+            // ── State ──
+            let step = 1;
+            let selectedSecondary: {
+                code: string;
+                name: string;
+                vernacular: string;
+            } | null = null;
+
+            // ── Grid rendering ──
+            function renderGrid(langs: typeof primaryLangs) {
+                let html = "";
+                for (const lang of langs) {
+                    const vern = lang.vernacular
+                        ? ` <span class="lang-vernacular"> - ${lang.vernacular}</span>`
+                        : "";
+                    html += `<div class="lang-item" data-code="${lang.code}" data-name="${lang.name}" data-vernacular="${lang.vernacular || ""}"><span class="lang-code">${lang.code}</span><span class="lang-name">${lang.name}</span>${vern}</div>`;
+                }
+                grid.innerHTML = html;
+                countEl.textContent = (
+                    ui.languageCount || "{count} languages"
+                ).replace("{count}", String(langs.length));
+                noResults.style.display = "none";
+                grid.style.display = "";
+            }
+
+            function showStep(s: number) {
+                step = s;
+                search.value = "";
+                search.placeholder =
+                    ui.searchPlaceholder ||
+                    "Search by language name, vernacular, or code...";
+                if (step === 1) {
+                    modalTitle.textContent =
+                        ui.selectMotherTongue || "Select your mother-tongue";
+                    backBtn.style.display = "none";
+                    selectedBadge.style.display = "none";
+                    renderGrid(secondaryLangs);
+                } else {
+                    modalTitle.textContent =
+                        ui.selectLanguageToLearn ||
+                        "Select a language to learn";
+                    backBtn.style.display = "";
+                    selectedBadge.style.display = "";
+                    const label = selectedSecondary!.vernacular
+                        ? `${selectedSecondary!.name} - ${selectedSecondary!.vernacular}`
+                        : selectedSecondary!.name;
+                    selectedBadge.textContent = (
+                        ui.motherTongueBadge || "Mother-tongue: {label}"
+                    ).replace("{label}", label);
+                    renderGrid(primaryLangs);
+                }
+                search.focus();
+            }
+
+            // ── Grid click handler ──
+            grid.addEventListener("click", (e) => {
+                const item = (e.target as HTMLElement).closest(
+                    ".lang-item",
+                ) as HTMLElement | null;
+                if (!item) return;
+                const code = item.dataset.code!;
+                const name = item.dataset.name!;
+                const vernacular = item.dataset.vernacular || "";
+
+                if (step === 1) {
+                    selectedSecondary = { code, name, vernacular };
+                    showStep(2);
+                } else {
+                    window.location.href = `/${code}/${selectedSecondary!.code}`;
+                }
+            });
+
+            // ── Modal open/close ──
             function openModal() {
+                if (!selectedSecondary) {
+                    showStep(1);
+                } else {
+                    showStep(2);
+                }
                 overlay.classList.add("open");
                 search.focus();
             }
@@ -722,6 +936,7 @@ const languages = [...primaryCodes].sort().map((code) => {
             openBtn.addEventListener("click", openModal);
             heroCta.addEventListener("click", openModal);
             closeBtn.addEventListener("click", closeModal);
+            backBtn.addEventListener("click", () => showStep(1));
             overlay.addEventListener("click", (e) => {
                 if (e.target === overlay) closeModal();
             });
@@ -729,15 +944,7 @@ const languages = [...primaryCodes].sort().map((code) => {
                 if (e.key === "Escape") closeModal();
             });
 
-            // Search filtering
-            const grid = document.getElementById("grid")!;
-            const countEl = document.getElementById("count")!;
-            const noResults = document.getElementById("no-results")!;
-            const items = [
-                ...grid.querySelectorAll<HTMLAnchorElement>(".lang-item"),
-            ];
-            const total = items.length;
-
+            // ── Search filtering ──
             function escapeRegex(s: string) {
                 return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             }
@@ -750,7 +957,12 @@ const languages = [...primaryCodes].sort().map((code) => {
             }
 
             search.addEventListener("input", () => {
+                const items = [
+                    ...grid.querySelectorAll<HTMLElement>(".lang-item"),
+                ];
+                const total = items.length;
                 const term = search.value.trim().toLowerCase();
+
                 if (!term) {
                     items.forEach((el) => {
                         el.style.display = "";
@@ -762,7 +974,9 @@ const languages = [...primaryCodes].sort().map((code) => {
                         if (vEl)
                             vEl.textContent = ` - ${el.dataset.vernacular!}`;
                     });
-                    countEl.textContent = `${total} languages`;
+                    countEl.textContent = (
+                        ui.languageCount || "{count} languages"
+                    ).replace("{count}", String(total));
                     noResults.style.display = "none";
                     grid.style.display = "";
                     return;
@@ -795,10 +1009,17 @@ const languages = [...primaryCodes].sort().map((code) => {
                     }
                 });
 
-                countEl.textContent = `${visible} of ${total} languages`;
+                countEl.textContent = (
+                    ui.languageCountFiltered || "{visible} of {total} languages"
+                )
+                    .replace("{visible}", String(visible))
+                    .replace("{total}", String(total));
                 noResults.style.display = visible === 0 ? "" : "none";
                 grid.style.display = visible === 0 ? "none" : "";
             });
+
+            // ── Initialize grid for direct page load (modal closed) ──
+            renderGrid(secondaryLangs);
         </script>
     </body>
 </html>
