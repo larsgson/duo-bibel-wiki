@@ -2450,22 +2450,16 @@ const uiLabels = JSON.stringify({
         function playVerse() {
             if (!VERSE.primaryAudioUrl) return;
             if (secPlaying) stopSecondary();
-            const seekAndPlay = () => {
-                audio.currentTime = VERSE.startTime;
-                audio.play().catch(() => {});
-                isPlaying = true;
-                imageContainer.classList.add("playing");
-                playIcon.innerHTML = "&#9208;";
-            };
-            if (audio.src && audio.src === VERSE.primaryAudioUrl) {
-                seekAndPlay();
-            } else {
+            // iOS-safe: set src if needed, then play synchronously in gesture context.
+            // Never use .load() — it can re-lock the element on iOS.
+            if (!audio.src || audio.src !== VERSE.primaryAudioUrl) {
                 audio.src = VERSE.primaryAudioUrl;
-                audio.addEventListener("loadeddata", seekAndPlay, {
-                    once: true,
-                });
-                audio.load();
             }
+            audio.currentTime = VERSE.startTime;
+            audio.play().catch(() => {});
+            isPlaying = true;
+            imageContainer.classList.add("playing");
+            playIcon.innerHTML = "&#9208;";
         }
 
         function togglePlay() {
@@ -2507,21 +2501,14 @@ const uiLabels = JSON.stringify({
                     playIcon.innerHTML = "&#9654;";
                 }
                 if (!VERSE.secondaryAudioUrl) return;
-                const seekAndPlay = () => {
-                    secAudio.currentTime = VERSE.secondaryStartTime;
-                    secAudio.play().catch(() => {});
-                    secPlaying = true;
-                    secPlayBtn.classList.add("playing");
-                };
-                if (secAudio.src && secAudio.src === VERSE.secondaryAudioUrl) {
-                    seekAndPlay();
-                } else {
+                // iOS-safe: set src if needed, then play synchronously in gesture context
+                if (!secAudio.src || secAudio.src !== VERSE.secondaryAudioUrl) {
                     secAudio.src = VERSE.secondaryAudioUrl;
-                    secAudio.addEventListener("loadeddata", seekAndPlay, {
-                        once: true,
-                    });
-                    secAudio.load();
                 }
+                secAudio.currentTime = VERSE.secondaryStartTime;
+                secAudio.play().catch(() => {});
+                secPlaying = true;
+                secPlayBtn.classList.add("playing");
             });
 
             secAudio.addEventListener("timeupdate", () => {

@@ -914,11 +914,12 @@ const uiLabels = JSON.stringify({
 
         // ══════════════════════════════════════════
         // AUDIO STATE MACHINE
+        // iOS-safe: single <audio> element, reused for all playback.
+        // The element is "unlocked" by the first user tap, then stays
+        // unlocked for programmatic .play() calls (src swaps, seeking).
         // ══════════════════════════════════════════
-        const primaryAudio = new Audio();
-        const secondaryAudio = new Audio();
-        primaryAudio.preload = "auto";
-        secondaryAudio.preload = "auto";
+        const audio = new Audio();
+        let currentAudioSrc = ""; // tracks which file is loaded
 
         // States: "idle" | "playing_primary" | "playing_secondary"
         let audioState = "idle";
@@ -927,7 +928,6 @@ const uiLabels = JSON.stringify({
         function getSecondaryTiming(entry) {
             const secTiming = CHAPTER.secondaryChapterTiming;
             if (!secTiming || Object.keys(secTiming).length === 0) return null;
-            // Find matching key for this verse
             for (const [ref, times] of Object.entries(secTiming)) {
                 const colonIdx = ref.indexOf(":");
                 const verseSpec = ref.substring(colonIdx + 1);
@@ -941,6 +941,24 @@ const uiLabels = JSON.stringify({
                 }
             }
             return null;
+        }
+
+        // Seek to a time and play. If src needs to change, swap it and
+        // wait for canplay before seeking (browser must load new file).
+        // If src is already correct, seek and play immediately.
+        function seekAndPlay(url, startTime) {
+            if (currentAudioSrc === url) {
+                audio.currentTime = startTime;
+                audio.play().catch(() => {});
+            } else {
+                currentAudioSrc = url;
+                audio.src = url;
+                audio.addEventListener("canplay", function onCanPlay() {
+                    audio.removeEventListener("canplay", onCanPlay);
+                    audio.currentTime = startTime;
+                    audio.play().catch(() => {});
+                });
+            }
         }
 
         function playVerseFromPrimary(idx) {
@@ -957,13 +975,11 @@ const uiLabels = JSON.stringify({
             showPulse(true);
 
             if (!cachedPrimaryAudioUrl) {
-                // No primary audio: try secondary directly
                 playVerseSecondary(idx);
                 return;
             }
 
-            primaryAudio.currentTime = entry.startTime;
-            primaryAudio.play().catch(() => {});
+            seekAndPlay(cachedPrimaryAudioUrl, entry.startTime);
         }
 
         function playVerseSecondary(idx) {
@@ -971,7 +987,6 @@ const uiLabels = JSON.stringify({
             const secTiming = getSecondaryTiming(entry);
 
             if (!cachedSecondaryAudioUrl || !secTiming) {
-                // No secondary: advance to next verse
                 advanceToNextVerse();
                 return;
             }
@@ -979,8 +994,7 @@ const uiLabels = JSON.stringify({
             audioState = "playing_secondary";
             updatePlayerCard(idx, "secondary");
 
-            secondaryAudio.currentTime = secTiming.startTime;
-            secondaryAudio.play().catch(() => {});
+            seekAndPlay(cachedSecondaryAudioUrl, secTiming.startTime);
         }
 
         function advanceToNextVerse() {
@@ -993,30 +1007,26 @@ const uiLabels = JSON.stringify({
             scrollToVerse(nextIdx);
         }
 
-        // Primary audio timeupdate: check if reached end of verse
-        primaryAudio.addEventListener("timeupdate", () => {
-            if (audioState !== "playing_primary") return;
-            const entry = CHAPTER.verseEntries[currentVerseIdx];
-            if (primaryAudio.currentTime >= entry.endTime) {
-                primaryAudio.pause();
-                playVerseSecondary(currentVerseIdx);
-            }
-        });
-
-        // Secondary audio timeupdate: check if reached end
-        secondaryAudio.addEventListener("timeupdate", () => {
-            if (audioState !== "playing_secondary") return;
-            const entry = CHAPTER.verseEntries[currentVerseIdx];
-            const secTiming = getSecondaryTiming(entry);
-            if (secTiming && secondaryAudio.currentTime >= secTiming.endTime) {
-                secondaryAudio.pause();
-                advanceToNextVerse();
+        // Single timeupdate handler — checks boundaries based on state
+        audio.addEventListener("timeupdate", () => {
+            if (audioState === "playing_primary") {
+                const entry = CHAPTER.verseEntries[currentVerseIdx];
+                if (audio.currentTime >= entry.endTime) {
+                    audio.pause();
+                    playVerseSecondary(currentVerseIdx);
+                }
+            } else if (audioState === "playing_secondary") {
+                const entry = CHAPTER.verseEntries[currentVerseIdx];
+                const secTiming = getSecondaryTiming(entry);
+                if (secTiming && audio.currentTime >= secTiming.endTime) {
+                    audio.pause();
+                    advanceToNextVerse();
+                }
             }
         });
 
         function stopAll() {
-            primaryAudio.pause();
-            secondaryAudio.pause();
+            audio.pause();
             audioState = "idle";
             showPulse(false);
         }
@@ -1031,29 +1041,28 @@ const uiLabels = JSON.stringify({
         let pausedState = null; // { state, verseIdx }
         const playerBtn = document.getElementById("player-btn");
 
+        // iOS-safe play handler: .play() must be called synchronously
+        // in the user gesture (click) context. If data is already cached
+        // (normal case — init() prefetches), ensureData returns instantly
+        // and the gesture chain is preserved. If data is not yet cached
+        // (user tapped before init finished), we unlock the audio element
+        // with a synchronous .play() first, then load data and start.
         playerBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             if (audioState === "idle") {
                 if (pausedState) {
-                    // Resume
                     resumePlayback();
                 } else {
-                    // Start from beginning
                     loadAudioAndStart();
                 }
             } else {
-                // Pause
                 pausePlayback();
             }
         });
 
         function pausePlayback() {
             pausedState = { state: audioState, verseIdx: currentVerseIdx };
-            if (audioState === "playing_primary") {
-                primaryAudio.pause();
-            } else if (audioState === "playing_secondary") {
-                secondaryAudio.pause();
-            }
+            audio.pause();
             audioState = "idle";
             showPulse(false);
             updateBtnIcon(false);
@@ -1066,22 +1075,37 @@ const uiLabels = JSON.stringify({
             pausedState = null;
             showPulse(true);
             updateBtnIcon(true);
-            if (audioState === "playing_primary") {
-                primaryAudio.play().catch(() => {});
-            } else if (audioState === "playing_secondary") {
-                secondaryAudio.play().catch(() => {});
-            }
+            // Same element, already unlocked — .play() works on iOS
+            audio.play().catch(() => {});
         }
 
-        async function loadAudioAndStart() {
-            await ensureData();
-            if (cachedPrimaryAudioUrl) primaryAudio.src = cachedPrimaryAudioUrl;
-            if (cachedSecondaryAudioUrl)
-                secondaryAudio.src = cachedSecondaryAudioUrl;
-            pausedState = null;
-            updateBtnIcon(true);
-            playVerseFromPrimary(0);
-            scrollToVerse(0);
+        function loadAudioAndStart() {
+            // If data is already cached (normal case), start immediately
+            if (cachedPrimaryTexts !== null) {
+                if (cachedPrimaryAudioUrl) {
+                    currentAudioSrc = cachedPrimaryAudioUrl;
+                    audio.src = cachedPrimaryAudioUrl;
+                }
+                pausedState = null;
+                updateBtnIcon(true);
+                playVerseFromPrimary(0);
+                scrollToVerse(0);
+                return;
+            }
+            // Data not yet cached: unlock audio synchronously in gesture
+            // context with a silent play, then load data and start for real
+            audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+            audio.play().catch(() => {});
+            ensureData().then(() => {
+                if (cachedPrimaryAudioUrl) {
+                    currentAudioSrc = cachedPrimaryAudioUrl;
+                    audio.src = cachedPrimaryAudioUrl;
+                }
+                pausedState = null;
+                updateBtnIcon(true);
+                playVerseFromPrimary(0);
+                scrollToVerse(0);
+            });
         }
 
         // Click anywhere on player card toggles play/pause
@@ -1162,10 +1186,9 @@ const uiLabels = JSON.stringify({
         // ══════════════════════════════════════════
         (async function init() {
             await ensureData();
-            // Set audio sources
-            if (cachedPrimaryAudioUrl) primaryAudio.src = cachedPrimaryAudioUrl;
-            if (cachedSecondaryAudioUrl)
-                secondaryAudio.src = cachedSecondaryAudioUrl;
+            // Audio src is set on first play (in user gesture context).
+            // Data is prefetched here so loadAudioAndStart() can start
+            // synchronously when the user taps play.
             renderVerseList();
         })();
     </script>
