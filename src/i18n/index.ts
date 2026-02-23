@@ -7,6 +7,7 @@ import rus from "./rus.json";
 import hin from "./hin.json";
 import arb from "./arb.json";
 import ron from "./ron.json";
+import swe from "./swe.json";
 
 const translations: Record<string, Record<string, string>> = {
   eng,
@@ -19,6 +20,7 @@ const translations: Record<string, Record<string, string>> = {
   hin,
   arb,
   ron,
+  swe,
 };
 
 /**
