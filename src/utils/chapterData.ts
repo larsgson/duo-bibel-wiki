@@ -107,14 +107,44 @@ export function validateParams(params: {
 
 /**
  * Load timing data for a language code.
+ * If preferredVersion is given (from getFilesetInfo), use that exact
+ * version so timing matches the audio recording.
  */
-export function findTimingData(langCode: string): {
+export function findTimingData(
+  langCode: string,
+  preferredCategory?: string,
+  preferredVersion?: string,
+): {
   filesetKey: string;
   timingData: any;
   distinctId: string;
   category: string;
 } | null {
   const categories = ["with-timecode", "audio-with-timecode"];
+
+  // If a preferred version is specified, try it first
+  if (preferredCategory && preferredVersion) {
+    const timingFile = path.join(
+      process.cwd(),
+      "src/data/templates/John/ALL-timings/nt",
+      preferredCategory,
+      langCode,
+      preferredVersion,
+      "timing.json",
+    );
+    if (fs.existsSync(timingFile)) {
+      const data = JSON.parse(fs.readFileSync(timingFile, "utf-8"));
+      const filesetKey = Object.keys(data)[0];
+      return {
+        filesetKey,
+        timingData: data[filesetKey],
+        distinctId: preferredVersion,
+        category: preferredCategory,
+      };
+    }
+  }
+
+  // Fall back to scanning all versions
   for (const cat of categories) {
     const catPath = path.join(
       process.cwd(),
@@ -148,36 +178,30 @@ export function findTimingData(langCode: string): {
 export function findWordTimingData(
   langCode: string,
   chapterNum: number,
-): Record<string, Record<string, (number | null)[]>> | null {
-  const categories = ["with-timecode", "audio-with-timecode"];
-  for (const cat of categories) {
-    const catPath = path.join(
-      process.cwd(),
-      "src/data/templates/John/ALL-timings/nt",
-      cat,
-      langCode,
-    );
-    if (!fs.existsSync(catPath)) continue;
-    const versions = fs.readdirSync(catPath);
-    for (const ver of versions) {
-      const wordsFile = path.join(catPath, ver, "words.json");
-      if (fs.existsSync(wordsFile)) {
-        const data = JSON.parse(fs.readFileSync(wordsFile, "utf-8"));
-        const filesetKey = Object.keys(data)[0];
-        const chapterData = data[filesetKey]?.[String(chapterNum)];
-        if (!chapterData) return null;
-        // Flatten: { "JHN1:1": { "1": [...] } } → { "JHN1:1": [...] }
-        const flat: Record<string, (number | null)[]> = {};
-        for (const [ref, verseObj] of Object.entries(chapterData)) {
-          const inner = verseObj as Record<string, (number | null)[]>;
-          const firstKey = Object.keys(inner)[0];
-          if (firstKey) flat[ref] = inner[firstKey];
-        }
-        return flat;
-      }
-    }
+  category: string,
+  distinctId: string,
+): Record<string, (number | null)[]> | null {
+  const wordsFile = path.join(
+    process.cwd(),
+    "src/data/templates/John/ALL-timings/nt",
+    category,
+    langCode,
+    distinctId,
+    "words.json",
+  );
+  if (!fs.existsSync(wordsFile)) return null;
+  const data = JSON.parse(fs.readFileSync(wordsFile, "utf-8"));
+  const filesetKey = Object.keys(data)[0];
+  const chapterData = data[filesetKey]?.[String(chapterNum)];
+  if (!chapterData) return null;
+  // Flatten: { "JHN1:1": { "1": [...] } } → { "JHN1:1": [...] }
+  const flat: Record<string, (number | null)[]> = {};
+  for (const [ref, verseObj] of Object.entries(chapterData)) {
+    const inner = verseObj as Record<string, (number | null)[]>;
+    const firstKey = Object.keys(inner)[0];
+    if (firstKey) flat[ref] = inner[firstKey];
   }
-  return null;
+  return flat;
 }
 
 function parseTextFilesetId(
@@ -194,10 +218,15 @@ function parseTextFilesetId(
 
 /**
  * Get audio and text fileset IDs for a language.
+ * Also returns the distinctId/category of the audio source,
+ * so timing data can be loaded from the matching version.
  */
-export function getFilesetInfo(
-  langCode: string,
-): { audioFilesetId: string; textFilesetId: string } | null {
+export function getFilesetInfo(langCode: string): {
+  audioFilesetId: string;
+  textFilesetId: string;
+  audioDistinctId: string;
+  audioCategory: string;
+} | null {
   const allCategories = [
     "with-timecode",
     "audio-with-timecode",
@@ -207,6 +236,8 @@ export function getFilesetInfo(
   ];
   let bestAudio = "";
   let bestText = "";
+  let audioDistinctId = "";
+  let audioCategory = "";
   for (const cat of allCategories) {
     const catPath = path.join(
       process.cwd(),
@@ -223,6 +254,8 @@ export function getFilesetInfo(
       if (!bestAudio && d.a) {
         const audioSuffix = d.a.replace(".mp3", "");
         bestAudio = audioSuffix.length >= 6 ? audioSuffix : ver + audioSuffix;
+        audioDistinctId = ver;
+        audioCategory = cat;
       }
       if (!bestText && d.t) {
         bestText = parseTextFilesetId(d.t, ver);
@@ -232,7 +265,7 @@ export function getFilesetInfo(
     if (bestAudio && bestText) break;
   }
   if (!bestAudio && !bestText) return null;
-  return { audioFilesetId: bestAudio, textFilesetId: bestText };
+  return { audioFilesetId: bestAudio, textFilesetId: bestText, audioDistinctId, audioCategory };
 }
 
 /**

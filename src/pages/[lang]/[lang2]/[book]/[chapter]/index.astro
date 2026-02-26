@@ -28,9 +28,21 @@ const secondaryCode = secondary.code;
 const secondaryEnglish = secondary.english;
 const secondaryIsRTL = secondary.isRTL;
 
-// ── Load timing data ──
-const primaryTiming = findTimingData(primaryCode);
-const secondaryTiming = findTimingData(secondaryCode);
+// ── Fileset IDs (resolve first so timing uses the matching audio version) ──
+const primaryFileset = getFilesetInfo(primaryCode);
+const secondaryFileset = getFilesetInfo(secondaryCode);
+
+// ── Load timing data (prefer the version matching the audio fileset) ──
+const primaryTiming = findTimingData(
+    primaryCode,
+    primaryFileset?.audioCategory,
+    primaryFileset?.audioDistinctId,
+);
+const secondaryTiming = findTimingData(
+    secondaryCode,
+    secondaryFileset?.audioCategory,
+    secondaryFileset?.audioDistinctId,
+);
 
 if (!primaryTiming || !primaryTiming.timingData[String(chapterNum)]) {
     return Astro.redirect(`/${primaryCode}/${secondaryCode}`);
@@ -48,13 +60,11 @@ if (secondaryTiming) {
     }
 }
 
-// ── Fileset IDs & image data ──
-const primaryFileset = getFilesetInfo(primaryCode);
-const secondaryFileset = getFilesetInfo(secondaryCode);
+// ── Image data & word-level timing ──
 const chapterImageData = getChapterImageData(bookInfo.img, chapterNum);
-
-// ── Word-level timing ──
-const primaryWordTiming = findWordTimingData(primaryCode, chapterNum);
+const primaryWordTiming = primaryTiming
+    ? findWordTimingData(primaryCode, chapterNum, primaryTiming.category, primaryTiming.distinctId)
+    : null;
 
 // ── Data to pass to client ──
 const chapterData = buildChapterData({
@@ -1638,6 +1648,11 @@ const uiLabels = JSON.stringify({
 
         async function loadVerse(verseNum) {
             await ensureChapterData();
+            // Preload AudioBuffer for word-level playback (non-blocking).
+            // Only if AudioContext already exists (created on first user tap).
+            if (cachedPrimaryAudioUrl && CHAPTER.primaryWordTiming && !wordAudioBuffer && wordAudioCtx) {
+                ensureWordAudioBuffer(cachedPrimaryAudioUrl);
+            }
 
             const entries = CHAPTER.verseEntries;
             const idx = entries.findIndex(
@@ -1907,17 +1922,47 @@ const uiLabels = JSON.stringify({
             return wt[wordIdx] !== null;
         }
 
-        // Word audio reuses the main audio element (iOS only unlocks one)
-        let wordAudioEndTime = null;
-        let wordAudioStartedAt = 0;
+        // ── Web Audio API for word-level playback (sample-accurate) ──
+        let wordAudioCtx = null;
+        let wordAudioBuffer = null;       // decoded AudioBuffer for current chapter audio
+        let wordAudioBufferUrl = null;    // URL the buffer was decoded from
+        let wordAudioSource = null;       // currently playing AudioBufferSourceNode
+        let wordAudioEndTime = null;      // non-null = word playback active (for timeupdate guard)
+        let wordAudioBufferLoading = false;
+
+        function ensureWordAudioCtx() {
+            if (!wordAudioCtx) {
+                wordAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (wordAudioCtx.state === "suspended") {
+                wordAudioCtx.resume();
+            }
+        }
+
+        async function ensureWordAudioBuffer(audioUrl) {
+            if (wordAudioBuffer && wordAudioBufferUrl === audioUrl) return;
+            if (wordAudioBufferLoading) return;
+            wordAudioBufferLoading = true;
+            try {
+                const resp = await fetch(audioUrl);
+                const arrayBuffer = await resp.arrayBuffer();
+                wordAudioBuffer = await wordAudioCtx.decodeAudioData(arrayBuffer);
+                wordAudioBufferUrl = audioUrl;
+            } catch (e) {
+                wordAudioBuffer = null;
+                wordAudioBufferUrl = null;
+            } finally {
+                wordAudioBufferLoading = false;
+            }
+        }
 
         function stopWordAudio() {
+            if (wordAudioSource) {
+                try { wordAudioSource.stop(); } catch (e) { /* already stopped */ }
+                wordAudioSource = null;
+            }
             if (wordAudioEndTime !== null) {
-                audio.pause();
                 wordAudioEndTime = null;
-                isPlaying = false;
-                imageContainer.classList.remove("playing");
-                playIcon.innerHTML = "&#9654;";
                 document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
             }
         }
@@ -1932,26 +1977,56 @@ const uiLabels = JSON.stringify({
             for (let i = wordIdx + 1; i < wt.length; i++) {
                 if (wt[i] !== null) { endTime = wt[i]; break; }
             }
-            // Enforce minimum duration so short words are audible
-            const MIN_WORD_DURATION = 0.2;
-            if (endTime - startTime < MIN_WORD_DURATION) {
-                endTime = startTime + MIN_WORD_DURATION;
-            }
-            // Stop any verse playback
+            const MIN_WORD_DURATION = 0.08;
+            const duration = Math.max(endTime - startTime, MIN_WORD_DURATION);
+
+            // Stop any current word playback
+            stopWordAudio();
+            // Pause verse playback if active
             if (isPlaying) {
                 audio.pause();
                 isPlaying = false;
                 imageContainer.classList.remove("playing");
                 playIcon.innerHTML = "&#9654;";
             }
-            // Reuse main audio element (already unlocked on iOS)
-            if (!audio.src || audio.src !== VERSE.primaryAudioUrl) {
-                audio.src = VERSE.primaryAudioUrl;
-            }
+
+            // Init AudioContext on user gesture
+            ensureWordAudioCtx();
+
+            // Mark word playback active (guards timeupdate)
             wordAudioEndTime = endTime;
-            wordAudioStartedAt = performance.now();
-            audio.currentTime = startTime;
-            audio.play().catch(() => {});
+
+            // If buffer is ready, play immediately; otherwise load then play
+            if (wordAudioBuffer && wordAudioBufferUrl === VERSE.primaryAudioUrl) {
+                _playWordFromBuffer(startTime, duration, wordIdx);
+            } else {
+                ensureWordAudioBuffer(VERSE.primaryAudioUrl).then(() => {
+                    if (wordAudioEndTime === null) return;
+                    if (!wordAudioBuffer) {
+                        audio.currentTime = startTime;
+                        audio.play().catch(() => {});
+                        return;
+                    }
+                    _playWordFromBuffer(startTime, duration, wordIdx);
+                });
+            }
+        }
+
+        function _playWordFromBuffer(startTime, duration, wordIdx) {
+            const source = wordAudioCtx.createBufferSource();
+            source.buffer = wordAudioBuffer;
+            source.connect(wordAudioCtx.destination);
+            wordAudioSource = source;
+
+            source.start(0, startTime, duration);
+
+            source.onended = () => {
+                if (wordAudioSource === source) {
+                    wordAudioSource = null;
+                    wordAudioEndTime = null;
+                    document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
+                }
+            };
         }
 
         function wordAudioAttr(wordIdx) {
@@ -2630,7 +2705,7 @@ const uiLabels = JSON.stringify({
 
         function playVerse() {
             if (!VERSE.primaryAudioUrl) return;
-            wordAudioEndTime = null;
+            stopWordAudio();
             if (secPlaying) stopSecondary();
             // iOS-safe: set src if needed, then play synchronously in gesture context.
             // Never use .load() — it can re-lock the element on iOS.
@@ -2656,13 +2731,8 @@ const uiLabels = JSON.stringify({
         }
 
         audio.addEventListener("timeupdate", () => {
-            // Word-level playback: stop at word end
+            // Word-level playback: setTimeout handles stopping
             if (wordAudioEndTime !== null) {
-                // Don't stop until real time has passed (iOS seek latency)
-                const elapsed = performance.now() - wordAudioStartedAt;
-                if (elapsed > 300 && audio.currentTime >= wordAudioEndTime) {
-                    stopWordAudio();
-                }
                 return;
             }
             if (audio.currentTime >= VERSE.endTime) {

@@ -28,9 +28,21 @@ const secondaryCode = secondary.code;
 const secondaryEnglish = secondary.english;
 const secondaryIsRTL = secondary.isRTL;
 
-// ── Load timing data ──
-const primaryTiming = findTimingData(primaryCode);
-const secondaryTiming = findTimingData(secondaryCode);
+// ── Fileset IDs (resolve first so timing uses the matching audio version) ──
+const primaryFileset = getFilesetInfo(primaryCode);
+const secondaryFileset = getFilesetInfo(secondaryCode);
+
+// ── Load timing data (prefer the version matching the audio fileset) ──
+const primaryTiming = findTimingData(
+    primaryCode,
+    primaryFileset?.audioCategory,
+    primaryFileset?.audioDistinctId,
+);
+const secondaryTiming = findTimingData(
+    secondaryCode,
+    secondaryFileset?.audioCategory,
+    secondaryFileset?.audioDistinctId,
+);
 
 if (!primaryTiming || !primaryTiming.timingData[String(chapterNum)]) {
     return Astro.redirect(`/${primaryCode}/${secondaryCode}`);
@@ -47,8 +59,6 @@ if (secondaryTiming) {
     }
 }
 
-const primaryFileset = getFilesetInfo(primaryCode);
-const secondaryFileset = getFilesetInfo(secondaryCode);
 const chapterImageData = getChapterImageData(bookInfo.img, chapterNum);
 
 const chapterData = buildChapterData({
@@ -59,6 +69,7 @@ const chapterData = buildChapterData({
     secondaryFileset,
     chapterImageData,
     secondaryChapterTiming,
+    primaryWordTiming: null,
 });
 
 // ── Story locale data for section headers ──
