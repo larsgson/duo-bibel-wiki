@@ -332,6 +332,17 @@ export function getLangFontScale(langCode: string): number {
 }
 
 /**
+ * Get gap scale for a language from language-styles.json.
+ * Returns 1 (no scaling) if no config exists for the language.
+ */
+export function getLangGapScale(langCode: string): number {
+  const styles = (languageStyles as Record<string, { gapScale?: number }>)[
+    langCode
+  ];
+  return styles?.gapScale ?? 1;
+}
+
+/**
  * Build the full chapterData JSON object for client-side use.
  */
 export function buildChapterData(params: {

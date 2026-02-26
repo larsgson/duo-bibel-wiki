@@ -11,6 +11,7 @@ import {
     getChapterImageData,
     buildChapterData,
     getLangFontScale,
+    getLangGapScale,
 } from "../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../i18n";
 
@@ -30,6 +31,7 @@ const secondaryEnglish = secondary.english;
 const secondaryIsRTL = secondary.isRTL;
 const primaryFontScale = getLangFontScale(primaryCode);
 const secondaryFontScale = getLangFontScale(secondaryCode);
+const primaryGapScale = getLangGapScale(primaryCode);
 
 // ── Fileset IDs (resolve first so timing uses the matching audio version) ──
 const primaryFileset = getFilesetInfo(primaryCode);
@@ -569,7 +571,7 @@ const uiLabels = JSON.stringify({
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.08);
             color: #e0e0e0;
-            font-size: calc(0.95rem * var(--primary-font-scale, 1));
+            font-size: inherit;
             cursor: pointer;
             transition: all 0.15s;
             user-select: none;
@@ -739,7 +741,8 @@ const uiLabels = JSON.stringify({
         .listen-reveal-words {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(6px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(1.1rem * var(--primary-font-scale, 1));
             padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.08);
             border-radius: 6px;
@@ -749,7 +752,7 @@ const uiLabels = JSON.stringify({
         }
         .listen-reveal-word {
             display: inline-block;
-            font-size: calc(1.1rem * var(--primary-font-scale, 1));
+            font-size: inherit;
             line-height: 1.6;
             transition: all 0.3s ease;
             cursor: pointer;
@@ -828,7 +831,8 @@ const uiLabels = JSON.stringify({
         .listen-order-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(6px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(0.95rem * var(--primary-font-scale, 1));
             min-height: 40px;
             padding: 0.5rem;
             align-items: center;
@@ -867,7 +871,8 @@ const uiLabels = JSON.stringify({
         .listen-fill-verse {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(5px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(1rem * var(--primary-font-scale, 1));
             padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.08);
             border-radius: 6px;
@@ -876,14 +881,14 @@ const uiLabels = JSON.stringify({
             line-height: 2;
         }
         .listen-fill-word {
-            font-size: calc(1rem * var(--primary-font-scale, 1));
+            font-size: inherit;
             color: #e0e0e0;
         }
         .listen-fill-blank {
             display: inline-block;
             padding: 2px 10px;
             border-bottom: 2px solid #5b9bd5;
-            font-size: calc(1rem * var(--primary-font-scale, 1));
+            font-size: inherit;
             color: #5b9bd5;
             cursor: pointer;
             min-width: 50px;
@@ -907,7 +912,8 @@ const uiLabels = JSON.stringify({
         .listen-fill-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(6px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(0.95rem * var(--primary-font-scale, 1));
             padding: 0.5rem;
             justify-content: center;
         }
@@ -1033,7 +1039,8 @@ const uiLabels = JSON.stringify({
         .sentence-builder-answer {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(6px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(0.95rem * var(--primary-font-scale, 1));
             min-height: 48px;
             padding: 0.5rem;
             border: 2px dashed #444;
@@ -1049,7 +1056,8 @@ const uiLabels = JSON.stringify({
         .sentence-builder-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: calc(6px * var(--primary-font-scale, 1));
+            gap: calc(0.35em * var(--primary-gap-scale, 1));
+            font-size: calc(0.95rem * var(--primary-font-scale, 1));
             min-height: 40px;
             padding: 0.5rem;
             align-items: center;
@@ -1268,6 +1276,7 @@ const uiLabels = JSON.stringify({
             secondaryIsRTL,
             primaryFontScale,
             secondaryFontScale,
+            primaryGapScale,
             uiLabels,
         }}
     >
@@ -1279,6 +1288,9 @@ const uiLabels = JSON.stringify({
         }
         if (secondaryFontScale !== 1) {
             document.documentElement.style.setProperty('--secondary-font-scale', String(secondaryFontScale));
+        }
+        if (primaryGapScale !== 1) {
+            document.documentElement.style.setProperty('--primary-gap-scale', String(primaryGapScale));
         }
 
         // Remember last visited chapter for the chapter picker accordion
