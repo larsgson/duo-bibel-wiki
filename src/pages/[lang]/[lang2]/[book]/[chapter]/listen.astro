@@ -10,6 +10,7 @@ import {
     buildVerseEntries,
     getChapterImageData,
     buildChapterData,
+    getLangFontScale,
 } from "../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../i18n";
 
@@ -107,6 +108,9 @@ for (const [catId, cat] of Object.entries(categories) as [string, any][]) {
 }
 
 const backHref = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
+
+const primaryFontScale = getLangFontScale(primaryCode);
+const secondaryFontScale = getLangFontScale(secondaryCode);
 
 const t = useTranslations(secondaryCode);
 const uiLabels = JSON.stringify({
@@ -320,12 +324,12 @@ const uiLabels = JSON.stringify({
 
         .listen-verse-text-primary {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--primary-font-scale, 1));
             line-height: 1.5;
         }
         .listen-verse-text-secondary {
             color: rgba(255, 255, 255, 0.55);
-            font-size: 0.85rem;
+            font-size: calc(0.85rem * var(--secondary-font-scale, 1));
             line-height: 1.5;
         }
 
@@ -598,6 +602,8 @@ const uiLabels = JSON.stringify({
             secondaryCode,
             primaryIsRTL,
             secondaryIsRTL,
+            primaryFontScale,
+            secondaryFontScale,
             storyMeta,
             uiLabels,
         }}
@@ -611,6 +617,10 @@ const uiLabels = JSON.stringify({
                 CHAPTER.chapterNum,
             );
         } catch (e) {}
+
+        // ── Per-language font scaling ──
+        document.documentElement.style.setProperty('--primary-font-scale', String(primaryFontScale));
+        document.documentElement.style.setProperty('--secondary-font-scale', String(secondaryFontScale));
 
         // ══════════════════════════════════════════
         // TAB BAR (same as placeholder)

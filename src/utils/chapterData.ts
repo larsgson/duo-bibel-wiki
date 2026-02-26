@@ -1,5 +1,6 @@
 import langsData from "../data/ALL-langs-compact.json";
 import imageIndex from "../generated/image-index.json";
+import languageStyles from "../data/language-styles.json";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -317,6 +318,17 @@ export function getApiConfig(): { apiKey: string; apiBaseUrl: string } {
     apiBaseUrl:
       import.meta.env.DBT_API_BASE_URL || process.env.DBT_API_BASE_URL || "",
   };
+}
+
+/**
+ * Get font scale for a language from language-styles.json.
+ * Returns 1 (no scaling) if no config exists for the language.
+ */
+export function getLangFontScale(langCode: string): number {
+  const styles = (languageStyles as Record<string, { fontScale?: number }>)[
+    langCode
+  ];
+  return styles?.fontScale ?? 1;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
     buildVerseEntries,
     getChapterImageData,
     buildChapterData,
+    getLangFontScale,
 } from "../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../i18n";
 
@@ -27,6 +28,8 @@ const primaryIsRTL = primary.isRTL;
 const secondaryCode = secondary.code;
 const secondaryEnglish = secondary.english;
 const secondaryIsRTL = secondary.isRTL;
+const primaryFontScale = getLangFontScale(primaryCode);
+const secondaryFontScale = getLangFontScale(secondaryCode);
 
 // ── Fileset IDs (resolve first so timing uses the matching audio version) ──
 const primaryFileset = getFilesetInfo(primaryCode);
@@ -349,7 +352,7 @@ const uiLabels = JSON.stringify({
         }
         .text-peek-content {
             margin: 0;
-            font-size: 1.125rem;
+            font-size: calc(1.125rem * var(--primary-font-scale, 1));
             line-height: 1.6;
             color: #e0e0e0;
         }
@@ -399,7 +402,7 @@ const uiLabels = JSON.stringify({
         }
         .learn-verse-content {
             margin: 0;
-            font-size: 1.125rem;
+            font-size: calc(1.125rem * var(--secondary-font-scale, 1));
             line-height: 1.6;
             color: #e0e0e0;
         }
@@ -566,7 +569,7 @@ const uiLabels = JSON.stringify({
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.08);
             color: #e0e0e0;
-            font-size: 0.95rem;
+            font-size: calc(0.95rem * var(--primary-font-scale, 1));
             cursor: pointer;
             transition: all 0.15s;
             user-select: none;
@@ -736,7 +739,7 @@ const uiLabels = JSON.stringify({
         .listen-reveal-words {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: calc(6px * var(--primary-font-scale, 1));
             padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.08);
             border-radius: 6px;
@@ -746,7 +749,7 @@ const uiLabels = JSON.stringify({
         }
         .listen-reveal-word {
             display: inline-block;
-            font-size: 1.1rem;
+            font-size: calc(1.1rem * var(--primary-font-scale, 1));
             line-height: 1.6;
             transition: all 0.3s ease;
             cursor: pointer;
@@ -798,7 +801,7 @@ const uiLabels = JSON.stringify({
             background: rgba(255, 255, 255, 0.08);
             border-radius: 6px;
             border-left: 3px solid rgba(255, 255, 255, 0.3);
-            font-size: 1rem;
+            font-size: calc(1rem * var(--primary-font-scale, 1));
             line-height: 1.8;
             color: #e0e0e0;
         }
@@ -825,7 +828,7 @@ const uiLabels = JSON.stringify({
         .listen-order-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: calc(6px * var(--primary-font-scale, 1));
             min-height: 40px;
             padding: 0.5rem;
             align-items: center;
@@ -864,7 +867,7 @@ const uiLabels = JSON.stringify({
         .listen-fill-verse {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: calc(5px * var(--primary-font-scale, 1));
             padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.08);
             border-radius: 6px;
@@ -873,14 +876,14 @@ const uiLabels = JSON.stringify({
             line-height: 2;
         }
         .listen-fill-word {
-            font-size: 1rem;
+            font-size: calc(1rem * var(--primary-font-scale, 1));
             color: #e0e0e0;
         }
         .listen-fill-blank {
             display: inline-block;
             padding: 2px 10px;
             border-bottom: 2px solid #5b9bd5;
-            font-size: 1rem;
+            font-size: calc(1rem * var(--primary-font-scale, 1));
             color: #5b9bd5;
             cursor: pointer;
             min-width: 50px;
@@ -904,7 +907,7 @@ const uiLabels = JSON.stringify({
         .listen-fill-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: calc(6px * var(--primary-font-scale, 1));
             padding: 0.5rem;
             justify-content: center;
         }
@@ -1023,14 +1026,14 @@ const uiLabels = JSON.stringify({
         }
         .sentence-builder-hint-text {
             margin: 0;
-            font-size: 1rem;
+            font-size: calc(1rem * var(--primary-font-scale, 1));
             line-height: 1.5;
             color: #e0e0e0;
         }
         .sentence-builder-answer {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: calc(6px * var(--primary-font-scale, 1));
             min-height: 48px;
             padding: 0.5rem;
             border: 2px dashed #444;
@@ -1040,13 +1043,13 @@ const uiLabels = JSON.stringify({
         }
         .sentence-builder-placeholder {
             color: rgba(255, 255, 255, 0.3);
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--primary-font-scale, 1));
             padding: 4px 8px;
         }
         .sentence-builder-bank {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: calc(6px * var(--primary-font-scale, 1));
             min-height: 40px;
             padding: 0.5rem;
             align-items: center;
@@ -1085,7 +1088,7 @@ const uiLabels = JSON.stringify({
                 padding: 0.5rem;
             }
             .learn-verse-content {
-                font-size: 1rem;
+                font-size: calc(1rem * var(--secondary-font-scale, 1));
             }
         }
         @media (min-width: 769px) {
@@ -1263,10 +1266,20 @@ const uiLabels = JSON.stringify({
             secondaryCode,
             primaryIsRTL,
             secondaryIsRTL,
+            primaryFontScale,
+            secondaryFontScale,
             uiLabels,
         }}
     >
         const CHAPTER = JSON.parse(chapterData);
+
+        // Set per-language font scale CSS custom properties
+        if (primaryFontScale !== 1) {
+            document.documentElement.style.setProperty('--primary-font-scale', String(primaryFontScale));
+        }
+        if (secondaryFontScale !== 1) {
+            document.documentElement.style.setProperty('--secondary-font-scale', String(secondaryFontScale));
+        }
 
         // Remember last visited chapter for the chapter picker accordion
         try {
