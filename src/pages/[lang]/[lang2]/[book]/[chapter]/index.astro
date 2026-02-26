@@ -2578,6 +2578,8 @@ const uiLabels = JSON.stringify({
                                     words[gapIndices[lastIdx]],
                                 );
                             const base = lastIsWrong ? fw.slice(0, -1) : fw;
+                            // Don't add beyond the number of gaps
+                            if (base.length >= gapIndices.length) return;
                             exState.filledWords = [
                                 ...base,
                                 { id: tile.id, text: tile.text },
@@ -2608,6 +2610,8 @@ const uiLabels = JSON.stringify({
                                 words[gapIndices[lastIdx]],
                             );
                         const base = lastIsWrong ? fw.slice(0, -1) : fw;
+                        // Don't add beyond the number of gaps
+                        if (base.length >= gapIndices.length) return;
                         exState.filledWords = [...base, { text: word }];
                         renderListenFill();
                         return;
