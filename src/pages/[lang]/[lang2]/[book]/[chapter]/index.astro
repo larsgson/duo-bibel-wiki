@@ -5,6 +5,7 @@ import Layout from "../../../../../layouts/Layout.astro";
 import {
     validateParams,
     findTimingData,
+    findWordTimingData,
     getFilesetInfo,
     buildVerseEntries,
     getChapterImageData,
@@ -52,6 +53,9 @@ const primaryFileset = getFilesetInfo(primaryCode);
 const secondaryFileset = getFilesetInfo(secondaryCode);
 const chapterImageData = getChapterImageData(bookInfo.img, chapterNum);
 
+// ── Word-level timing ──
+const primaryWordTiming = findWordTimingData(primaryCode, chapterNum);
+
 // ── Data to pass to client ──
 const chapterData = buildChapterData({
     bookInfo,
@@ -61,6 +65,7 @@ const chapterData = buildChapterData({
     secondaryFileset,
     chapterImageData,
     secondaryChapterTiming,
+    primaryWordTiming,
 });
 
 const backHref =
@@ -600,6 +605,44 @@ const uiLabels = JSON.stringify({
         .word-tile.used {
             opacity: 0.3;
             cursor: default;
+        }
+
+        /* ── Word audio ── */
+        .has-word-audio {
+            cursor: pointer;
+        }
+        .has-word-audio:not(.word-tile) {
+            border-bottom: 1px dotted rgba(91, 155, 213, 0.5);
+        }
+        .word-audio-playing {
+            background: rgba(91, 155, 213, 0.25) !important;
+            transition: background 0.15s;
+        }
+        .word-tile.has-word-audio {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            padding: 0;
+        }
+        .word-tile-text {
+            padding: 6px 8px;
+            flex: 1;
+        }
+        .word-tile-place {
+            padding: 6px 6px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s;
+        }
+        .word-tile-place:hover {
+            color: #5b9bd5;
+        }
+        .word-tile.used .word-tile-place {
+            display: none;
         }
 
         /* ══════════════════════════════════════════
@@ -1546,6 +1589,7 @@ const uiLabels = JSON.stringify({
             reference: "",
             versePosition: 0,
             totalVerses: CHAPTER.verseEntries.length,
+            wordTimings: null,
         };
         let currentIdx = 0;
 
@@ -1653,6 +1697,27 @@ const uiLabels = JSON.stringify({
                     : `${entry.verseStart}-${entry.verseEnd}`;
             const reference = `${bookDisplay} ${CHAPTER.chapterNum}:${verseDisplay}`;
 
+            // Word-level timing for this verse
+            const wt = CHAPTER.primaryWordTiming;
+            let wordTimings = null;
+            if (wt) {
+                // Try exact ref match first, then search by verse range
+                wordTimings = wt[entry.ref] || null;
+                if (!wordTimings) {
+                    for (const [ref, times] of Object.entries(wt)) {
+                        const colonIdx = ref.indexOf(":");
+                        const vs = ref.substring(colonIdx + 1);
+                        const parts = vs.split("-");
+                        const vs1 = parseInt(parts[0], 10);
+                        const vs2 = parts.length > 1 ? parseInt(parts[parts.length - 1], 10) : vs1;
+                        if (entry.verseStart >= vs1 && entry.verseEnd <= vs2) {
+                            wordTimings = times;
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Update VERSE state
             VERSE = {
                 primaryText,
@@ -1667,6 +1732,7 @@ const uiLabels = JSON.stringify({
                 reference,
                 versePosition: idx + 1,
                 totalVerses: entries.length,
+                wordTimings,
             };
 
             // Stop any playing audio
@@ -1834,6 +1900,69 @@ const uiLabels = JSON.stringify({
             return tokenizeText(VERSE.primaryText || "");
         }
 
+        // ── Word-level audio helpers ──
+        function hasWordAudio(wordIdx) {
+            const wt = VERSE.wordTimings;
+            if (!wt || wordIdx < 0 || wordIdx >= wt.length) return false;
+            return wt[wordIdx] !== null;
+        }
+
+        // Word audio reuses the main audio element (iOS only unlocks one)
+        let wordAudioEndTime = null;
+        let wordAudioStartedAt = 0;
+
+        function stopWordAudio() {
+            if (wordAudioEndTime !== null) {
+                audio.pause();
+                wordAudioEndTime = null;
+                isPlaying = false;
+                imageContainer.classList.remove("playing");
+                playIcon.innerHTML = "&#9654;";
+                document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
+            }
+        }
+
+        function playWordAudio(wordIdx) {
+            const wt = VERSE.wordTimings;
+            if (!wt || !VERSE.primaryAudioUrl) return;
+            const startTime = wt[wordIdx];
+            if (startTime === null || startTime === undefined) return;
+            // Find end time: next non-null value, or verse end
+            let endTime = VERSE.endTime;
+            for (let i = wordIdx + 1; i < wt.length; i++) {
+                if (wt[i] !== null) { endTime = wt[i]; break; }
+            }
+            // Enforce minimum duration so short words are audible
+            const MIN_WORD_DURATION = 0.2;
+            if (endTime - startTime < MIN_WORD_DURATION) {
+                endTime = startTime + MIN_WORD_DURATION;
+            }
+            // Stop any verse playback
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                imageContainer.classList.remove("playing");
+                playIcon.innerHTML = "&#9654;";
+            }
+            // Reuse main audio element (already unlocked on iOS)
+            if (!audio.src || audio.src !== VERSE.primaryAudioUrl) {
+                audio.src = VERSE.primaryAudioUrl;
+            }
+            wordAudioEndTime = endTime;
+            wordAudioStartedAt = performance.now();
+            audio.currentTime = startTime;
+            audio.play().catch(() => {});
+        }
+
+        function wordAudioAttr(wordIdx) {
+            if (!hasWordAudio(wordIdx)) return "";
+            return ` data-word-audio="${wordIdx}"`;
+        }
+
+        function wordAudioClass(wordIdx) {
+            return hasWordAudio(wordIdx) ? " has-word-audio" : "";
+        }
+
         function completionHTML() {
             const hasNext = currentIdx < CHAPTER.verseEntries.length - 1;
             const btnHTML = hasNext
@@ -1878,11 +2007,11 @@ const uiLabels = JSON.stringify({
             const wordsHTML = words
                 .map((w, i) => {
                     if (rev.has(i))
-                        return `<span class="listen-reveal-word revealed" data-idx="${i}">${w}</span>`;
+                        return `<span class="listen-reveal-word revealed${wordAudioClass(i)}" data-idx="${i}"${wordAudioAttr(i)}>${w}</span>`;
                     const placeholder = CJK_REGEX.test(w)
                         ? "\u3000".repeat(Math.max(w.length, 2))
                         : "\u00A0".repeat(Math.max(w.length, 3));
-                    return `<span class="listen-reveal-word hidden" data-idx="${i}">${placeholder}</span>`;
+                    return `<span class="listen-reveal-word hidden${wordAudioClass(i)}" data-idx="${i}"${wordAudioAttr(i)}>${placeholder}</span>`;
                 })
                 .join("");
             const eyeSvg = allRevealed
@@ -1931,7 +2060,7 @@ const uiLabels = JSON.stringify({
             const verseHTML = words
                 .map((w, i) => {
                     if (i < prefillCount) {
-                        return `<span class="listen-order-given-word">${w}</span>`;
+                        return `<span class="listen-order-given-word${wordAudioClass(i)}"${wordAudioAttr(i)}>${w}</span>`;
                     }
                     const gapPos = gapIndices.indexOf(i);
                     if (gapPos < filledWords.length) {
@@ -1942,7 +2071,7 @@ const uiLabels = JSON.stringify({
                         let cls = "listen-order-placed";
                         if (isCorrect) cls += " correct";
                         else cls += " incorrect";
-                        return `<span class="${cls}" ${isRemovable ? 'data-action="remove-last"' : ""}>${fw.text}</span>`;
+                        return `<span class="${cls}${wordAudioClass(i)}" ${isRemovable ? 'data-action="remove-last"' : ""}${wordAudioAttr(i)}>${fw.text}</span>`;
                     }
                     return `<span class="listen-order-slot">____</span>`;
                 })
@@ -1957,8 +2086,10 @@ const uiLabels = JSON.stringify({
                 : remainingTiles;
             const bankHTML = effectiveTiles
                 .map(
-                    (tile) =>
-                        `<button class="word-tile" data-action="place-word" data-id="${tile.id}">${tile.text}</button>`,
+                    (tile) => {
+                        const wa = hasWordAudio(tile.id);
+                        return `<button class="word-tile${wa ? " has-word-audio" : ""}" data-action="place-word" data-id="${tile.id}"${wa ? ` data-word-audio="${tile.id}"` : ""}><span class="word-tile-text">${tile.text}</span>${wa ? '<span class="word-tile-place" data-action="place-word">&#9650;</span>' : ""}</button>`;
+                    },
                 )
                 .join("");
             const headerHTML = allCorrect
@@ -2048,21 +2179,28 @@ const uiLabels = JSON.stringify({
                             let cls = "listen-fill-blank filled";
                             if (isCorrect) cls += " correct";
                             else cls += " incorrect";
-                            return `<span class="${cls}" ${isRemovable ? 'data-action="remove-last" style="cursor:pointer"' : ""}>${filled.text}</span>`;
+                            return `<span class="${cls}${wordAudioClass(i)}" ${isRemovable ? 'data-action="remove-last" style="cursor:pointer"' : ""}${wordAudioAttr(i)}>${filled.text}</span>`;
                         }
                         return `<span class="listen-fill-blank">____</span>`;
                     }
-                    return `<span class="listen-fill-word">${w}</span>`;
+                    return `<span class="listen-fill-word${wordAudioClass(i)}"${wordAudioAttr(i)}>${w}</span>`;
                 })
                 .join("");
             // When last word is wrong, exclude it from used so it's available again
             const effectiveUsed = lastIsWrong
                 ? filledWords.slice(0, -1).map((fw) => fw.text)
                 : filledWords.map((fw) => fw.text);
+            // Map bank words to their original word index for audio lookup
+            function findWordIdx(bankWord) {
+                const idx = words.findIndex((w) => w === bankWord);
+                return idx >= 0 ? idx : -1;
+            }
             const bankHTML = bankWords
                 .map((w) => {
                     const isUsed = effectiveUsed.includes(w);
-                    return `<button class="word-tile${isUsed ? " used" : ""}" data-action="fill-bank" data-word="${w}" ${isUsed ? "disabled" : ""}>${w}</button>`;
+                    const wi = findWordIdx(w);
+                    const wa = wi >= 0 && hasWordAudio(wi);
+                    return `<button class="word-tile${isUsed ? " used" : ""}${wa ? " has-word-audio" : ""}" data-action="fill-bank" data-word="${w}" ${isUsed ? "disabled" : ""}${wa ? ` data-word-audio="${wi}"` : ""}><span class="word-tile-text">${w}</span>${wa ? '<span class="word-tile-place" data-action="fill-bank">&#9650;</span>' : ""}</button>`;
                 })
                 .join("");
             const headerHTML = allCorrect
@@ -2105,8 +2243,10 @@ const uiLabels = JSON.stringify({
                         ? '<span class="sentence-builder-placeholder">...</span>'
                         : sbPlacedIds
                               .map(
-                                  (id) =>
-                                      `<button class="word-tile placed" data-action="sb-remove" data-id="${id}">${words[id]}</button>`,
+                                  (id) => {
+                                      const wa = hasWordAudio(id);
+                                      return `<button class="word-tile placed${wa ? " has-word-audio" : ""}" data-action="sb-remove" data-id="${id}"${wa ? ` data-word-audio="${id}"` : ""}><span class="word-tile-text">${words[id]}</span>${wa ? '<span class="word-tile-place" data-action="sb-remove">&#9660;</span>' : ""}</button>`;
+                                  },
                               )
                               .join("");
             } else if (sbResult) {
@@ -2117,15 +2257,18 @@ const uiLabels = JSON.stringify({
                         else if (entry.status === "displaced")
                             cls += " word-displaced";
                         else cls += " word-wrong";
-                        return `<span class="${cls}">${entry.word}</span>`;
+                        const wa = hasWordAudio(entry.id);
+                        return `<span class="${cls}${wa ? " has-word-audio" : ""}"${wa ? ` data-word-audio="${entry.id}"` : ""}>${entry.word}</span>`;
                     })
                     .join("");
             }
             let bankHTML = !sbChecked
                 ? `<div class="sentence-builder-bank"${rtlAttr}>${remainingTiles
                       .map(
-                          (tile) =>
-                              `<button class="word-tile" data-action="sb-place" data-id="${tile.id}">${tile.text}</button>`,
+                          (tile) => {
+                              const wa = hasWordAudio(tile.id);
+                              return `<button class="word-tile${wa ? " has-word-audio" : ""}" data-action="sb-place" data-id="${tile.id}"${wa ? ` data-word-audio="${tile.id}"` : ""}><span class="word-tile-text">${tile.text}</span>${wa ? '<span class="word-tile-place" data-action="sb-place">&#9650;</span>' : ""}</button>`;
+                          },
                       )
                       .join("")}</div>`
                 : "";
@@ -2281,6 +2424,32 @@ const uiLabels = JSON.stringify({
         // ══════════════════════════════════════════
         if (exerciseArea) {
             exerciseArea.addEventListener("click", (e) => {
+                // ── Word audio: click on word text plays audio ──
+                const clickedEl = e.target;
+                // If user clicked the ▲/▼ place icon, skip audio and let action handler below proceed
+                if (!clickedEl.closest(".word-tile-place")) {
+                    // Check if the clicked element or its parent has word audio
+                    const audioEl = clickedEl.closest("[data-word-audio]");
+                    if (audioEl) {
+                        const wordIdx = parseInt(audioEl.dataset.wordAudio);
+                        if (!isNaN(wordIdx) && hasWordAudio(wordIdx)) {
+                            // For elements that have no action OR are word-tile with text clicked,
+                            // play audio. For listen-reveal, let the toggle still happen below.
+                            const isInlineWord = audioEl.classList.contains("listen-order-given-word") || audioEl.classList.contains("listen-fill-word") || audioEl.classList.contains("listen-order-placed") || audioEl.classList.contains("listen-fill-blank");
+                            const isResultSpan = audioEl.classList.contains("word-correct") || audioEl.classList.contains("word-displaced") || audioEl.classList.contains("word-wrong");
+                            const isBankTile = audioEl.classList.contains("word-tile") && !isInlineWord && !isResultSpan;
+                            if (isInlineWord || isResultSpan || isBankTile) {
+                                playWordAudio(wordIdx);
+                                audioEl.classList.add("word-audio-playing");
+                                // For word-tiles in bank, don't proceed to action (audio only)
+                                if (isBankTile) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 const target = e.target.closest("[data-action]");
                 if (!target) return;
                 const action = target.dataset.action;
@@ -2318,7 +2487,8 @@ const uiLabels = JSON.stringify({
                 }
                 if (activeExercise === "listen-order") {
                     if (action === "place-word") {
-                        const id = parseInt(target.dataset.id);
+                        const tileEl = target.closest("[data-id]") || target;
+                        const id = parseInt(tileEl.dataset.id);
                         const tile = exState.tiles.find((t) => t.id === id);
                         if (tile) {
                             // If the last word was wrong, remove it first
@@ -2349,7 +2519,8 @@ const uiLabels = JSON.stringify({
                 }
                 if (activeExercise === "listen-fill") {
                     if (action === "fill-bank") {
-                        const word = target.dataset.word;
+                        const tileEl = target.closest("[data-word]") || target;
+                        const word = tileEl.dataset.word;
                         // If the last word was wrong, remove it first
                         const words = getPrimaryWords();
                         const gapIndices = exState.gapIndices;
@@ -2374,17 +2545,19 @@ const uiLabels = JSON.stringify({
                 }
                 if (activeExercise === "sentence-builder") {
                     if (action === "sb-place") {
+                        const tileEl = target.closest("[data-id]") || target;
                         exState.sbPlacedIds = [
                             ...exState.sbPlacedIds,
-                            parseInt(target.dataset.id),
+                            parseInt(tileEl.dataset.id),
                         ];
                         exState.sbChecked = false;
                         renderSentenceBuilder();
                         return;
                     }
                     if (action === "sb-remove") {
+                        const tileEl = target.closest("[data-id]") || target;
                         exState.sbPlacedIds = exState.sbPlacedIds.filter(
-                            (pid) => pid !== parseInt(target.dataset.id),
+                            (pid) => pid !== parseInt(tileEl.dataset.id),
                         );
                         exState.sbChecked = false;
                         renderSentenceBuilder();
@@ -2428,9 +2601,17 @@ const uiLabels = JSON.stringify({
                 if (!wordEl) return;
                 const idx = parseInt(wordEl.dataset.idx);
                 if (isNaN(idx)) return;
-                if (exState.revealedSet.has(idx))
+                const wasRevealed = exState.revealedSet.has(idx);
+                if (wasRevealed)
                     exState.revealedSet.delete(idx);
-                else exState.revealedSet.add(idx);
+                else {
+                    exState.revealedSet.add(idx);
+                    // Play word audio when revealing
+                    if (hasWordAudio(idx)) {
+                        playWordAudio(idx);
+                        wordEl.classList.add("word-audio-playing");
+                    }
+                }
                 renderListenReveal();
             });
         }
@@ -2449,6 +2630,7 @@ const uiLabels = JSON.stringify({
 
         function playVerse() {
             if (!VERSE.primaryAudioUrl) return;
+            wordAudioEndTime = null;
             if (secPlaying) stopSecondary();
             // iOS-safe: set src if needed, then play synchronously in gesture context.
             // Never use .load() — it can re-lock the element on iOS.
@@ -2474,6 +2656,15 @@ const uiLabels = JSON.stringify({
         }
 
         audio.addEventListener("timeupdate", () => {
+            // Word-level playback: stop at word end
+            if (wordAudioEndTime !== null) {
+                // Don't stop until real time has passed (iOS seek latency)
+                const elapsed = performance.now() - wordAudioStartedAt;
+                if (elapsed > 300 && audio.currentTime >= wordAudioEndTime) {
+                    stopWordAudio();
+                }
+                return;
+            }
             if (audio.currentTime >= VERSE.endTime) {
                 audio.pause();
                 isPlaying = false;

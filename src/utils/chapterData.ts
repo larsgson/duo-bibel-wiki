@@ -141,6 +141,45 @@ export function findTimingData(langCode: string): {
   return null;
 }
 
+/**
+ * Load word-level timing data for a language code.
+ * Returns the words data for a specific chapter, or null if unavailable.
+ */
+export function findWordTimingData(
+  langCode: string,
+  chapterNum: number,
+): Record<string, Record<string, (number | null)[]>> | null {
+  const categories = ["with-timecode", "audio-with-timecode"];
+  for (const cat of categories) {
+    const catPath = path.join(
+      process.cwd(),
+      "src/data/templates/John/ALL-timings/nt",
+      cat,
+      langCode,
+    );
+    if (!fs.existsSync(catPath)) continue;
+    const versions = fs.readdirSync(catPath);
+    for (const ver of versions) {
+      const wordsFile = path.join(catPath, ver, "words.json");
+      if (fs.existsSync(wordsFile)) {
+        const data = JSON.parse(fs.readFileSync(wordsFile, "utf-8"));
+        const filesetKey = Object.keys(data)[0];
+        const chapterData = data[filesetKey]?.[String(chapterNum)];
+        if (!chapterData) return null;
+        // Flatten: { "JHN1:1": { "1": [...] } } → { "JHN1:1": [...] }
+        const flat: Record<string, (number | null)[]> = {};
+        for (const [ref, verseObj] of Object.entries(chapterData)) {
+          const inner = verseObj as Record<string, (number | null)[]>;
+          const firstKey = Object.keys(inner)[0];
+          if (firstKey) flat[ref] = inner[firstKey];
+        }
+        return flat;
+      }
+    }
+  }
+  return null;
+}
+
 function parseTextFilesetId(
   textValue: string | undefined,
   distinctId: string,
@@ -258,6 +297,7 @@ export function buildChapterData(params: {
   secondaryFileset: { audioFilesetId: string; textFilesetId: string } | null;
   chapterImageData: Record<string, string[]>;
   secondaryChapterTiming: Record<string, number[]>;
+  primaryWordTiming: Record<string, (number | null)[]> | null;
 }): string {
   const { apiKey, apiBaseUrl } = getApiConfig();
   return JSON.stringify({
@@ -271,6 +311,7 @@ export function buildChapterData(params: {
     secondaryAudioFilesetId: params.secondaryFileset?.audioFilesetId || "",
     chapterImageData: params.chapterImageData,
     secondaryChapterTiming: params.secondaryChapterTiming,
+    primaryWordTiming: params.primaryWordTiming,
     apiKey,
     apiBaseUrl,
   });
