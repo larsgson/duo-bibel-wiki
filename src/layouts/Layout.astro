@@ -1,4 +1,6 @@
 ---
+import { ClientRouter } from "astro:transitions";
+
 interface LangEntry {
     code: string;
     name: string;
@@ -45,6 +47,7 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark" />
         <title>{title}</title>
+        <ClientRouter />
         <style>
             * {
                 box-sizing: border-box;
@@ -74,7 +77,6 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                 flex-direction: column;
                 overflow: hidden;
             }
-
             /* Header */
             .app-header {
                 background: #007bff;
@@ -200,6 +202,183 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                     display: none;
                 }
             }
+        </style>
+        <style is:global>
+            /* ── Dim active verse card during focus mode ── */
+            body.focus-mode .listen-verse-card.active {
+                opacity: 0.15 !important;
+                pointer-events: none !important;
+                border-color: transparent !important;
+                background: transparent !important;
+            }
+
+            /* ── Mini player (layout-level, persists across navigations) ── */
+            .listen-player {
+                position: fixed;
+                bottom: 72px;
+                right: 16px;
+                width: 280px;
+                height: 160px;
+                border: 2px solid #0f3460;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                z-index: 1001;
+                overflow: hidden;
+            }
+            .listen-player:hover {
+                transform: scale(1.02);
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+                border-color: #1a4d7a;
+            }
+            @media (min-width: 769px) {
+                .listen-player { bottom: 16px; }
+            }
+            @media (max-width: 640px) {
+                .listen-player { width: 240px; height: 140px; bottom: 68px; right: 12px; }
+            }
+            @media (max-width: 400px) {
+                .listen-player { width: 200px; height: 120px; bottom: 64px; right: 8px; }
+            }
+            .listen-player-image {
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            }
+            .listen-player-image img {
+                width: 100%; height: 100%; object-fit: cover; display: block;
+            }
+            .listen-player-overlay {
+                position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                display: flex; flex-direction: column; justify-content: flex-end;
+                background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 70%, transparent 100%);
+                z-index: 2;
+            }
+            .listen-player-content {
+                display: flex; align-items: flex-end; justify-content: space-between;
+                padding: 12px 16px; gap: 12px;
+            }
+            @media (max-width: 640px) {
+                .listen-player-content { padding: 10px 12px; gap: 10px; }
+            }
+            @media (max-width: 400px) {
+                .listen-player-content { padding: 8px 10px; }
+            }
+            .listen-player-info { flex: 1; min-width: 0; }
+            .listen-player-title {
+                color: #eee; font-size: 11px; font-weight: 500; letter-spacing: 0.3px;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            }
+            @media (max-width: 640px) { .listen-player-title { font-size: 10px; } }
+            @media (max-width: 400px) { .listen-player-title { font-size: 9px; } }
+            .listen-player-lang {
+                color: rgba(255,255,255,0.6); font-size: 9px;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.8); margin-top: 2px;
+            }
+            .listen-player-btn {
+                background: rgba(15,52,96,0.85); border: none; border-radius: 4px;
+                color: #fff; width: 24px; height: 24px; min-width: 24px; min-height: 24px;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer; transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.4); flex-shrink: 0;
+                padding: 2px; outline: none;
+            }
+            .listen-player-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+            .listen-player-btn:hover { background: rgba(26,77,122,0.95); transform: scale(1.1); }
+            .listen-player-btn:active { transform: scale(0.95); }
+            .mini-player-close { margin-left: 4px; }
+            @media (max-width: 640px) {
+                .listen-player-btn { width: 22px; height: 22px; min-width: 22px; min-height: 22px; }
+                .listen-player-btn svg { width: 18px; height: 18px; }
+            }
+            @media (max-width: 400px) {
+                .listen-player-btn { width: 20px; height: 20px; min-width: 20px; min-height: 20px; }
+                .listen-player-btn svg { width: 16px; height: 16px; }
+            }
+            .listen-player-pulse {
+                position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+                background: linear-gradient(90deg, #e94560 0%, #ff6b7a 100%);
+                animation: listen-pulse 2s ease-in-out infinite; z-index: 3;
+            }
+            @keyframes listen-pulse {
+                0%, 100% { opacity: 0.5; transform: scaleX(0.8); }
+                50% { opacity: 1; transform: scaleX(1); }
+            }
+
+            /* ── Focus mode panel ── */
+            .focus-panel-backdrop {
+                position: fixed; inset: 0;
+                background: rgba(0, 0, 0, 0.15);
+                z-index: 900;
+            }
+            .focus-panel {
+                position: fixed; top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 950;
+                width: min(90vw, 600px);
+                border: 3px solid #e74c3c;
+                border-radius: 0.75rem;
+                background: #1a1a2e;
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+                overflow: hidden;
+            }
+            @media (max-width: 480px) {
+                .focus-panel { width: 95vw; }
+            }
+            .focus-panel-content { position: relative; }
+            .focus-panel-content img {
+                width: 100%; display: block; overflow: hidden;
+            }
+            .focus-panel-content img:first-child {
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .focus-panel-verse {
+                padding: 16px 20px;
+                font-size: 1.05rem;
+                line-height: 1.6;
+                color: #e0e0e0;
+            }
+            .focus-panel-verse .focus-verse-ref {
+                display: block;
+                font-size: 0.75rem;
+                color: rgba(255,255,255,0.5);
+                margin-bottom: 8px;
+                letter-spacing: 0.3px;
+            }
+            .focus-panel-verse .focus-verse-secondary {
+                margin-top: 10px;
+                color: rgba(255,255,255,0.6);
+                font-size: 0.95rem;
+            }
+            .focus-panel-controls {
+                position: absolute; top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex; gap: 16px; align-items: center;
+                z-index: 10; pointer-events: auto;
+            }
+            .focus-panel-btn {
+                background: rgba(255,255,255,0.25); border: none; border-radius: 50%;
+                width: 64px; height: 64px;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer; color: #fff; transition: background 0.15s;
+            }
+            .focus-panel-btn:hover { background: rgba(255,255,255,0.4); }
+            .focus-panel-stop { width: 52px; height: 52px; }
+            @media (max-width: 480px) {
+                .focus-panel-btn { width: 52px; height: 52px; }
+                .focus-panel-stop { width: 44px; height: 44px; }
+            }
+
+            /* Ken Burns animation variants */
+            @keyframes kenBurns1 { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.15) translate(-3%,-2%); } }
+            @keyframes kenBurns2 { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.12) translate(2%,-3%); } }
+            @keyframes kenBurns3 { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.18) translate(-2%,2%); } }
+            @keyframes kenBurns4 { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.14) translate(3%,1%); } }
+            .focus-panel-content img.ken-burns-1 { animation: kenBurns1 linear forwards; }
+            .focus-panel-content img.ken-burns-2 { animation: kenBurns2 linear forwards; }
+            .focus-panel-content img.ken-burns-3 { animation: kenBurns3 linear forwards; }
+            .focus-panel-content img.ken-burns-4 { animation: kenBurns4 linear forwards; }
+            body.audio-paused .focus-panel-content img { animation-play-state: paused; }
         </style>
     </head>
     <body class={flexMode ? "flex-mode" : undefined}>
@@ -602,5 +781,251 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                 </>
             )
         }
+        <!-- Mini player (persists across page transitions) -->
+        <div id="mini-player-root" transition:persist="audio-player" style="display:none;">
+            <div class="listen-player" id="mini-player">
+                <div class="listen-player-image" id="mini-player-image"></div>
+                <div class="listen-player-overlay">
+                    <div class="listen-player-content">
+                        <div class="listen-player-info">
+                            <div class="listen-player-title" id="mini-player-title">&mdash;</div>
+                            <div class="listen-player-lang" id="mini-player-lang"></div>
+                        </div>
+                        <button class="listen-player-btn" id="mini-player-btn" aria-label="Play">
+                            <svg id="mini-player-icon-play" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M8 5v14l11-7z" fill="#fff"/></svg>
+                            <svg id="mini-player-icon-pause" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><rect x="6" y="4" width="4" height="16" fill="#fff"/><rect x="14" y="4" width="4" height="16" fill="#fff"/></svg>
+                        </button>
+                        <button class="listen-player-btn mini-player-close" id="mini-player-close" aria-label="Stop">
+                            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M18 6L6 18M6 6l12 12" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="listen-player-pulse" id="mini-player-pulse" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Focus mode panel (persists across page transitions) -->
+        <div id="focus-root" transition:persist="focus-panel">
+            <div class="focus-panel-backdrop" id="focus-backdrop" style="display:none"></div>
+            <div class="focus-panel" id="focus-panel" style="display:none">
+                <div class="focus-panel-content" id="focus-panel-content"></div>
+                <div class="focus-panel-controls" id="focus-panel-controls">
+                    <button class="focus-panel-btn" id="focus-play-btn" aria-label="Play">
+                        <svg id="fp-icon-play" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="fp-icon-pause" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button class="focus-panel-btn focus-panel-stop" id="focus-stop-btn" aria-label="Stop" style="display:none">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            import * as audioStore from "../scripts/audio-store";
+
+            // Expose for define:vars page scripts
+            (window as any).__audioStore = audioStore;
+
+            // iOS audio unlock on first interaction
+            const unlockEvents = ["touchstart", "click"] as const;
+            function onFirstInteraction() {
+                audioStore.unlockAudio();
+                for (const evt of unlockEvents) {
+                    document.removeEventListener(evt, onFirstInteraction, true);
+                }
+            }
+            for (const evt of unlockEvents) {
+                document.addEventListener(evt, onFirstInteraction, true);
+            }
+
+            // Mini player UI bindings
+            const root = document.getElementById("mini-player-root")!;
+            const playerBtn = document.getElementById("mini-player-btn")!;
+            const closeBtn = document.getElementById("mini-player-close")!;
+            const titleEl = document.getElementById("mini-player-title")!;
+            const langEl = document.getElementById("mini-player-lang")!;
+            const imageEl = document.getElementById("mini-player-image")!;
+            const pulseEl = document.getElementById("mini-player-pulse")!;
+            const iconPlay = document.getElementById("mini-player-icon-play")!;
+            const iconPause = document.getElementById("mini-player-icon-pause")!;
+
+            playerBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const state = audioStore.getState();
+                if (state.audioPlayState === "idle") {
+                    if (state.pausedState) audioStore.resumePlayback();
+                } else {
+                    audioStore.pausePlayback();
+                }
+            });
+
+            closeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                audioStore.stopAll();
+            });
+
+            // Click the player card → enter focus mode + navigate to playing chapter
+            root.addEventListener("click", () => {
+                const state = audioStore.getState();
+                if (state.audioContext) {
+                    const { primaryCode, secondaryCode, book, chapter } = state.audioContext;
+                    const href = `/${primaryCode}/${secondaryCode}/${book}/${chapter}/`;
+                    audioStore.setFocusMode(true);
+                    if (window.location.pathname !== href) {
+                        window.location.href = href;
+                    }
+                }
+            });
+
+            // ── Focus panel bindings ──
+            const focusBackdrop = document.getElementById("focus-backdrop")!;
+            const focusPanel = document.getElementById("focus-panel")!;
+            const focusPanelContent = document.getElementById("focus-panel-content")!;
+            const focusPlayBtn = document.getElementById("focus-play-btn")!;
+            const focusStopBtn = document.getElementById("focus-stop-btn")!;
+            const fpIconPlay = document.getElementById("fp-icon-play")!;
+            const fpIconPause = document.getElementById("fp-icon-pause")!;
+
+            // Focus play/pause
+            focusPlayBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const state = audioStore.getState();
+                if (state.audioPlayState === "idle") {
+                    if (state.pausedState) {
+                        audioStore.resumePlayback();
+                    } else if (state.cachedPrimaryAudioUrl) {
+                        audioStore.playVerse(state.currentVerseIdx);
+                    }
+                } else {
+                    audioStore.pausePlayback();
+                }
+            });
+
+            // Focus stop
+            focusStopBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                audioStore.stopAll();
+            });
+
+            // Exit focus mode
+            focusBackdrop.addEventListener("click", () => audioStore.setFocusMode(false));
+            window.addEventListener("wheel", () => {
+                if (audioStore.getState().focusMode) audioStore.setFocusMode(false);
+            }, { passive: true });
+            focusBackdrop.addEventListener("touchmove", () => {
+                audioStore.setFocusMode(false);
+            }, { passive: true });
+
+            function populateFocusPanel(idx: number) {
+                const state = audioStore.getState();
+                const card = audioStore.getPlayerCardInfo();
+                const entry = state.verseEntries[idx];
+                if (!entry) return;
+
+                const duration = entry.endTime > entry.startTime
+                    ? (entry.endTime - entry.startTime) : 10;
+                const variant = Math.floor(Math.random() * 4) + 1;
+
+                // Build focus panel content: images + verse text
+                let html = "";
+                const verseEl = document.getElementById(`verse-${idx}`);
+                // Get all images from the verse card DOM
+                const verseImages = verseEl?.querySelectorAll(".listen-verse-images img");
+                if (verseImages && verseImages.length > 0) {
+                    verseImages.forEach((img) => {
+                        const src = (img as HTMLImageElement).src;
+                        html += `<div style="overflow:hidden"><img src="${src}" alt="" class="ken-burns-${variant}" style="animation-duration:${duration}s" /></div>`;
+                    });
+                } else if (card.imageUrl) {
+                    html += `<div style="overflow:hidden"><img src="${card.imageUrl}" alt="" class="ken-burns-${variant}" style="animation-duration:${duration}s" /></div>`;
+                }
+                html += `<div class="focus-panel-verse">`;
+                html += `<span class="focus-verse-ref">${card.title}</span>`;
+                if (verseEl) {
+                    const priText = verseEl.querySelector(".listen-verse-text-primary") as HTMLElement | null;
+                    const secText = verseEl.querySelector(".listen-verse-text-secondary") as HTMLElement | null;
+                    const priDir = priText?.getAttribute("dir") ? ` dir="${priText.getAttribute("dir")}"` : "";
+                    const secDir = secText?.getAttribute("dir") ? ` dir="${secText.getAttribute("dir")}"` : "";
+                    if (priText) html += `<div${priDir}>${priText.innerHTML}</div>`;
+                    if (secText) html += `<div class="focus-verse-secondary"${secDir}>${secText.innerHTML}</div>`;
+                }
+                html += `</div>`;
+                focusPanelContent.innerHTML = html;
+                focusPanel.scrollTop = 0;
+            }
+
+            function showFocusPanel(idx: number) {
+                populateFocusPanel(idx);
+                focusBackdrop.style.display = "";
+                focusPanel.style.display = "";
+            }
+
+            function hideFocusPanel() {
+                focusBackdrop.style.display = "none";
+                focusPanel.style.display = "none";
+                focusPanelContent.innerHTML = "";
+            }
+
+            // Subscribe to state changes
+            let prevFocusMode = false;
+            let prevVerseIdx = -1;
+            audioStore.subscribe(() => {
+                const state = audioStore.getState();
+                const card = audioStore.getPlayerCardInfo();
+                const isPlaying = state.audioPlayState !== "idle";
+
+                // ── Focus mode transitions ──
+                if (state.focusMode && !prevFocusMode) {
+                    // Entering focus mode
+                    document.body.classList.add("focus-mode");
+                    root.style.display = "none"; // hide mini player
+                    showFocusPanel(state.currentVerseIdx);
+                } else if (!state.focusMode && prevFocusMode) {
+                    // Exiting focus mode
+                    document.body.classList.remove("focus-mode");
+                    hideFocusPanel();
+                    if (state.playerVisible) root.style.display = ""; // show mini player
+                }
+                prevFocusMode = state.focusMode;
+
+                // Update focus panel content when verse changes during focus mode
+                if (state.focusMode && state.currentVerseIdx !== prevVerseIdx && isPlaying) {
+                    populateFocusPanel(state.currentVerseIdx);
+                }
+                prevVerseIdx = state.currentVerseIdx;
+
+                // ── Focus panel play/pause icons ──
+                fpIconPlay.style.display = isPlaying ? "none" : "block";
+                fpIconPause.style.display = isPlaying ? "block" : "none";
+                focusStopBtn.style.display = isPlaying ? "none" : "";
+
+                // ── Audio paused class for Ken Burns ──
+                if (state.pausedState) {
+                    document.body.classList.add("audio-paused");
+                } else {
+                    document.body.classList.remove("audio-paused");
+                }
+
+                // ── Mini player (only when not in focus mode) ──
+                if (!state.focusMode) {
+                    root.style.display = state.playerVisible ? "" : "none";
+                }
+
+                // Play/pause icon
+                iconPlay.style.display = isPlaying ? "none" : "block";
+                iconPause.style.display = isPlaying ? "block" : "none";
+
+                // Pulse
+                pulseEl.style.display = isPlaying ? "" : "none";
+
+                // Card info
+                titleEl.textContent = card.title;
+                langEl.textContent = card.langLabel;
+                if (card.imageUrl) {
+                    imageEl.innerHTML = `<img src="${card.imageUrl}" alt="" />`;
+                }
+            });
+        </script>
     </body>
 </html>

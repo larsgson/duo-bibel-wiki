@@ -243,7 +243,7 @@ const backHref = `/${primaryCode}`;
         <div id="accordion-container"></div>
     </div>
 
-    <script define:vars={{ categoriesJSON, bookTitle, book, chapterLabel }}>
+    <script data-astro-rerun define:vars={{ categoriesJSON, bookTitle, book, chapterLabel }}>
         const categories = JSON.parse(categoriesJSON);
         const bookKey = book.toLowerCase();
 
