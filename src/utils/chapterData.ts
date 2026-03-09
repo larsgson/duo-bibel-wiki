@@ -193,16 +193,14 @@ export function findWordTimingData(
   if (!fs.existsSync(wordsFile)) return null;
   const data = JSON.parse(fs.readFileSync(wordsFile, "utf-8"));
   const filesetKey = Object.keys(data)[0];
-  const chapterData = data[filesetKey]?.[String(chapterNum)];
-  if (!chapterData) return null;
-  // Flatten: { "JHN1:1": { "1": [...] } } → { "JHN1:1": [...] }
-  const flat: Record<string, (number | null)[]> = {};
-  for (const [ref, verseObj] of Object.entries(chapterData)) {
-    const inner = verseObj as Record<string, (number | null)[]>;
-    const firstKey = Object.keys(inner)[0];
-    if (firstKey) flat[ref] = inner[firstKey];
-  }
-  return flat;
+  const storyData = data[filesetKey]?.[String(chapterNum)];
+  if (!storyData) return null;
+  // Navigate: { book: { chapter: { verse: [...] } } }
+  const bookKey = Object.keys(storyData)[0];
+  if (!bookKey) return null;
+  const chapterObj = storyData[bookKey]?.[String(chapterNum)];
+  if (!chapterObj) return null;
+  return chapterObj as Record<string, (number | null)[]>;
 }
 
 function parseTextFilesetId(

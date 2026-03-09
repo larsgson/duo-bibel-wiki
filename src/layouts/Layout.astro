@@ -211,6 +211,15 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                 border-color: transparent !important;
                 background: transparent !important;
             }
+            /* Enlarge active verse text to match focus panel size */
+            body.focus-mode .listen-verse-card.active .listen-verse-text-primary {
+                font-size: calc(1.05rem * var(--primary-font-scale, 1));
+                line-height: 1.6;
+            }
+            body.focus-mode .listen-verse-card.active .listen-verse-text-secondary {
+                font-size: calc(0.95rem * var(--secondary-font-scale, 1));
+                line-height: 1.6;
+            }
 
             /* ── Mini player (layout-level, persists across navigations) ── */
             .listen-player {
@@ -286,7 +295,7 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
             .listen-player-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
             .listen-player-btn:hover { background: rgba(26,77,122,0.95); transform: scale(1.1); }
             .listen-player-btn:active { transform: scale(0.95); }
-            .mini-player-close { margin-left: 4px; }
+            .mini-player-close { position: absolute; top: 4px; right: 4px; z-index: 3; }
             @media (max-width: 640px) {
                 .listen-player-btn { width: 22px; height: 22px; min-width: 22px; min-height: 22px; }
                 .listen-player-btn svg { width: 18px; height: 18px; }
@@ -332,23 +341,14 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
             .focus-panel-content img:first-child {
                 border-radius: 0.5rem 0.5rem 0 0;
             }
-            .focus-panel-verse {
-                padding: 16px 20px;
-                font-size: 1.05rem;
+            /* Focus panel reuses .listen-verse-* classes, enlarged */
+            .focus-panel-content .listen-verse-text-primary {
+                font-size: calc(1.05rem * var(--primary-font-scale, 1));
                 line-height: 1.6;
-                color: #e0e0e0;
             }
-            .focus-panel-verse .focus-verse-ref {
-                display: block;
-                font-size: 0.75rem;
-                color: rgba(255,255,255,0.5);
-                margin-bottom: 8px;
-                letter-spacing: 0.3px;
-            }
-            .focus-panel-verse .focus-verse-secondary {
-                margin-top: 10px;
-                color: rgba(255,255,255,0.6);
-                font-size: 0.95rem;
+            .focus-panel-content .listen-verse-text-secondary {
+                font-size: calc(0.95rem * var(--secondary-font-scale, 1));
+                line-height: 1.6;
             }
             .focus-panel-controls {
                 position: absolute; top: 50%; left: 50%;
@@ -785,18 +785,17 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
         <div id="mini-player-root" transition:persist="audio-player" style="display:none;">
             <div class="listen-player" id="mini-player">
                 <div class="listen-player-image" id="mini-player-image"></div>
+                <button class="listen-player-btn mini-player-close" id="mini-player-close" aria-label="Stop" style="display:none">
+                    <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M18 6L6 18M6 6l12 12" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                </button>
                 <div class="listen-player-overlay">
                     <div class="listen-player-content">
                         <div class="listen-player-info">
                             <div class="listen-player-title" id="mini-player-title">&mdash;</div>
-                            <div class="listen-player-lang" id="mini-player-lang"></div>
                         </div>
                         <button class="listen-player-btn" id="mini-player-btn" aria-label="Play">
                             <svg id="mini-player-icon-play" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M8 5v14l11-7z" fill="#fff"/></svg>
                             <svg id="mini-player-icon-pause" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><rect x="6" y="4" width="4" height="16" fill="#fff"/><rect x="14" y="4" width="4" height="16" fill="#fff"/></svg>
-                        </button>
-                        <button class="listen-player-btn mini-player-close" id="mini-player-close" aria-label="Stop">
-                            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M18 6L6 18M6 6l12 12" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
                         </button>
                     </div>
                 </div>
@@ -844,7 +843,6 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
             const playerBtn = document.getElementById("mini-player-btn")!;
             const closeBtn = document.getElementById("mini-player-close")!;
             const titleEl = document.getElementById("mini-player-title")!;
-            const langEl = document.getElementById("mini-player-lang")!;
             const imageEl = document.getElementById("mini-player-image")!;
             const pulseEl = document.getElementById("mini-player-pulse")!;
             const iconPlay = document.getElementById("mini-player-icon-play")!;
@@ -916,6 +914,42 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
             focusBackdrop.addEventListener("touchmove", () => {
                 audioStore.setFocusMode(false);
             }, { passive: true });
+            let focusTouchStartY = 0;
+            let focusTouchLastY = 0;
+            let focusTouchLastTime = 0;
+            focusPanel.addEventListener("touchstart", (e) => {
+                focusTouchStartY = e.touches[0].clientY;
+                focusTouchLastY = focusTouchStartY;
+                focusTouchLastTime = Date.now();
+                focusTouchHandled = false;
+            }, { passive: true });
+            let focusTouchHandled = false;
+            focusPanel.addEventListener("touchmove", (e) => {
+                if (focusTouchHandled) return;
+                const y = e.touches[0].clientY;
+                const deltaY = focusTouchLastY - y;
+                const now = Date.now();
+                const dt = now - focusTouchLastTime;
+                const velocity = dt > 0 ? deltaY / dt : 0; // px/ms
+                focusTouchLastY = y;
+                focusTouchLastTime = now;
+                const totalDelta = focusTouchStartY - y;
+                if (Math.abs(totalDelta) > 10) {
+                    focusTouchHandled = true;
+                    const scrollAmount = totalDelta + velocity * 150;
+                    audioStore.setFocusMode(false);
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            const scroller = document.querySelector(".listen-scroll-area") || document.querySelector(".chapter-content") || document.querySelector(".main-content");
+                            if (scroller) {
+                                scroller.scrollBy({ top: scrollAmount, behavior: "smooth" });
+                            } else {
+                                window.scrollBy({ top: scrollAmount, behavior: "smooth" });
+                            }
+                        });
+                    });
+                }
+            }, { passive: true });
 
             function populateFocusPanel(idx: number) {
                 const state = audioStore.getState();
@@ -927,30 +961,38 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                     ? (entry.endTime - entry.startTime) : 10;
                 const variant = Math.floor(Math.random() * 4) + 1;
 
-                // Build focus panel content: images + verse text
+                // Build focus panel content mirroring verse card structure
                 let html = "";
                 const verseEl = document.getElementById(`verse-${idx}`);
                 // Get all images from the verse card DOM
                 const verseImages = verseEl?.querySelectorAll(".listen-verse-images img");
+                let hasImages = false;
                 if (verseImages && verseImages.length > 0) {
+                    hasImages = true;
+                    html += `<div class="listen-verse-images">`;
                     verseImages.forEach((img) => {
                         const src = (img as HTMLImageElement).src;
                         html += `<div style="overflow:hidden"><img src="${src}" alt="" class="ken-burns-${variant}" style="animation-duration:${duration}s" /></div>`;
                     });
+                    html += `<div class="listen-verse-ref">${card.title}</div>`;
+                    html += `</div>`;
                 } else if (card.imageUrl) {
+                    hasImages = true;
+                    html += `<div class="listen-verse-images">`;
                     html += `<div style="overflow:hidden"><img src="${card.imageUrl}" alt="" class="ken-burns-${variant}" style="animation-duration:${duration}s" /></div>`;
+                    html += `<div class="listen-verse-ref">${card.title}</div>`;
+                    html += `</div>`;
+                } else {
+                    html += `<div class="listen-verse-ref" style="position:static;background:none;color:#5b9bd5;font-size:0.75rem;font-weight:600;text-transform:none;letter-spacing:normal;text-shadow:none;padding:0.75rem 0.75rem 0;border-radius:0;">${card.title}</div>`;
                 }
-                html += `<div class="focus-panel-verse">`;
-                html += `<span class="focus-verse-ref">${card.title}</span>`;
                 if (verseEl) {
                     const priText = verseEl.querySelector(".listen-verse-text-primary") as HTMLElement | null;
                     const secText = verseEl.querySelector(".listen-verse-text-secondary") as HTMLElement | null;
                     const priDir = priText?.getAttribute("dir") ? ` dir="${priText.getAttribute("dir")}"` : "";
                     const secDir = secText?.getAttribute("dir") ? ` dir="${secText.getAttribute("dir")}"` : "";
-                    if (priText) html += `<div${priDir}>${priText.innerHTML}</div>`;
-                    if (secText) html += `<div class="focus-verse-secondary"${secDir}>${secText.innerHTML}</div>`;
+                    if (priText) html += `<div class="listen-verse-text-primary"${priDir}>${priText.innerHTML}</div>`;
+                    if (secText) html += `<div class="listen-verse-text-secondary"${secDir}>${secText.innerHTML}</div>`;
                 }
-                html += `</div>`;
                 focusPanelContent.innerHTML = html;
                 focusPanel.scrollTop = 0;
             }
@@ -1016,12 +1058,14 @@ const hasSelectorModal = !noHeader && compact && primaryLangs && secondaryLangs;
                 iconPlay.style.display = isPlaying ? "none" : "block";
                 iconPause.style.display = isPlaying ? "block" : "none";
 
+                // Close button only visible when paused
+                closeBtn.style.display = state.pausedState ? "" : "none";
+
                 // Pulse
                 pulseEl.style.display = isPlaying ? "" : "none";
 
                 // Card info
                 titleEl.textContent = card.title;
-                langEl.textContent = card.langLabel;
                 if (card.imageUrl) {
                     imageEl.innerHTML = `<img src="${card.imageUrl}" alt="" />`;
                 }

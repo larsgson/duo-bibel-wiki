@@ -1609,7 +1609,7 @@ const uiLabels = JSON.stringify({
                   : "listen";
         let moreMenuOpen = false;
         let exState = {};
-        const audio = new Audio();
+        function getStore() { return window.__audioStore; }
 
         // Current verse data (set by loadVerse)
         let VERSE = {
@@ -1675,9 +1675,9 @@ const uiLabels = JSON.stringify({
         async function loadVerse(verseNum) {
             await ensureChapterData();
             // Preload AudioBuffer for word-level playback (non-blocking).
-            // Only if AudioContext already exists (created on first user tap).
-            if (cachedPrimaryAudioUrl && CHAPTER.primaryWordTiming && !wordAudioBuffer && wordAudioCtx) {
-                ensureWordAudioBuffer(cachedPrimaryAudioUrl);
+            if (cachedPrimaryAudioUrl && CHAPTER.primaryWordTiming) {
+                const store = getStore();
+                if (store) store.preloadBuffer(cachedPrimaryAudioUrl, "primary");
             }
 
             const entries = CHAPTER.verseEntries;
@@ -1738,25 +1738,11 @@ const uiLabels = JSON.stringify({
                     : `${entry.verseStart}-${entry.verseEnd}`;
             const reference = `${bookDisplay} ${CHAPTER.chapterNum}:${verseDisplay}`;
 
-            // Word-level timing for this verse
+            // Word-level timing for this verse (keyed by verse number)
             const wt = CHAPTER.primaryWordTiming;
             let wordTimings = null;
             if (wt) {
-                // Try exact ref match first, then search by verse range
-                wordTimings = wt[entry.ref] || null;
-                if (!wordTimings) {
-                    for (const [ref, times] of Object.entries(wt)) {
-                        const colonIdx = ref.indexOf(":");
-                        const vs = ref.substring(colonIdx + 1);
-                        const parts = vs.split("-");
-                        const vs1 = parseInt(parts[0], 10);
-                        const vs2 = parts.length > 1 ? parseInt(parts[parts.length - 1], 10) : vs1;
-                        if (entry.verseStart >= vs1 && entry.verseEnd <= vs2) {
-                            wordTimings = times;
-                            break;
-                        }
-                    }
-                }
+                wordTimings = wt[String(entry.verseStart)] || null;
             }
 
             // Update VERSE state
@@ -1778,7 +1764,8 @@ const uiLabels = JSON.stringify({
 
             // Stop any playing audio
             if (isPlaying) {
-                audio.pause();
+                const store = getStore();
+                if (store) store.stopExerciseAudio();
                 isPlaying = false;
                 imageContainer.classList.remove("playing");
                 playIcon.innerHTML = "&#9654;";
@@ -1948,112 +1935,30 @@ const uiLabels = JSON.stringify({
             return wt[wordIdx] !== null;
         }
 
-        // ── Web Audio API for word-level playback (sample-accurate) ──
-        let wordAudioCtx = null;
-        let wordAudioBuffer = null;       // decoded AudioBuffer for current chapter audio
-        let wordAudioBufferUrl = null;    // URL the buffer was decoded from
-        let wordAudioSource = null;       // currently playing AudioBufferSourceNode
-        let wordAudioEndTime = null;      // non-null = word playback active (for timeupdate guard)
-        let wordAudioBufferLoading = false;
-
-        function ensureWordAudioCtx() {
-            if (!wordAudioCtx) {
-                wordAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (wordAudioCtx.state === "suspended") {
-                wordAudioCtx.resume();
-            }
-        }
-
-        async function ensureWordAudioBuffer(audioUrl) {
-            if (wordAudioBuffer && wordAudioBufferUrl === audioUrl) return;
-            if (wordAudioBufferLoading) return;
-            wordAudioBufferLoading = true;
-            try {
-                const resp = await fetch(audioUrl);
-                const arrayBuffer = await resp.arrayBuffer();
-                wordAudioBuffer = await wordAudioCtx.decodeAudioData(arrayBuffer);
-                wordAudioBufferUrl = audioUrl;
-            } catch (e) {
-                wordAudioBuffer = null;
-                wordAudioBufferUrl = null;
-            } finally {
-                wordAudioBufferLoading = false;
-            }
-        }
-
         function stopWordAudio() {
-            if (wordAudioSource) {
-                try { wordAudioSource.stop(); } catch (e) { /* already stopped */ }
-                wordAudioSource = null;
-            }
-            if (wordAudioEndTime !== null) {
-                wordAudioEndTime = null;
-                document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
-            }
+            const store = getStore();
+            if (store) store.stopWordAudio();
+            document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
         }
 
         function playWordAudio(wordIdx) {
             const wt = VERSE.wordTimings;
             if (!wt || !VERSE.primaryAudioUrl) return;
-            pauseStoreAudio();
-            const startTime = wt[wordIdx];
-            if (startTime === null || startTime === undefined) return;
-            // Find end time: next non-null value, or verse end
-            let endTime = VERSE.endTime;
-            for (let i = wordIdx + 1; i < wt.length; i++) {
-                if (wt[i] !== null) { endTime = wt[i]; break; }
-            }
-            const MIN_WORD_DURATION = 0.08;
-            const duration = Math.max(endTime - startTime, MIN_WORD_DURATION);
+            const store = getStore();
+            if (!store) return;
 
-            // Stop any current word playback
+            // Stop any current word/verse playback
             stopWordAudio();
-            // Pause verse playback if active
             if (isPlaying) {
-                audio.pause();
+                store.stopExerciseAudio();
                 isPlaying = false;
                 imageContainer.classList.remove("playing");
                 playIcon.innerHTML = "&#9654;";
             }
 
-            // Init AudioContext on user gesture
-            ensureWordAudioCtx();
-
-            // Mark word playback active (guards timeupdate)
-            wordAudioEndTime = endTime;
-
-            // If buffer is ready, play immediately; otherwise load then play
-            if (wordAudioBuffer && wordAudioBufferUrl === VERSE.primaryAudioUrl) {
-                _playWordFromBuffer(startTime, duration, wordIdx);
-            } else {
-                ensureWordAudioBuffer(VERSE.primaryAudioUrl).then(() => {
-                    if (wordAudioEndTime === null) return;
-                    if (!wordAudioBuffer) {
-                        audio.currentTime = startTime;
-                        audio.play().catch(() => {});
-                        return;
-                    }
-                    _playWordFromBuffer(startTime, duration, wordIdx);
-                });
-            }
-        }
-
-        function _playWordFromBuffer(startTime, duration, wordIdx) {
-            const source = wordAudioCtx.createBufferSource();
-            source.buffer = wordAudioBuffer;
-            source.connect(wordAudioCtx.destination);
-            wordAudioSource = source;
-
-            source.start(0, startTime, duration);
-
-            source.onended = () => {
-                if (wordAudioSource === source) {
-                    wordAudioSource = null;
-                    wordAudioEndTime = null;
-                    document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
-                }
-            };
+            store.playWordAudio(wt, wordIdx, VERSE.primaryAudioUrl, VERSE.endTime, () => {
+                document.querySelectorAll(".word-audio-playing").forEach(el => el.classList.remove("word-audio-playing"));
+            });
         }
 
         function wordAudioAttr(wordIdx) {
@@ -2723,97 +2628,44 @@ const uiLabels = JSON.stringify({
         }
 
         // ══════════════════════════════════════════
-        // AUDIO
+        // AUDIO (uses shared Web Audio store)
         // ══════════════════════════════════════════
-        const secAudio = new Audio();
         let secPlaying = false;
 
-        // ── iOS audio unlock: pre-unlock both elements on first interaction ──
-        const SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
-        let audioUnlocked = false;
-        function unlockAudioElements() {
-            if (audioUnlocked) return;
-            audioUnlocked = true;
-            [audio, secAudio].forEach(a => {
-                a.src = SILENT_WAV;
-                a.play().then(() => { a.src = ""; }).catch(() => {});
-            });
-        }
-        ["touchstart", "click"].forEach(evt => {
-            document.addEventListener(evt, function handler() {
-                unlockAudioElements();
-                ["touchstart", "click"].forEach(e => document.removeEventListener(e, handler, true));
-            }, true);
-        });
-
-        // Pause the shared audio store (mini player) whenever this page plays audio
-        function pauseStoreAudio() {
-            if (window.__audioStore && window.__audioStore.getState().audioPlayState !== "idle") {
-                window.__audioStore.pausePlayback();
-            }
-        }
-
         function stopSecondary() {
-            secAudio.pause();
+            const store = getStore();
+            if (store) store.stopExerciseAudio();
             secPlaying = false;
             if (secPlayBtn) secPlayBtn.classList.remove("playing");
         }
 
+        function onVerseEnded() {
+            isPlaying = false;
+            imageContainer.classList.remove("playing");
+            playIcon.innerHTML = "&#9654;";
+        }
+
         function playVerse() {
             if (!VERSE.primaryAudioUrl) return;
-            pauseStoreAudio();
+            const store = getStore();
+            if (!store) return;
             stopWordAudio();
             if (secPlaying) stopSecondary();
-            // iOS-safe: never use .load() — it can re-lock the element on iOS.
-            if (!audio.src || audio.src !== VERSE.primaryAudioUrl) {
-                audio.src = VERSE.primaryAudioUrl;
-                audio.addEventListener("canplay", function onReady() {
-                    audio.removeEventListener("canplay", onReady);
-                    audio.currentTime = VERSE.startTime;
-                    audio.play().catch(() => {});
-                });
-            } else {
-                audio.currentTime = VERSE.startTime;
-                audio.play().catch(() => {});
-            }
             isPlaying = true;
             imageContainer.classList.add("playing");
             playIcon.innerHTML = "&#9208;";
+            store.playExerciseVerse(VERSE.primaryAudioUrl, VERSE.startTime, VERSE.endTime, onVerseEnded);
         }
 
         function togglePlay() {
             if (isPlaying) {
-                audio.pause();
-                isPlaying = false;
-                imageContainer.classList.remove("playing");
-                playIcon.innerHTML = "&#9654;";
+                const store = getStore();
+                if (store) store.stopExerciseAudio();
+                onVerseEnded();
             } else {
                 playVerse();
             }
         }
-
-        audio.addEventListener("timeupdate", () => {
-            // Word-level playback: setTimeout handles stopping
-            if (wordAudioEndTime !== null) {
-                return;
-            }
-            if (audio.currentTime >= VERSE.endTime) {
-                audio.pause();
-                isPlaying = false;
-                imageContainer.classList.remove("playing");
-                playIcon.innerHTML = "&#9654;";
-            }
-        });
-        audio.addEventListener("ended", () => {
-            isPlaying = false;
-            imageContainer.classList.remove("playing");
-            playIcon.innerHTML = "&#9654;";
-        });
-        audio.addEventListener("error", () => {
-            isPlaying = false;
-            imageContainer.classList.remove("playing");
-            playIcon.innerHTML = "&#9654;";
-        });
 
         // ── Secondary audio ──
         if (secPlayBtn) {
@@ -2823,35 +2675,19 @@ const uiLabels = JSON.stringify({
                     return;
                 }
                 if (isPlaying) {
-                    audio.pause();
-                    isPlaying = false;
-                    imageContainer.classList.remove("playing");
-                    playIcon.innerHTML = "&#9654;";
+                    const store = getStore();
+                    if (store) store.stopExerciseAudio();
+                    onVerseEnded();
                 }
                 if (!VERSE.secondaryAudioUrl) return;
-                pauseStoreAudio();
-                // iOS-safe: never use .load() — it can re-lock the element on iOS.
+                const store = getStore();
+                if (!store) return;
                 secPlaying = true;
                 secPlayBtn.classList.add("playing");
-                if (!secAudio.src || secAudio.src !== VERSE.secondaryAudioUrl) {
-                    secAudio.src = VERSE.secondaryAudioUrl;
-                    secAudio.addEventListener("canplay", function onReady() {
-                        secAudio.removeEventListener("canplay", onReady);
-                        secAudio.currentTime = VERSE.secondaryStartTime;
-                        secAudio.play().catch(() => {});
-                    });
-                } else {
-                    secAudio.currentTime = VERSE.secondaryStartTime;
-                    secAudio.play().catch(() => {});
-                }
-            });
-
-            secAudio.addEventListener("timeupdate", () => {
-                if (secAudio.currentTime >= VERSE.secondaryEndTime)
+                store.playExerciseSecondary(VERSE.secondaryAudioUrl, VERSE.secondaryStartTime, VERSE.secondaryEndTime, () => {
                     stopSecondary();
+                });
             });
-            secAudio.addEventListener("ended", () => stopSecondary());
-            secAudio.addEventListener("error", () => stopSecondary());
         }
 
         // Click image to play
