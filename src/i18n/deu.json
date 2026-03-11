@@ -29,8 +29,10 @@
   "languageCountFiltered": "{visible} von {total} Sprachen",
   "noLanguagesFound": "Keine Sprachen gefunden",
   "motherTongueBadge": "Muttersprache: {label}",
+  "learningLangBadge": "Lernsprache: {label}",
   "screenshotHeading": "So funktioniert's",
   "screenshotSelectStory": "Wähle eine Geschichte",
   "screenshotSelectExercise": "Wähle eine Übung",
-  "screenshotContinue": "Weiter"
+  "screenshotContinue": "Weiter",
+  "stepIndicator": "Schritt {current} von {total}"
 }

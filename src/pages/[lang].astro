@@ -92,6 +92,7 @@ for (const loc of uiLocales) {
     const t = useTranslations(loc);
     uiTranslations[loc] = {
         selectMotherTongue: t("selectMotherTongue"),
+        learningLangBadge: t("learningLangBadge"),
         searchPlaceholder: t("searchPlaceholder"),
         languageCount: t("languageCount"),
         languageCountFiltered: t("languageCountFiltered"),
@@ -111,60 +112,72 @@ const uiJSON = JSON.stringify(uiTranslations);
         .page {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 56px);
+            height: calc(100dvh - 56px);
         }
-        .primary-info {
+        .sticky-top {
+            flex-shrink: 0;
+            background: #007bff;
             text-align: center;
-            margin-bottom: 1.5rem;
         }
-        .lang-heading {
-            font-size: 1.8rem;
-            margin-bottom: 0.25rem;
-        }
-        .vernacular {
-            font-style: italic;
-            color: #6ea8fe;
-            font-size: 1.15rem;
-            margin: 0.25rem 0;
-        }
-        .code-label {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.95rem;
-            font-family: monospace;
+        .sticky-top h2 {
+            font-size: 1.25rem;
+            color: white;
             margin: 0;
+            padding: 0.75rem 1.5rem 0;
         }
-        .secondary-heading {
-            text-align: center;
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 1rem;
+        .header-pills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.5rem;
+        }
+        .learning-badge {
+            background: white;
+            color: #007bff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        .search-area {
+            padding: 0.75rem 1.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: #1a1a2e;
         }
         .search-section {
             max-width: 500px;
-            margin: 0 auto 1rem;
+            margin: 0 auto 0.75rem;
         }
         .search-input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1.15rem;
             font-size: 1.1rem;
-            border: 2px solid rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(80, 180, 220, 0.6);
             border-radius: 8px;
             outline: none;
             box-sizing: border-box;
-            transition: border-color 0.2s;
-            background: rgba(255, 255, 255, 0.08);
-            color: #e0e0e0;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: rgb(182 231 252 / 94%);
+            color: #111;
         }
         .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(0, 0, 0, 0.45);
         }
         .search-input:focus {
-            border-color: #6ea8fe;
+            border-color: #4cc4f0;
+            box-shadow: 0 0 0 3px rgba(110, 204, 244, 0.3);
         }
         .count {
             text-align: center;
             color: rgba(255, 255, 255, 0.4);
-            margin: 0.5rem 0 1.25rem;
+            margin: 0.25rem 0 0.5rem;
             font-size: 0.95rem;
         }
         .no-results {
@@ -172,6 +185,11 @@ const uiJSON = JSON.stringify(uiTranslations);
             color: rgba(255, 255, 255, 0.4);
             padding: 3rem 1rem;
             font-size: 1.1rem;
+        }
+        .grid-wrap {
+            padding: 0.75rem 1.5rem 1rem;
+            overflow-y: auto;
+            flex: 1;
         }
         .grid {
             display: grid;
@@ -183,16 +201,17 @@ const uiJSON = JSON.stringify(uiTranslations);
             align-items: baseline;
             gap: 0.5rem;
             padding: 0.6rem 0.85rem;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 6px;
             text-decoration: none;
             color: #e0e0e0;
             transition: background 0.15s;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
         }
         .lang-item:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(110, 168, 254, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(110, 168, 254, 0.4);
         }
         .lang-code {
             color: rgba(255, 255, 255, 0.4);
@@ -212,20 +231,15 @@ const uiJSON = JSON.stringify(uiTranslations);
             color: #6ea8fe;
             border-radius: 2px;
         }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 2rem;
-            color: #6ea8fe;
-            text-decoration: none;
-            font-size: 0.95rem;
-        }
-        .back-link:hover {
-            text-decoration: underline;
+        @media (min-width: 769px) {
+            .page {
+                height: 100vh;
+                height: 100dvh;
+            }
         }
         @media (max-width: 768px) {
-            .page {
-                padding: 1rem;
+            .grid-wrap {
+                padding: 0.75rem 1rem 1rem;
             }
             .grid {
                 grid-template-columns: 1fr;
@@ -234,25 +248,27 @@ const uiJSON = JSON.stringify(uiTranslations);
     </style>
 
     <div class="page">
-        <div class="primary-info">
-            <h2 class="lang-heading">{nameEnglish}</h2>
-            {nameVernacular && <p class="vernacular">{nameVernacular}</p>}
-            <p class="code-label">[{code}]</p>
+        <div class="sticky-top">
+            <h2 id="secondary-heading"></h2>
+            <div class="header-pills">
+                <div class="learning-badge" id="learning-badge" data-name={nameEnglish} data-vernacular={nameVernacular}></div>
+            </div>
         </div>
 
-        <p class="secondary-heading" id="secondary-heading"></p>
-
-        <div class="search-section">
-            <input
-                id="search"
-                class="search-input"
-                type="text"
-                placeholder=""
-                autofocus
-            />
+        <div class="search-area">
+            <div class="search-section">
+                <input
+                    id="search"
+                    class="search-input"
+                    type="text"
+                    placeholder=""
+                    autofocus
+                />
+            </div>
+            <p class="count" id="count"></p>
         </div>
-        <p class="count" id="count"></p>
 
+        <div class="grid-wrap">
         <div class="grid" id="grid">
             {
                 allLangs.map((lang) => (
@@ -276,6 +292,7 @@ const uiJSON = JSON.stringify(uiTranslations);
             }
         </div>
         <p class="no-results" id="no-results" style="display:none"></p>
+        </div>
     </div>
 
     <script id="ui-i18n" type="application/json" set:html={uiJSON} />
@@ -311,6 +328,13 @@ const uiJSON = JSON.stringify(uiTranslations);
         const total = items.length;
 
         // Apply localized strings
+        const badge = document.getElementById("learning-badge")!;
+        const langName = badge.dataset.name!;
+        const langVern = badge.dataset.vernacular || "";
+        const badgeLabel = langVern ? `${langName} - ${langVern}` : langName;
+        badge.textContent = (
+            ui.learningLangBadge || "Learning: {label}"
+        ).replace("{label}", badgeLabel);
         document.getElementById("secondary-heading")!.textContent =
             ui.selectMotherTongue || "Select mother-tongue";
         search.placeholder =

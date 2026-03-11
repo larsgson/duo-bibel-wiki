@@ -29,8 +29,10 @@
   "languageCountFiltered": "{visible} из {total} языков",
   "noLanguagesFound": "Языки не найдены",
   "motherTongueBadge": "Родной язык: {label}",
+  "learningLangBadge": "Изучаю: {label}",
   "screenshotHeading": "Как это работает",
   "screenshotSelectStory": "Выберите историю",
   "screenshotSelectExercise": "Выберите упражнение",
-  "screenshotContinue": "Продолжить"
+  "screenshotContinue": "Продолжить",
+  "stepIndicator": "Шаг {current} из {total}"
 }

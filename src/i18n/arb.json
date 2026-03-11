@@ -29,8 +29,10 @@
   "languageCountFiltered": "{visible} من {total} لغة",
   "noLanguagesFound": "لم يتم العثور على لغات",
   "motherTongueBadge": "اللغة الأم: {label}",
+  "learningLangBadge": "أتعلّم: {label}",
   "screenshotHeading": "كيف يعمل",
   "screenshotSelectStory": "اختر قصة",
   "screenshotSelectExercise": "اختر تمرينًا",
-  "screenshotContinue": "متابعة"
+  "screenshotContinue": "متابعة",
+  "stepIndicator": "الخطوة {current} من {total}"
 }

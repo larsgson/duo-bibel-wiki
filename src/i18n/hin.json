@@ -29,8 +29,10 @@
   "languageCountFiltered": "{total} में से {visible} भाषाएँ",
   "noLanguagesFound": "कोई भाषा नहीं मिली",
   "motherTongueBadge": "मातृभाषा: {label}",
+  "learningLangBadge": "सीख रहे हैं: {label}",
   "screenshotHeading": "यह कैसे काम करता है",
   "screenshotSelectStory": "एक कहानी चुनें",
   "screenshotSelectExercise": "एक अभ्यास चुनें",
-  "screenshotContinue": "आगे बढ़ें"
+  "screenshotContinue": "आगे बढ़ें",
+  "stepIndicator": "चरण {current} / {total}"
 }

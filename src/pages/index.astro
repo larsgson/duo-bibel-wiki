@@ -78,6 +78,8 @@ for (const loc of heroLocales) {
         languageCountFiltered: t("languageCountFiltered"),
         noLanguagesFound: t("noLanguagesFound"),
         motherTongueBadge: t("motherTongueBadge"),
+        learningLangBadge: t("learningLangBadge"),
+        stepIndicator: t("stepIndicator"),
         screenshotHeading: t("screenshotHeading"),
         screenshotSelectStory: t("screenshotSelectStory"),
         screenshotSelectExercise: t("screenshotSelectExercise"),
@@ -352,21 +354,28 @@ const langDataJSON = JSON.stringify({
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             }
             .modal-header {
+                position: relative;
                 display: flex;
-                justify-content: space-between;
+                justify-content: center;
                 align-items: center;
-                padding: 1rem 1.5rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 0.75rem 3rem 0;
+                background: #007bff;
+                color: white;
                 flex-shrink: 0;
             }
             .modal-header h2 {
                 font-size: 1.25rem;
-                flex: 1;
+                text-align: center;
+                color: white;
             }
             .modal-back {
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
                 background: none;
                 border: none;
-                color: rgba(255, 255, 255, 0.5);
+                color: rgba(255, 255, 255, 0.8);
                 font-size: 1.25rem;
                 cursor: pointer;
                 padding: 0.25rem 0.5rem;
@@ -375,28 +384,51 @@ const langDataJSON = JSON.stringify({
                     color 0.2s,
                     background 0.2s;
                 line-height: 1;
-                margin-right: 0.5rem;
             }
             .modal-back:hover {
-                color: #e0e0e0;
-                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                background: rgba(255, 255, 255, 0.15);
+            }
+            .header-pills {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 1.5rem;
+                background: #007bff;
+                flex-shrink: 0;
             }
             .selected-badge {
-                display: inline-flex;
+                display: none;
                 align-items: center;
                 gap: 0.4rem;
-                background: rgba(110, 168, 254, 0.15);
-                border: 1px solid rgba(110, 168, 254, 0.3);
-                color: #6ea8fe;
-                padding: 0.35rem 0.75rem;
-                border-radius: 20px;
-                font-size: 0.9rem;
-                margin-bottom: 0.75rem;
+                background: white;
+                color: #007bff;
+                font-weight: 600;
+                padding: 0.25rem 0.7rem;
+                border-radius: 10px;
+                font-size: 0.85rem;
+                border: none;
+                white-space: nowrap;
+            }
+            .step-indicator {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #007bff;
+                background: white;
+                padding: 0.25rem 0.7rem;
+                border-radius: 10px;
+                white-space: nowrap;
             }
             .modal-close {
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
                 background: none;
                 border: none;
-                color: rgba(255, 255, 255, 0.5);
+                color: rgba(255, 255, 255, 0.8);
                 font-size: 1.5rem;
                 cursor: pointer;
                 padding: 0.25rem 0.5rem;
@@ -407,11 +439,17 @@ const langDataJSON = JSON.stringify({
                 line-height: 1;
             }
             .modal-close:hover {
-                color: #e0e0e0;
-                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                background: rgba(255, 255, 255, 0.15);
+            }
+            .modal-sticky {
+                padding: 0.75rem 1.5rem 0;
+                flex-shrink: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                text-align: center;
             }
             .modal-body {
-                padding: 1rem 1.5rem;
+                padding: 0.75rem 1.5rem 1rem;
                 overflow-y: auto;
                 flex: 1;
             }
@@ -423,21 +461,22 @@ const langDataJSON = JSON.stringify({
             }
             .search-input {
                 width: 100%;
-                padding: 0.75rem 1rem;
+                padding: 0.85rem 1.15rem;
                 font-size: 1.1rem;
-                border: 2px solid rgba(255, 255, 255, 0.15);
+                border: 2px solid rgba(80, 180, 220, 0.6);
                 border-radius: 8px;
                 outline: none;
                 box-sizing: border-box;
-                transition: border-color 0.2s;
-                background: rgba(255, 255, 255, 0.08);
-                color: #e0e0e0;
+                transition: border-color 0.2s, box-shadow 0.2s;
+                background: rgb(182 231 252 / 94%);
+                color: #111;
             }
             .search-input::placeholder {
-                color: rgba(255, 255, 255, 0.4);
+                color: rgba(0, 0, 0, 0.45);
             }
             .search-input:focus {
-                border-color: #6ea8fe;
+                border-color: #4cc4f0;
+                box-shadow: 0 0 0 3px rgba(110, 204, 244, 0.3);
             }
             .count {
                 text-align: center;
@@ -462,16 +501,16 @@ const langDataJSON = JSON.stringify({
                 align-items: baseline;
                 gap: 0.5rem;
                 padding: 0.6rem 0.85rem;
-                background: rgba(255, 255, 255, 0.06);
+                background: rgba(255, 255, 255, 0.12);
                 border-radius: 6px;
                 color: #e0e0e0;
                 transition: background 0.15s;
-                border: 1px solid rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
                 cursor: pointer;
             }
             :global(.lang-item:hover) {
-                background: rgba(255, 255, 255, 0.12);
-                border-color: rgba(110, 168, 254, 0.3);
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(110, 168, 254, 0.4);
             }
             :global(.lang-code) {
                 color: rgba(255, 255, 255, 0.4);
@@ -693,7 +732,7 @@ const langDataJSON = JSON.stringify({
                     {secondaryCount.toLocaleString("en-US")} mother-tongues
                 </p>
                 <button class="hero-cta" id="hero-cta">
-                    <span id="hero-cta-text">Select mother-tongue</span>
+                    <span id="hero-cta-text">Select language to learn</span>
                     <span>&rarr;</span>
                 </button>
             </section>
@@ -788,13 +827,16 @@ const langDataJSON = JSON.stringify({
                         aria-label="Close">&times;</button
                     >
                 </div>
-                <div class="modal-body">
+                <div class="header-pills">
                     <div
                         id="selected-badge"
                         class="selected-badge"
                         style="display:none"
                     >
                     </div>
+                    <span class="step-indicator" id="step-indicator"></span>
+                </div>
+                <div class="modal-sticky">
                     <div class="search-section">
                         <input
                             id="search"
@@ -804,6 +846,8 @@ const langDataJSON = JSON.stringify({
                         />
                     </div>
                     <p class="count" id="count"></p>
+                </div>
+                <div class="modal-body">
                     <div class="grid" id="grid"></div>
                     <p class="no-results" id="no-results" style="display:none">
                     </p>
@@ -848,7 +892,7 @@ const langDataJSON = JSON.stringify({
                     document.getElementById("hero-sub")!.textContent =
                         ui.heroSub;
                     document.getElementById("hero-cta-text")!.textContent =
-                        ui.selectMotherTongue;
+                        ui.selectLanguageToLearn;
                     document.getElementById(
                         "screenshots-heading",
                     )!.textContent = ui.screenshotHeading;
@@ -918,6 +962,7 @@ const langDataJSON = JSON.stringify({
             const backBtn = document.getElementById("modal-back")!;
             const modalTitle = document.getElementById("modal-title")!;
             const selectedBadge = document.getElementById("selected-badge")!;
+            const stepIndicator = document.getElementById("step-indicator")!;
             const search = document.getElementById(
                 "search",
             ) as HTMLInputElement;
@@ -928,7 +973,7 @@ const langDataJSON = JSON.stringify({
 
             // ── State ──
             let step = 1;
-            let selectedSecondary: {
+            let selectedPrimary: {
                 code: string;
                 name: string;
                 vernacular: string;
@@ -957,24 +1002,29 @@ const langDataJSON = JSON.stringify({
                 search.placeholder =
                     ui.searchPlaceholder ||
                     "Search by language name, vernacular, or code...";
+                stepIndicator.textContent = (
+                    ui.stepIndicator || "Step {current} of {total}"
+                )
+                    .replace("{current}", String(s))
+                    .replace("{total}", "2");
                 if (step === 1) {
                     modalTitle.textContent =
-                        ui.selectMotherTongue || "Select mother-tongue";
+                        ui.selectLanguageToLearn || "Select language to learn";
                     backBtn.style.display = "none";
                     selectedBadge.style.display = "none";
-                    renderGrid(secondaryLangs);
+                    renderGrid(primaryLangs);
                 } else {
                     modalTitle.textContent =
-                        ui.selectLanguageToLearn || "Select language to learn";
+                        ui.selectMotherTongue || "Select mother-tongue";
                     backBtn.style.display = "";
-                    selectedBadge.style.display = "";
-                    const label = selectedSecondary!.vernacular
-                        ? `${selectedSecondary!.name} - ${selectedSecondary!.vernacular}`
-                        : selectedSecondary!.name;
+                    selectedBadge.style.display = "flex";
+                    const label = selectedPrimary!.vernacular
+                        ? `${selectedPrimary!.name} - ${selectedPrimary!.vernacular}`
+                        : selectedPrimary!.name;
                     selectedBadge.textContent = (
-                        ui.motherTongueBadge || "Mother-tongue: {label}"
+                        ui.learningLangBadge || "Learning: {label}"
                     ).replace("{label}", label);
-                    renderGrid(primaryLangs);
+                    renderGrid(secondaryLangs);
                 }
                 search.focus();
             }
@@ -990,16 +1040,16 @@ const langDataJSON = JSON.stringify({
                 const vernacular = item.dataset.vernacular || "";
 
                 if (step === 1) {
-                    selectedSecondary = { code, name, vernacular };
+                    selectedPrimary = { code, name, vernacular };
                     showStep(2);
                 } else {
-                    window.location.href = `/${code}/${selectedSecondary!.code}`;
+                    window.location.href = `/${selectedPrimary!.code}/${code}`;
                 }
             });
 
             // ── Modal open/close ──
             function openModal() {
-                if (!selectedSecondary) {
+                if (!selectedPrimary) {
                     showStep(1);
                 } else {
                     showStep(2);

@@ -308,17 +308,6 @@ export function getChapterImageData(
 }
 
 /**
- * Get API config from environment.
- */
-export function getApiConfig(): { apiKey: string; apiBaseUrl: string } {
-  return {
-    apiKey: import.meta.env.DBT_API_KEY || process.env.DBT_API_KEY || "",
-    apiBaseUrl:
-      import.meta.env.DBT_API_BASE_URL || process.env.DBT_API_BASE_URL || "",
-  };
-}
-
-/**
  * Get font scale for a language from language-styles.json.
  * Returns 1 (no scaling) if no config exists for the language.
  */
@@ -353,7 +342,6 @@ export function buildChapterData(params: {
   secondaryChapterTiming: Record<string, number[]>;
   primaryWordTiming: Record<string, (number | null)[]> | null;
 }): string {
-  const { apiKey, apiBaseUrl } = getApiConfig();
   return JSON.stringify({
     bookDbt: params.bookInfo.dbt,
     bookImg: params.bookInfo.img,
@@ -366,7 +354,5 @@ export function buildChapterData(params: {
     chapterImageData: params.chapterImageData,
     secondaryChapterTiming: params.secondaryChapterTiming,
     primaryWordTiming: params.primaryWordTiming,
-    apiKey,
-    apiBaseUrl,
   });
 }

@@ -29,8 +29,10 @@
   "languageCountFiltered": "{visible} av {total} språk",
   "noLanguagesFound": "Inga språk hittades",
   "motherTongueBadge": "Modersmål: {label}",
+  "learningLangBadge": "Lär mig: {label}",
   "screenshotHeading": "Så fungerar det",
   "screenshotSelectStory": "Välj en berättelse",
   "screenshotSelectExercise": "Välj en övning",
-  "screenshotContinue": "Fortsätt"
+  "screenshotContinue": "Fortsätt",
+  "stepIndicator": "Steg {current} av {total}"
 }

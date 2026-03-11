@@ -535,7 +535,7 @@ const uiLabels = JSON.stringify({
             const cls = `exercise-tab-item${isActive ? " active" : ""}`;
             const inner = `<span class="exercise-tab-icon">${ICON_SVGS[ex.icon]}</span><span class="exercise-tab-label">${getLabel(ex)}</span>`;
             if (isActive) return `<span class="${cls}">${inner}</span>`;
-            return `<a class="${cls}" href="./learn">${inner}</a>`;
+            return `<a class="${cls}" href="./learn#${ex.id}">${inner}</a>`;
         }
         function buildTabBarHTML(isDesktop) {
             const allSorted = [...EXERCISES].sort(
@@ -636,14 +636,10 @@ const uiLabels = JSON.stringify({
 
         async function fetchChapterText(filesetId) {
             const verses = new Map();
-            if (!filesetId || !CHAPTER.apiKey) return verses;
+            if (!filesetId) return verses;
             try {
-                let url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
-                let resp = await fetch(url);
-                if (!resp.ok && resp.status === 404) {
-                    url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}_ET/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
-                    resp = await fetch(url);
-                }
+                const url = `/.netlify/functions/dbt-proxy?type=text&fileset_id=${filesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
+                const resp = await fetch(url);
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.data && Array.isArray(data.data)) {
@@ -660,9 +656,9 @@ const uiLabels = JSON.stringify({
         }
 
         async function fetchAudioUrl(audioFilesetId) {
-            if (!audioFilesetId || !CHAPTER.apiKey) return "";
+            if (!audioFilesetId) return "";
             try {
-                const url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${audioFilesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                const url = `/.netlify/functions/dbt-proxy?type=audio&fileset_id=${audioFilesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
                 const resp = await fetch(url);
                 if (resp.ok) {
                     const data = await resp.json();

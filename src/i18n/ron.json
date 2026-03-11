@@ -29,8 +29,10 @@
   "languageCountFiltered": "{visible} din {total} limbi",
   "noLanguagesFound": "Nicio limbă găsită",
   "motherTongueBadge": "Limba maternă: {label}",
+  "learningLangBadge": "Învăț: {label}",
   "screenshotHeading": "Cum funcționează",
   "screenshotSelectStory": "Selectează o poveste",
   "screenshotSelectExercise": "Selectează un exercițiu",
-  "screenshotContinue": "Continuă"
+  "screenshotContinue": "Continuă",
+  "stepIndicator": "Pasul {current} din {total}"
 }

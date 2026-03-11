@@ -53,10 +53,10 @@ let segmentEndTimer: number | null = null;
 let ctx: AudioContext | null = null;
 let waBufferUrl = "";
 let waBuffer: AudioBuffer | null = null;
-let waBufferLoading = false;
+let waBufferLoading: Promise<AudioBuffer | null> | null = null;
 let waSecBufferUrl = "";
 let waSecBuffer: AudioBuffer | null = null;
-let waSecBufferLoading = false;
+let waSecBufferLoading: Promise<AudioBuffer | null> | null = null;
 
 function getCtx(): AudioContext {
   if (!ctx) {
@@ -74,30 +74,35 @@ async function ensureWABuffer(
   if (which === "secondary" && waSecBuffer && waSecBufferUrl === url)
     return waSecBuffer;
 
-  if (which === "primary" && waBufferLoading) return null;
-  if (which === "secondary" && waSecBufferLoading) return null;
+  // If already loading, wait for the in-flight request instead of returning null
+  if (which === "primary" && waBufferLoading) return waBufferLoading;
+  if (which === "secondary" && waSecBufferLoading) return waSecBufferLoading;
 
-  if (which === "primary") waBufferLoading = true;
-  else waSecBufferLoading = true;
-
-  try {
-    const resp = await fetch(url);
-    const arrayBuf = await resp.arrayBuffer();
-    const decoded = await getCtx().decodeAudioData(arrayBuf);
-    if (which === "primary") {
-      waBuffer = decoded;
-      waBufferUrl = url;
-    } else {
-      waSecBuffer = decoded;
-      waSecBufferUrl = url;
+  const loadPromise = (async (): Promise<AudioBuffer | null> => {
+    try {
+      const resp = await fetch(url);
+      const arrayBuf = await resp.arrayBuffer();
+      const decoded = await getCtx().decodeAudioData(arrayBuf);
+      if (which === "primary") {
+        waBuffer = decoded;
+        waBufferUrl = url;
+      } else {
+        waSecBuffer = decoded;
+        waSecBufferUrl = url;
+      }
+      return decoded;
+    } catch {
+      return null;
+    } finally {
+      if (which === "primary") waBufferLoading = null;
+      else waSecBufferLoading = null;
     }
-    return decoded;
-  } catch {
-    return null;
-  } finally {
-    if (which === "primary") waBufferLoading = false;
-    else waSecBufferLoading = false;
-  }
+  })();
+
+  if (which === "primary") waBufferLoading = loadPromise;
+  else waSecBufferLoading = loadPromise;
+
+  return loadPromise;
 }
 
 function getPrimaryAudio(): HTMLAudioElement {

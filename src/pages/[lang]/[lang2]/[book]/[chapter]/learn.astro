@@ -1471,14 +1471,10 @@ const uiLabels = JSON.stringify({
 
         async function fetchChapterText(filesetId) {
             const verses = new Map();
-            if (!filesetId || !CHAPTER.apiKey) return verses;
+            if (!filesetId) return verses;
             try {
-                let url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
-                let resp = await fetch(url);
-                if (!resp.ok && resp.status === 404) {
-                    url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${filesetId}_ET/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
-                    resp = await fetch(url);
-                }
+                const url = `/.netlify/functions/dbt-proxy?type=text&fileset_id=${filesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
+                const resp = await fetch(url);
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.data && Array.isArray(data.data)) {
@@ -1495,9 +1491,9 @@ const uiLabels = JSON.stringify({
         }
 
         async function fetchAudioUrl(audioFilesetId) {
-            if (!audioFilesetId || !CHAPTER.apiKey) return "";
+            if (!audioFilesetId) return "";
             try {
-                const url = `${CHAPTER.apiBaseUrl}/bibles/filesets/${audioFilesetId}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}?key=${CHAPTER.apiKey}&v=4`;
+                const url = `/.netlify/functions/dbt-proxy?type=audio&fileset_id=${audioFilesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
                 const resp = await fetch(url);
                 if (resp.ok) {
                     const data = await resp.json();
@@ -1600,13 +1596,16 @@ const uiLabels = JSON.stringify({
         let isPlaying = false;
         let peekTimer = null;
         const VALID_EXERCISES = new Set(EXERCISES.map((e) => e.id));
+        const hashExercise = location.hash.slice(1);
         const savedExercise = localStorage.getItem("activeExercise");
         let activeExercise =
-            savedExercise && VALID_EXERCISES.has(savedExercise)
-                ? savedExercise
-                : secondaryHasText
-                  ? "listen-reveal"
-                  : "listen";
+            hashExercise && VALID_EXERCISES.has(hashExercise)
+                ? hashExercise
+                : savedExercise && VALID_EXERCISES.has(savedExercise)
+                  ? savedExercise
+                  : secondaryHasText
+                    ? "listen-reveal"
+                    : "listen";
         let moreMenuOpen = false;
         let exState = {};
         function getStore() { return window.__audioStore; }
