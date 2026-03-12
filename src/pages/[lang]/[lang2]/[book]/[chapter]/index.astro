@@ -638,14 +638,30 @@ const uiLabels = JSON.stringify({
             const verses = new Map();
             if (!filesetId) return verses;
             try {
-                const url = `/.netlify/functions/dbt-proxy?type=text&fileset_id=${filesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
-                const resp = await fetch(url);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.data && Array.isArray(data.data)) {
-                        for (const v of data.data) {
-                            const num = parseInt(v.verse_start, 10);
-                            verses.set(num, v.verse_text?.trim() || "");
+                if (filesetId.startsWith("helloao:")) {
+                    const tid = filesetId.slice(8);
+                    const resp = await fetch(`https://bible.helloao.org/api/${tid}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}.json`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.chapter?.content) {
+                            for (const item of data.chapter.content) {
+                                if (item.type === "verse") {
+                                    const text = item.content.map(c => typeof c === "string" ? c : c.text || "").join(" ").trim();
+                                    verses.set(item.number, text);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    const url = `/.netlify/functions/dbt-proxy?type=text&fileset_id=${filesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.data && Array.isArray(data.data)) {
+                            for (const v of data.data) {
+                                const num = parseInt(v.verse_start, 10);
+                                verses.set(num, v.verse_text?.trim() || "");
+                            }
                         }
                     }
                 }
@@ -658,11 +674,22 @@ const uiLabels = JSON.stringify({
         async function fetchAudioUrl(audioFilesetId) {
             if (!audioFilesetId) return "";
             try {
-                const url = `/.netlify/functions/dbt-proxy?type=audio&fileset_id=${audioFilesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
-                const resp = await fetch(url);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.data?.[0]?.path) return data.data[0].path;
+                if (audioFilesetId.startsWith("helloao:")) {
+                    const tid = audioFilesetId.slice(8);
+                    const resp = await fetch(`https://bible.helloao.org/api/${tid}/${CHAPTER.bookDbt}/${CHAPTER.chapterNum}.json`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const links = data.thisChapterAudioLinks || {};
+                        const urls = Object.values(links);
+                        if (urls.length > 0) return urls[0];
+                    }
+                } else {
+                    const url = `/.netlify/functions/dbt-proxy?type=audio&fileset_id=${audioFilesetId}&book_id=${CHAPTER.bookDbt}&chapter_id=${CHAPTER.chapterNum}`;
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.data?.[0]?.path) return data.data[0].path;
+                    }
                 }
             } catch (e) {
                 /* silent */

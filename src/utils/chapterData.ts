@@ -208,6 +208,7 @@ function parseTextFilesetId(
   distinctId: string,
 ): string {
   if (!textValue) return "";
+  if (textValue.startsWith("helloao:")) return textValue;
   if (textValue.endsWith(".txt")) {
     const suffix = textValue.replace(".txt", "");
     return suffix.length >= 6 ? suffix : distinctId + suffix;
@@ -251,8 +252,43 @@ export function getFilesetInfo(langCode: string): {
       if (!fs.existsSync(dataFile)) continue;
       const d = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
       if (!bestAudio && d.a) {
-        const audioSuffix = d.a.replace(".mp3", "");
-        bestAudio = audioSuffix.length >= 6 ? audioSuffix : ver + audioSuffix;
+        if (d.a.startsWith("helloao:")) {
+          bestAudio = d.a;
+        } else {
+          const audioSuffix = d.a.replace(".mp3", "");
+          if (audioSuffix.length >= 6) {
+            bestAudio = audioSuffix;
+          } else if (ver.includes("_")) {
+            // Folder is a helloao-style ID (e.g. ibo_bib) — find the DBT version
+            // from the timing directory to construct the correct audio fileset ID
+            let dbtVer = "";
+            for (const tc of ["with-timecode", "audio-with-timecode"]) {
+              const timingCatPath = path.join(
+                process.cwd(),
+                "src/data/templates/John/ALL-timings/nt",
+                tc,
+                langCode,
+              );
+              if (fs.existsSync(timingCatPath)) {
+                const found = fs.readdirSync(timingCatPath).find((v) => !v.includes("_"));
+                if (found) { dbtVer = found; break; }
+              }
+            }
+            if (dbtVer) {
+              bestAudio = dbtVer + audioSuffix;
+              audioDistinctId = dbtVer;
+              audioCategory = cat;
+              if (!bestText && d.t) {
+                bestText = parseTextFilesetId(d.t, ver);
+              }
+              if (bestAudio && bestText) break;
+              continue;
+            }
+            bestAudio = ver + audioSuffix;
+          } else {
+            bestAudio = ver + audioSuffix;
+          }
+        }
         audioDistinctId = ver;
         audioCategory = cat;
       }
