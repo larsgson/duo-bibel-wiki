@@ -1,7 +1,7 @@
 {
   "metadata": {
     "generated_at": "2026-01-01T00:00:00Z",
-    "total_languages": 1736
+    "total_languages": 1936
   },
   "canons": {
     "nt": {
@@ -82,6 +82,11 @@
         },
         "amf": {
           "n": "Banna"
+        },
+        "amh": {
+          "n": "Amharic",
+          "v": "አማርኛ",
+          "s": "Ethi"
         },
         "any": {
           "n": "Agni Sanvi",
@@ -316,6 +321,10 @@
         },
         "bqj": {
           "n": "Bandial"
+        },
+        "bqp": {
+          "n": "Bisã",
+          "v": "Busa-Bisã"
         },
         "bri": {
           "n": "Bakweri"
@@ -769,12 +778,19 @@
           "n": "Hadothi",
           "s": "Deva"
         },
+        "hun": {
+          "n": "Hungarian",
+          "v": "Magyar"
+        },
         "hus": {
           "n": "Huasteco, Veracruz",
           "v": "Teenek"
         },
         "huu": {
           "n": "Huitoto Murui"
+        },
+        "ibo": {
+          "n": "Enuani"
         },
         "icr": {
           "n": "San Andrés Islander Creole",
@@ -891,6 +907,11 @@
             "Latn",
             "Cyrl"
           ]
+        },
+        "kaz": {
+          "n": "Kazakh",
+          "v": "Қазақша",
+          "s": "Cyrl"
         },
         "kbq": {
           "n": "Kamano"
@@ -1180,6 +1201,9 @@
         },
         "lia": {
           "n": "Limba West"
+        },
+        "lid": {
+          "n": "Nyindrou"
         },
         "lik": {
           "n": "Lika"
@@ -1521,6 +1545,10 @@
           "n": "Ndruna",
           "v": "Ndrǔna"
         },
+        "nld": {
+          "n": "Dutch",
+          "v": "Nederlands"
+        },
         "nlg": {
           "n": "Gela"
         },
@@ -1660,10 +1688,16 @@
         "pio": {
           "n": "Piapoco"
         },
+        "pjt": {
+          "n": "Pitjantjatjara"
+        },
         "pkr": {
           "n": "Kurumba, Pal",
           "v": "പാല് കുറുമ്പ‎",
           "s": "Mlym"
+        },
+        "plu": {
+          "n": "Palikur"
         },
         "plw": {
           "n": "Palawano, Brooke’s Point",
@@ -1675,6 +1709,10 @@
         "poe": {
           "n": "Ngiva, San Juan Atzingo",
           "v": "Popoloca, San Juan Atzingo"
+        },
+        "pol": {
+          "n": "Polish",
+          "v": "polski"
         },
         "por": {
           "n": "Portuguese: Brasil",
@@ -1861,6 +1899,14 @@
         "sne": {
           "n": "Bidayuh, Bau"
         },
+        "som": {
+          "n": "Somali",
+          "v": "Af-Soomaali",
+          "s": [
+            "Latn",
+            "Osma"
+          ]
+        },
         "soy": {
           "n": "Miyobe",
           "v": "Sola"
@@ -1888,6 +1934,11 @@
         "suc": {
           "n": "Subanon, Western",
           "v": "Subanon"
+        },
+        "suz": {
+          "n": "Sunuwar",
+          "v": "कोँइच",
+          "s": "Deva"
         },
         "swe": {
           "n": "Swedish",
@@ -2197,6 +2248,14 @@
         },
         "vut": {
           "n": "Vute"
+        },
+        "wal": {
+          "n": "Wolaitta",
+          "v": "Wolaytta, ወላይታ",
+          "s": [
+            "Latn",
+            "Ethi"
+          ]
         },
         "wap": {
           "n": "Wapishana"
@@ -2661,10 +2720,6 @@
           "n": "Poqomchi Occidental",
           "v": "Poqonchi"
         },
-        "por": {
-          "n": "Portuguese: Brasil",
-          "v": "Português"
-        },
         "pxm": {
           "n": "Mixe Quetzaltepec",
           "v": "Mixe, Quetzaltepec"
@@ -2861,11 +2916,6 @@
         "akb": {
           "n": "Batak, Angkola"
         },
-        "amh": {
-          "n": "Amharic",
-          "v": "አማርኛ",
-          "s": "Ethi"
-        },
         "amk": {
           "n": "Ambai"
         },
@@ -2971,6 +3021,9 @@
         "byr": {
           "n": "Baruya",
           "v": "Yipma (Baruya)"
+        },
+        "bzd": {
+          "n": "Bribri"
         },
         "bzh": {
           "n": "Buang, Central"
@@ -3223,15 +3276,14 @@
         "hil": {
           "n": "Hiligaynon"
         },
+        "hix": {
+          "n": "Hixkaryana"
+        },
         "hmt": {
           "n": "Hamtai"
         },
         "hub": {
           "n": "Huambisa"
-        },
-        "hun": {
-          "n": "Hungarian",
-          "v": "Magyar"
         },
         "hwc": {
           "n": "Hawai’i Pidgin"
@@ -3239,13 +3291,12 @@
         "iba": {
           "n": "Iban"
         },
+        "ikz": {
+          "n": "Ikizu",
+          "v": "Ikiikiizʉ"
+        },
         "izr": {
           "n": "Izere"
-        },
-        "kaz": {
-          "n": "Kazakh",
-          "v": "Қазақша",
-          "s": "Cyrl"
         },
         "kbo": {
           "n": "Keliko"
@@ -3287,6 +3338,9 @@
             "Deva"
           ]
         },
+        "ksj": {
+          "n": "Uare"
+        },
         "ksr": {
           "n": "Borong"
         },
@@ -3310,6 +3364,9 @@
         "lac": {
           "n": "Lacandón"
         },
+        "lag": {
+          "n": "Rangi"
+        },
         "las": {
           "n": "Lamba (Togo)",
           "v": "Lamba"
@@ -3330,6 +3387,9 @@
           "v": "लोहोरुङ्",
           "s": "Deva"
         },
+        "lgl": {
+          "n": "Wala"
+        },
         "lis": {
           "n": "Lisu"
         },
@@ -3339,6 +3399,9 @@
         "llg": {
           "n": "Lole"
         },
+        "luo": {
+          "n": "Luo"
+        },
         "mar": {
           "n": "Marathi",
           "v": "मराठी",
@@ -3347,6 +3410,9 @@
         "maz": {
           "n": "Central Mazahua",
           "v": "Mazahua, Central"
+        },
+        "mbl": {
+          "n": "Maxakalí"
         },
         "mca": {
           "n": "Maca",
@@ -3387,12 +3453,18 @@
           "n": "Apasco-Apoala Mixtec",
           "v": "Mixteco, Apasco-Apoala"
         },
+        "mkn": {
+          "n": "Kupang Malay"
+        },
         "mnx": {
           "n": "Sougb"
         },
         "mor": {
           "n": "Moro: Nubwa",
           "v": "Nuba Moro"
+        },
+        "mpx": {
+          "n": "Misima-Panaeyati"
         },
         "mtg": {
           "n": "Una"
@@ -3446,6 +3518,10 @@
         "ndz": {
           "n": "Ndogo"
         },
+        "nfa": {
+          "n": "Dhao",
+          "v": "Lii Dhao"
+        },
         "nga": {
           "n": "Ngbaka"
         },
@@ -3462,10 +3538,6 @@
         },
         "nlc": {
           "n": "Nalca"
-        },
-        "nld": {
-          "n": "Dutch",
-          "v": "Nederlands"
         },
         "nlk": {
           "n": "Yali, Selatan",
@@ -3512,6 +3584,10 @@
         "okx": {
           "n": "Okpe"
         },
+        "otn": {
+          "n": "Otomi, Tenango",
+          "v": "Otomí de Tenango"
+        },
         "pbv": {
           "n": "Pnar"
         },
@@ -3550,17 +3626,13 @@
         "plv": {
           "n": "Palawano, Southwestern"
         },
+        "poh": {
+          "n": "Poqomchi Occidental",
+          "v": "Poqonchi"
+        },
         "poi": {
           "n": "Highland Popoluca",
           "v": "Popoluca, Sierra"
-        },
-        "pol": {
-          "n": "Polish",
-          "v": "polski"
-        },
-        "por": {
-          "n": "Portuguese: Brasil",
-          "v": "Português"
         },
         "pps": {
           "n": "Ngigua, San Luis Temalacayuca",
@@ -3654,6 +3726,9 @@
           "n": "Romanian",
           "v": "Limba română"
         },
+        "row": {
+          "n": "Dela-Oenale"
+        },
         "run": {
           "n": "Kirundi",
           "v": "Ikirundi"
@@ -3669,8 +3744,14 @@
         "sas": {
           "n": "Sasak"
         },
+        "sav": {
+          "n": "Saafi"
+        },
         "sbd": {
           "n": "San"
+        },
+        "sbe": {
+          "n": "Saliba"
         },
         "sbl": {
           "n": "Botolan Sambal",
@@ -3730,6 +3811,9 @@
           "n": "Sisaali",
           "v": "Sissala"
         },
+        "smk": {
+          "n": "Bolinao"
+        },
         "sml": {
           "n": "Central Sama",
           "v": "Sinama"
@@ -3753,6 +3837,9 @@
           "n": "Senoufo, Supyire",
           "v": "Supyire"
         },
+        "spy": {
+          "n": "Sabaot"
+        },
         "srm": {
           "n": "Saramaccan",
           "v": "Gadu Buku"
@@ -3769,10 +3856,6 @@
         },
         "sur": {
           "n": "Mwaghavul"
-        },
-        "swe": {
-          "n": "Swedish",
-          "v": "Svenska"
         },
         "sxn": {
           "n": "Sangir"
@@ -3872,8 +3955,14 @@
         "wob": {
           "n": "Wè Northern"
         },
+        "wol": {
+          "n": "Wolof"
+        },
         "xkl": {
           "n": "Kenyah, Mainstream"
+        },
+        "xnn": {
+          "n": "Kankanay, Northern"
         },
         "xsb": {
           "n": "Sambal",
@@ -3920,6 +4009,10 @@
         "zae": {
           "n": "Yareni Zapotec",
           "v": "Tisa"
+        },
+        "zak": {
+          "n": "Zanaki",
+          "v": "Ekizanaki"
         },
         "zao": {
           "n": "Ozolotepec Zapotec",
@@ -3993,11 +4086,38 @@
         "aak": {
           "n": "Angave"
         },
+        "aau": {
+          "n": "Abau"
+        },
+        "aaz": {
+          "n": "Amarasi"
+        },
+        "abt": {
+          "n": "Ambulas (Maprik)"
+        },
+        "abx": {
+          "n": "Inabaknon"
+        },
+        "aby": {
+          "n": "Aneme Wake"
+        },
         "acd": {
           "n": "Gikyode"
         },
+        "acf": {
+          "n": "Saint Lucian Creole",
+          "v": "Kwèyòl"
+        },
         "ach": {
           "n": "Acholi"
+        },
+        "acr": {
+          "n": "Achi de Cubulco",
+          "v": "Achí, Cubulco"
+        },
+        "acu": {
+          "n": "Achuar",
+          "v": "Achuar-Shiwiar"
         },
         "adj": {
           "n": "Adioukrou"
@@ -4006,6 +4126,18 @@
           "n": "Arrernte, Eastern",
           "v": "Arrernte"
         },
+        "aey": {
+          "n": "Amele"
+        },
+        "agd": {
+          "n": "Agarabi"
+        },
+        "agg": {
+          "n": "Angor"
+        },
+        "agm": {
+          "n": "Angaataha"
+        },
         "agn": {
           "n": "Agutaynen"
         },
@@ -4013,12 +4145,36 @@
           "n": "Aguaruna",
           "v": "Awajun"
         },
+        "agt": {
+          "n": "Central Cagayan Agta"
+        },
+        "agu": {
+          "n": "Aguacateco"
+        },
         "ahk": {
           "n": "Akha",
           "v": "Aˇka ˇ Jaˇ liˆ"
         },
+        "aia": {
+          "n": "Arosi"
+        },
+        "aii": {
+          "n": "Assyrian Neo Aramaic",
+          "v": "ܐܬܘܪܝܐ‎, ܣܘܪܬ‎"
+        },
+        "ake": {
+          "n": "Akawaio"
+        },
         "akh": {
           "n": "Angal Heneng"
+        },
+        "alp": {
+          "n": "Alune",
+          "v": "Janji beluke"
+        },
+        "alq": {
+          "n": "Algonquin",
+          "v": "Anicinàbemowin"
         },
         "als": {
           "n": "Albanian",
@@ -4032,10 +4188,19 @@
         "alz": {
           "n": "Alur"
         },
+        "ame": {
+          "n": "Yanesha"
+        },
+        "amf": {
+          "n": "Banna"
+        },
         "amh": {
           "n": "Amharic",
           "v": "አማርኛ",
           "s": "Ethi"
+        },
+        "amk": {
+          "n": "Ambai"
         },
         "amm": {
           "n": "Ama",
@@ -4044,8 +4209,18 @@
         "amn": {
           "n": "Amanab"
         },
+        "amo": {
+          "n": "Amo"
+        },
         "amp": {
           "n": "Alamblak"
+        },
+        "amr": {
+          "n": "Amarakaeri"
+        },
+        "amu": {
+          "n": "Amuzgo de Guerrero",
+          "v": "Ñomndaa"
         },
         "ann": {
           "n": "Obolo"
@@ -4068,6 +4243,9 @@
         "aoz": {
           "n": "Amanatun"
         },
+        "apb": {
+          "n": "Sa’a"
+        },
         "ape": {
           "n": "Bukiyip"
         },
@@ -4075,8 +4253,68 @@
           "n": "Apinaye",
           "v": "Apinayé"
         },
+        "apr": {
+          "n": "Arop-Lokep"
+        },
         "apu": {
           "n": "Apurinã"
+        },
+        "apw": {
+          "n": "Western Apache"
+        },
+        "apz": {
+          "n": "Safeyoka",
+          "v": "Ampeeli-Wojokeso"
+        },
+        "arb": {
+          "n": "Arabic, Standard: Classical",
+          "v": "العربية الفصحى",
+          "d": "rtl",
+          "s": "Arab"
+        },
+        "are": {
+          "n": "Western Arrarnta"
+        },
+        "arl": {
+          "n": "Arabela"
+        },
+        "arn": {
+          "n": "Mapuche"
+        },
+        "asj": {
+          "n": "Sari"
+        },
+        "asm": {
+          "n": "Assamese",
+          "v": "অসমীয়া",
+          "s": "Beng"
+        },
+        "aso": {
+          "n": "Dano"
+        },
+        "ata": {
+          "n": "Pele-Ata"
+        },
+        "atb": {
+          "n": "Zaiwa",
+          "v": "Chyoiyúng chyumlaiká"
+        },
+        "atd": {
+          "n": "Ata"
+        },
+        "atg": {
+          "n": "Ivbie North-Okpela-Arhe",
+          "v": "Okphela"
+        },
+        "att": {
+          "n": "Pamplona Atta"
+        },
+        "auc": {
+          "n": "Waorani",
+          "v": "Waodani"
+        },
+        "aui": {
+          "n": "Anuki"
         },
         "auy": {
           "n": "Awiyaana"
@@ -4096,6 +4334,16 @@
           "d": "rtl",
           "s": "Arab"
         },
+        "azb": {
+          "n": "Azerbaijani, South",
+          "v": "آذربایجانجا‎",
+          "d": "rtl",
+          "s": "Arab"
+        },
+        "azg": {
+          "n": "San Pedro Amuzgo",
+          "v": "Amuzgo, San Pedro Amuzgos"
+        },
         "azz": {
           "n": "Highland Puebla Nahuatl",
           "v": "Nahuatlahtolli"
@@ -4108,8 +4356,21 @@
           "n": "Waimaha",
           "v": "Waimaja"
         },
+        "bba": {
+          "n": "Baatonum",
+          "v": "Bariba"
+        },
+        "bbb": {
+          "n": "Barai"
+        },
         "bbr": {
           "n": "Girawa"
+        },
+        "bch": {
+          "n": "Bariai"
+        },
+        "bco": {
+          "n": "Kaluli"
         },
         "bcw": {
           "n": "Bana"
@@ -4117,13 +4378,26 @@
         "bdd": {
           "n": "Bunama"
         },
+        "bdv": {
+          "n": "Bodoporja",
+          "v": "ବଡ଼ ପରଜା‎",
+          "s": "Orya"
+        },
         "bef": {
           "n": "Benabena"
+        },
+        "bel": {
+          "n": "Belarusian",
+          "v": "беларуская мова",
+          "s": "Cyrl"
         },
         "ben": {
           "n": "Bengali",
           "v": "বাংলা",
           "s": "Beng"
+        },
+        "beo": {
+          "n": "Beami"
         },
         "bex": {
           "n": "Jur Modo"
@@ -4132,11 +4406,45 @@
           "n": "Bafut",
           "v": "Bɨfɨɨ̀"
         },
+        "bfz": {
+          "n": "Pahari, Mahasu",
+          "s": "Deva"
+        },
+        "bgc": {
+          "n": "Haryanvi",
+          "s": "Deva"
+        },
+        "bgg": {
+          "n": "Bugun"
+        },
+        "bgs": {
+          "n": "Tagabawa"
+        },
+        "bgt": {
+          "n": "Bughotu",
+          "v": "Bugotu"
+        },
         "bgz": {
           "n": "Banggai"
         },
+        "bhd": {
+          "n": "Bhadrawahi",
+          "s": "Deva"
+        },
+        "bhi": {
+          "n": "Bhilali"
+        },
         "bhl": {
           "n": "Bimin"
+        },
+        "bht": {
+          "n": "Bhattiyali",
+          "v": "भटियाली बाइबिल",
+          "s": "Deva"
+        },
+        "bhu": {
+          "n": "Bhumiya",
+          "s": "Deva"
         },
         "bhw": {
           "n": "Biak"
@@ -4145,9 +4453,21 @@
           "n": "Bissa-Barka",
           "v": "Bisa"
         },
+        "big": {
+          "n": "Biangai"
+        },
         "biv": {
           "n": "Birifor, Southern",
           "v": "Birifo"
+        },
+        "bjk": {
+          "n": "Barok"
+        },
+        "bjp": {
+          "n": "Fanamaket"
+        },
+        "bjr": {
+          "n": "Binumarien"
         },
         "bjv": {
           "n": "Bedjond",
@@ -4156,11 +4476,21 @@
         "bjz": {
           "n": "Baruga"
         },
+        "bkd": {
+          "n": "Talaandig"
+        },
         "bkh": {
           "n": "Bakoko"
         },
+        "bki": {
+          "n": "Baki"
+        },
         "bkl": {
           "n": "Berik"
+        },
+        "bkq": {
+          "n": "Bakairí",
+          "v": "Kurâ-Bakairí"
         },
         "bku": {
           "n": "Buhid"
@@ -4168,18 +4498,64 @@
         "bkv": {
           "n": "Bekwarra"
         },
+        "bkw": {
+          "n": "Bekwel",
+          "v": "Bɛkwyel"
+        },
+        "blw": {
+          "n": "Balangao"
+        },
         "blz": {
           "n": "Balantak"
         },
         "bmh": {
           "n": "Kein"
         },
+        "bmr": {
+          "n": "Muinane"
+        },
+        "bmu": {
+          "n": "Burum-Mindik"
+        },
+        "bnp": {
+          "n": "Bola"
+        },
+        "boa": {
+          "n": "Bora"
+        },
+        "bod": {
+          "n": "Tibetan, Lhasa",
+          "v": "ལྷ་སའི་སྐད།",
+          "s": "Tibt"
+        },
+        "boj": {
+          "n": "Anjam"
+        },
+        "bon": {
+          "n": "Bine"
+        },
+        "box": {
+          "n": "Buamu"
+        },
+        "bpr": {
+          "n": "Koronadal Blaan"
+        },
         "bps": {
           "n": "Blaan, Sarangani"
+        },
+        "bqc": {
+          "n": "Illo Busa"
         },
         "bsn": {
           "n": "Barasana-Eduria",
           "v": "Eduria"
+        },
+        "bss": {
+          "n": "Akoose",
+          "v": "Bakossi"
+        },
+        "bsw": {
+          "n": "Baiso"
         },
         "bts": {
           "n": "Batak, Simalungun"
@@ -4197,14 +4573,53 @@
           "v": "български",
           "s": "Cyrl"
         },
+        "bus": {
+          "n": "Bokobaru"
+        },
+        "bvd": {
+          "n": "Baeggu"
+        },
+        "bvr": {
+          "n": "Burarra"
+        },
+        "bwo": {
+          "n": "Boro (Ethiopia)"
+        },
+        "bxh": {
+          "n": "Buhutu"
+        },
         "bxr": {
           "n": "Buryat",
           "v": "буряад хэлэн",
           "s": "Cyrl"
         },
+        "byr": {
+          "n": "Baruya",
+          "v": "Yipma (Baruya)"
+        },
+        "byx": {
+          "n": "Qaqet"
+        },
+        "bzh": {
+          "n": "Buang, Central"
+        },
         "bzj": {
           "n": "Belize Kriol",
           "v": "Bileez Kriol"
+        },
+        "caa": {
+          "n": "Chorti",
+          "v": "Chortí"
+        },
+        "cab": {
+          "n": "Garifuna"
+        },
+        "cac": {
+          "n": "Chuj, San Mateo Ixtatan",
+          "v": "Chuj, San Mateo Ixtatán"
+        },
+        "caf": {
+          "n": "Southern Carrier"
         },
         "cak": {
           "n": "Cakchiquel Santa Maria de Jesus (Kaqchikel)",
@@ -4213,12 +4628,32 @@
         "cao": {
           "n": "Chácobo"
         },
+        "cap": {
+          "n": "Chipaya"
+        },
+        "cav": {
+          "n": "Cavineña"
+        },
+        "cax": {
+          "n": "Chiquitano",
+          "v": "Bésiro"
+        },
         "cbc": {
           "n": "Carapana"
+        },
+        "cbi": {
+          "n": "Chachi"
+        },
+        "cbk": {
+          "n": "Chavacano"
         },
         "cbl": {
           "n": "Bualkhaw-Chin",
           "v": "Chin, Bualkhaw"
+        },
+        "cbr": {
+          "n": "Cashibo-Cacataibo",
+          "v": "Kakataibo"
         },
         "cbs": {
           "n": "Cashinahua",
@@ -4231,6 +4666,12 @@
         "cbu": {
           "n": "Candoshi-Shapra",
           "v": "Candoshi"
+        },
+        "cbv": {
+          "n": "Cacua"
+        },
+        "cco": {
+          "n": "Chinantec, Comaltepec"
         },
         "ccp": {
           "n": "Chakma",
@@ -4247,6 +4688,9 @@
         "ceg": {
           "n": "Chamacoco"
         },
+        "cek": {
+          "n": "Chin, Khenlak-Asang"
+        },
         "ces": {
           "n": "Czech",
           "v": "čeština"
@@ -4254,6 +4698,21 @@
         "cfm": {
           "n": "Khualsim",
           "v": "Falam Chin"
+        },
+        "cgc": {
+          "n": "Kagayanen"
+        },
+        "chd": {
+          "n": "Highland Oaxaca Chontal"
+        },
+        "chf": {
+          "n": "Chontal, Tabasco"
+        },
+        "chk": {
+          "n": "Chuukese"
+        },
+        "chq": {
+          "n": "Quiotepec Chinantec"
         },
         "chr": {
           "n": "Cherokee",
@@ -4263,33 +4722,155 @@
           "n": "Chinantec de Ozumacin",
           "v": "Chinanteco, Ozumacín"
         },
+        "cjo": {
+          "n": "Asheninka Pajonal"
+        },
+        "cjv": {
+          "n": "Chuave"
+        },
+        "ckb": {
+          "n": "Kurdish, Sorani",
+          "v": "کوردیی سۆرانی",
+          "d": "rtl",
+          "s": "Arab"
+        },
+        "cle": {
+          "n": "Chinanteco de San Juan Lealao",
+          "v": "Chinanteco, Lealao"
+        },
+        "clu": {
+          "n": "Caluyanun"
+        },
         "cme": {
           "n": "Cerma"
+        },
+        "cmn": {
+          "n": "Chinese, Mandarin: Hui",
+          "v": "回族版圣经",
+          "s": "Hani"
+        },
+        "cni": {
+          "n": "Ashaninca",
+          "v": "Asháninca"
+        },
+        "cnl": {
+          "n": "Chinanteco de San Juan Lalana",
+          "v": "Chinanteco, Lalana"
+        },
+        "cnq": {
+          "n": "Chung"
+        },
+        "cnt": {
+          "n": "Chinanteco de Tepetotutla",
+          "v": "Chinanteco, Tepetotutla"
         },
         "coe": {
           "n": "Koreguaje"
         },
+        "cof": {
+          "n": "Colorado"
+        },
         "con": {
           "n": "Cofán"
         },
-        "crh": {
-          "n": "Crimean Tatar",
-          "v": "къырымтатар тили",
-          "s": "Cyrl"
+        "cop": {
+          "n": "Coptic"
+        },
+        "cot": {
+          "n": "Caquinte"
+        },
+        "cpa": {
+          "n": "Chinanteco de Palantla",
+          "v": "Chinanteco, Palantla"
+        },
+        "cpb": {
+          "n": "Asheninka Ucayali-Yurua"
+        },
+        "cpc": {
+          "n": "Asheninka Apurucayali",
+          "v": "Ajyéninka"
+        },
+        "cpu": {
+          "n": "Asheninka, Pichis"
+        },
+        "cpy": {
+          "n": "Asheninka South Ucayali"
         },
         "crn": {
           "n": "Cora, El Nayar"
+        },
+        "crx": {
+          "n": "Carrier"
+        },
+        "cso": {
+          "n": "Chinanteco de Sochiapan",
+          "v": "Chinanteco, Sochiapam"
+        },
+        "csy": {
+          "n": "Sizang",
+          "v": "Siyin Chin"
+        },
+        "cta": {
+          "n": "Tataltepec Chatino"
         },
         "ctd": {
           "n": "Tedim Chin",
           "v": "Chin, Tiddim (Zomi)"
         },
+        "cth": {
+          "n": "Thaiphum Chin"
+        },
+        "ctp": {
+          "n": "Chatino Zona Alta (Occidental)"
+        },
+        "ctu": {
+          "n": "Chol Tumbala",
+          "v": "Chol, Tumbalá"
+        },
+        "cub": {
+          "n": "Cubeo"
+        },
+        "cuc": {
+          "n": "Chinanteco de Usila",
+          "v": "Chinanteco, Usila"
+        },
+        "cui": {
+          "n": "Cuiba",
+          "v": "Wajume"
+        },
+        "cuk": {
+          "n": "Kuna, San Blas",
+          "v": "Kuna (San Blas)"
+        },
+        "cut": {
+          "n": "Teutila Cuicatec"
+        },
+        "cux": {
+          "n": "Cuicatec, Tepeuxila: Papalo",
+          "v": "Cuicateco de Santa María Pápalo"
+        },
+        "cwe": {
+          "n": "Kwere",
+          "v": "Ching’hwele"
+        },
+        "cya": {
+          "n": "Chatino Nopala"
+        },
         "daa": {
           "n": "Dangaléat"
+        },
+        "dad": {
+          "n": "Marik"
+        },
+        "dah": {
+          "n": "Gwahatike"
         },
         "dan": {
           "n": "Danish",
           "v": "Dansk"
+        },
+        "dao": {
+          "n": "Daai Chin"
         },
         "ded": {
           "n": "Dedua"
@@ -4305,17 +4886,59 @@
         "dga": {
           "n": "Dagaare"
         },
+        "dgc": {
+          "n": "Casiguran Dumagat Agta"
+        },
+        "dgr": {
+          "n": "Dogrib",
+          "v": "Tlicho"
+        },
         "dgz": {
           "n": "Daga"
+        },
+        "dhn": {
+          "n": "Dhanki/Dhankavi",
+          "v": "ડાંગી બાઇબલ",
+          "s": [
+            "Gujr",
+            "Deva"
+          ]
+        },
+        "dif": {
+          "n": "Dieri"
         },
         "dik": {
           "n": "Dinka, Rek"
         },
+        "djk": {
+          "n": "Aukaans",
+          "v": "Okanisi"
+        },
+        "djr": {
+          "n": "Djambarrpuyngu"
+        },
         "dln": {
           "n": "Darlong"
         },
+        "dne": {
+          "n": "Ndendeule"
+        },
+        "dnv": {
+          "n": "Danu"
+        },
         "dob": {
           "n": "Dobu"
+        },
+        "dop": {
+          "n": "Lokpa"
+        },
+        "dov": {
+          "n": "Dombe"
+        },
+        "dso": {
+          "n": "Desiya",
+          "v": "ଦେଶିଆ",
+          "s": "Orya"
         },
         "dtb": {
           "n": "Kadazan, Labuk Kinabatangan"
@@ -4356,9 +4979,21 @@
         "dyo": {
           "n": "Jola-Fogny"
         },
-        "dyu": {
-          "n": "Jula (Burkina Faso)",
-          "v": "Julakan"
+        "ebk": {
+          "n": "Finallig"
+        },
+        "ekk": {
+          "n": "Estonian",
+          "v": "Eesti Keel"
+        },
+        "emi": {
+          "n": "Mussau-Emira"
+        },
+        "emp": {
+          "n": "Embera Northern"
+        },
+        "ena": {
+          "n": "Apal"
         },
         "eng": {
           "n": "English: USA",
@@ -4368,6 +5003,18 @@
             "Shaw"
           ]
         },
+        "enq": {
+          "n": "Enga"
+        },
+        "epo": {
+          "n": "Esperanto"
+        },
+        "eri": {
+          "n": "Ogea"
+        },
+        "ese": {
+          "n": "Ese Ejja"
+        },
         "esk": {
           "n": "Inupiaq",
           "v": "Iñupiatun"
@@ -4375,6 +5022,10 @@
         "eus": {
           "n": "Basque",
           "v": "Euskara"
+        },
+        "ewe": {
+          "n": "Ewe",
+          "v": "Eʋegbe"
         },
         "ewo": {
           "n": "Ewondo"
@@ -4387,6 +5038,12 @@
         },
         "fal": {
           "n": "Fali South"
+        },
+        "far": {
+          "n": "Fataleka"
+        },
+        "ffm": {
+          "n": "Fulfulde, Maasina"
         },
         "fin": {
           "n": "Finnish",
@@ -4402,14 +5059,42 @@
         "fuf": {
           "n": "Pular"
         },
+        "fuh": {
+          "n": "Fulfulde Burkina",
+          "v": "Fulfulde"
+        },
         "gah": {
           "n": "Alekano"
+        },
+        "gai": {
+          "n": "Mborena Kam"
+        },
+        "gam": {
+          "n": "Kandawo"
+        },
+        "gaq": {
+          "n": "Gata Didei",
+          "v": "Didei",
+          "s": "Orya"
         },
         "gaw": {
           "n": "Nobonob"
         },
+        "gax": {
+          "n": "Borana-Ethiopia",
+          "v": "Arsi"
+        },
+        "gaz": {
+          "n": "Oromo, West Central",
+          "v": "Afaan Oromoo"
+        },
         "gbi": {
           "n": "Galela"
+        },
+        "gbl": {
+          "n": "Gamit",
+          "v": "ગામીત બાઇબલ",
+          "s": "Gujr"
         },
         "gde": {
           "n": "Gude",
@@ -4421,8 +5106,14 @@
         "gdr": {
           "n": "Wipi"
         },
+        "geb": {
+          "n": "Kire"
+        },
         "gfk": {
           "n": "Patpatar"
+        },
+        "ghn": {
+          "n": "Ghanongga"
         },
         "ghs": {
           "n": "Guhu-Samane"
@@ -4434,6 +5125,29 @@
           "n": "Gamo",
           "v": "Gamoththo"
         },
+        "gng": {
+          "n": "Gangam/Gando",
+          "v": "Gangam"
+        },
+        "gnn": {
+          "n": "Gumatj"
+        },
+        "gnw": {
+          "n": "Guarani Western Bolivian",
+          "v": "Simba Guaraní"
+        },
+        "gof": {
+          "n": "Gofa",
+          "v": "Goofatho, ጎፋꬆ",
+          "s": [
+            "Ethi",
+            "Latn"
+          ]
+        },
+        "goj": {
+          "n": "Gowlan",
+          "s": "Deva"
+        },
         "gok": {
           "n": "Gowli",
           "v": "गौली",
@@ -4443,11 +5157,31 @@
           "n": "Gorontalo",
           "v": "Hulontalo"
         },
+        "grc": {
+          "n": "Greek, Koine",
+          "v": "Ἑλληνική",
+          "s": [
+            "Grek",
+            "Linb"
+          ]
+        },
         "gso": {
           "n": "Gbaya Southwest"
         },
+        "gub": {
+          "n": "Guajajara"
+        },
         "guh": {
           "n": "Guahibo"
+        },
+        "gui": {
+          "n": "Eastern Bolivian Guaraní",
+          "v": "Guarani de Bolivia"
+        },
+        "guj": {
+          "n": "Gujarati",
+          "v": "ગુજરાતી",
+          "s": "Gujr"
         },
         "gul": {
           "n": "Gullah"
@@ -4458,9 +5192,20 @@
         "gun": {
           "n": "Guaraní Mbyá"
         },
+        "guo": {
+          "n": "Guayabero",
+          "v": "Jiwjame"
+        },
+        "gup": {
+          "n": "Gunwinggu"
+        },
         "gur": {
           "n": "Frafra",
           "v": "Farefare"
+        },
+        "gux": {
+          "n": "Gourmanchéma",
+          "v": "Gulmancema"
         },
         "gvc": {
           "n": "Guanano"
@@ -4468,9 +5213,25 @@
         "gvf": {
           "n": "Golin"
         },
+        "gvn": {
+          "n": "Kuku Yalanji"
+        },
+        "gvs": {
+          "n": "Gumawana"
+        },
+        "gwi": {
+          "n": "Gwich’in"
+        },
+        "gyl": {
+          "n": "Gayil"
+        },
         "gym": {
           "n": "Guaymi",
           "v": "Ngäbere"
+        },
+        "gyr": {
+          "n": "Guarayo",
+          "v": "Gwarayu"
         },
         "hae": {
           "n": "Oromo, Eastern",
@@ -4484,6 +5245,29 @@
           "n": "Haitian",
           "v": "Kreyòl Ayisyen"
         },
+        "hau": {
+          "n": "Hausa"
+        },
+        "haw": {
+          "n": "Hawaiian",
+          "v": "ʻŌlelo Hawaiʻi"
+        },
+        "hbo": {
+          "n": "Ancient Hebrew",
+          "d": "rtl"
+        },
+        "hch": {
+          "n": "Huichol"
+        },
+        "heb": {
+          "n": "Hebrew",
+          "v": "עברית",
+          "d": "rtl",
+          "s": "Hebr"
+        },
+        "heg": {
+          "n": "Helong"
+        },
         "heh": {
           "n": "Hehe",
           "v": "Kihehe"
@@ -4492,6 +5276,22 @@
           "n": "Kamwe",
           "v": "Kamwə, Vәcәmwe"
         },
+        "hil": {
+          "n": "Hiligaynon"
+        },
+        "hin": {
+          "n": "Hindi",
+          "v": "हिन्दी",
+          "s": "Deva"
+        },
+        "hla": {
+          "n": "Halia"
+        },
+        "hlb": {
+          "n": "Halbi",
+          "v": "हलबी",
+          "s": "Deva"
+        },
         "hlt": {
           "n": "Chin, Matu"
         },
@@ -4499,16 +5299,40 @@
           "n": "Hiri Motu",
           "v": "Motu, Hiri"
         },
+        "hne": {
+          "n": "Baigani",
+          "v": "बैगानी"
+        },
         "hns": {
           "n": "Caribbean Hindustani",
           "v": "Sarnaamie Hiendoestaanie"
         },
+        "hop": {
+          "n": "Hopi"
+        },
         "hot": {
           "n": "Hote"
+        },
+        "hoy": {
+          "n": "Holiya",
+          "s": "Deva"
+        },
+        "hre": {
+          "n": "Hre"
+        },
+        "hrv": {
+          "n": "Croatian",
+          "v": "Hrvatski"
+        },
+        "hrw": {
+          "n": "Warwar Feni"
         },
         "hto": {
           "n": "Huitoto, Minica",
           "v": "HUITOTO MƗNƗCA"
+        },
+        "hub": {
+          "n": "Huambisa"
         },
         "hui": {
           "n": "Huli"
@@ -4521,6 +5345,9 @@
           "n": "Huasteco, Veracruz",
           "v": "Teenek"
         },
+        "huu": {
+          "n": "Huitoto Murui"
+        },
         "huv": {
           "n": "Huave de San Mateo del Mar",
           "v": "Huave, San Mateo del Mar"
@@ -4529,11 +5356,11 @@
           "n": "Sabu/Hawu",
           "v": "Lii Hawu"
         },
+        "hwo": {
+          "n": "Hwana"
+        },
         "ian": {
           "n": "Iatmul"
-        },
-        "iba": {
-          "n": "Iban"
         },
         "ifb": {
           "n": "Ayangan Ifugao"
@@ -4547,6 +5374,22 @@
         "ify": {
           "n": "Antipolo Ifugao"
         },
+        "ign": {
+          "n": "Ignaciano"
+        },
+        "ikk": {
+          "n": "Ika"
+        },
+        "ikw": {
+          "n": "Ikwere"
+        },
+        "ilo": {
+          "n": "Ilokano"
+        },
+        "imo": {
+          "n": "Imbongu",
+          "v": "Imbo Ungu"
+        },
         "inb": {
           "n": "Inga"
         },
@@ -4557,11 +5400,21 @@
         "ino": {
           "n": "Inoke-Yate"
         },
+        "iou": {
+          "n": "Tuma-Irumu"
+        },
         "ipi": {
           "n": "Ipili"
         },
         "iry": {
           "n": "Iraya"
+        },
+        "isl": {
+          "n": "Icelandic",
+          "v": "íslenska"
+        },
+        "isn": {
+          "n": "Isanzu"
         },
         "ita": {
           "n": "Italian",
@@ -4577,9 +5430,15 @@
           "n": "Ixil, Nebaj",
           "v": "Ixil de Nebaj"
         },
+        "iyx": {
+          "n": "Yaka"
+        },
         "jac": {
           "n": "Jacalteco, Western",
           "v": "Jacalteco Occidental"
+        },
+        "jae": {
+          "n": "Yabem"
         },
         "jam": {
           "n": "Jamaican Creole",
@@ -4595,13 +5454,43 @@
         "jic": {
           "n": "Tol"
         },
+        "jid": {
+          "n": "Bu (Kaduna State)"
+        },
         "jiv": {
           "n": "Shuar"
+        },
+        "jni": {
+          "n": "Janji"
+        },
+        "jnj": {
+          "n": "Yemsa",
+          "v": "Yèmsa"
+        },
+        "jpn": {
+          "n": "Japanese",
+          "v": "日本語"
+        },
+        "juy": {
+          "n": "Juray Saura",
+          "v": "ଜୁରାୟ୍",
+          "s": "Orya"
+        },
+        "jvn": {
+          "n": "Caribbean Javanese",
+          "v": "Suriname Javanese"
         },
         "kan": {
           "n": "Kannada",
           "v": "ಕನ್ನಡ",
           "s": "Knda"
+        },
+        "kaq": {
+          "n": "Capanahua",
+          "v": "Noquen hihbaan joi"
+        },
+        "kbc": {
+          "n": "Kadiweu"
         },
         "kbh": {
           "n": "Camsa",
@@ -4614,15 +5503,34 @@
           "n": "Kabiyè",
           "v": "Kabιyԑ"
         },
+        "kbq": {
+          "n": "Kamano"
+        },
+        "kdc": {
+          "n": "Kutu"
+        },
+        "kde": {
+          "n": "Makonde",
+          "v": "Shimakonde"
+        },
+        "kdl": {
+          "n": "Tsikimba"
+        },
         "kek": {
           "n": "Kekchi",
           "v": "Q’eqchi’"
+        },
+        "ken": {
+          "n": "Kenyang"
         },
         "keo": {
           "n": "Kakwa"
         },
         "ker": {
           "n": "Kera"
+        },
+        "kew": {
+          "n": "Kewa, West"
         },
         "kez": {
           "n": "Kukele"
@@ -4632,9 +5540,45 @@
           "v": "కొండ‎",
           "s": "Orya"
         },
+        "kff": {
+          "n": "Koya",
+          "s": [
+            "Telu",
+            "Orya"
+          ]
+        },
+        "kfw": {
+          "n": "Kharam"
+        },
+        "kgf": {
+          "n": "Kube"
+        },
+        "kgk": {
+          "n": "Kaiwá"
+        },
+        "kgp": {
+          "n": "Kaingang",
+          "v": "kanhgág"
+        },
+        "khs": {
+          "n": "Kasua"
+        },
         "khz": {
           "n": "Keapara: Kalo",
           "v": "KHZ (vernacular name not cached)"
+        },
+        "kij": {
+          "n": "Kilivila",
+          "v": "Kiriwina"
+        },
+        "kik": {
+          "n": "Gikuyu"
+        },
+        "kiz": {
+          "n": "Kisi"
+        },
+        "kje": {
+          "n": "Kisar"
         },
         "kjs": {
           "n": "East Kewa",
@@ -4644,6 +5588,13 @@
           "n": "Kako",
           "v": "KAKÓ"
         },
+        "klg": {
+          "n": "Tagakaulo"
+        },
+        "klv": {
+          "n": "Maskelynes",
+          "v": "Maskilin"
+        },
         "kma": {
           "n": "Konni",
           "v": "Kɔmɩŋ"
@@ -4651,11 +5602,21 @@
         "kmh": {
           "n": "Kalam (Minimib)"
         },
+        "kmk": {
+          "n": "Limos Kalinga"
+        },
         "kmo": {
           "n": "Kwoma"
         },
         "kms": {
           "n": "Kamasau"
+        },
+        "kmu": {
+          "n": "Kanite"
+        },
+        "knf": {
+          "n": "Mankanya",
+          "v": "Mancagne"
         },
         "knj": {
           "n": "Akateco",
@@ -4668,6 +5629,9 @@
           "n": "Korean, South",
           "v": "한국말",
           "s": "Kore"
+        },
+        "kos": {
+          "n": "Kosraean"
         },
         "kpf": {
           "n": "Komba"
@@ -4687,6 +5651,10 @@
         "kpx": {
           "n": "Koiali, Mountain"
         },
+        "kqc": {
+          "n": "Doromu",
+          "v": "Doromu-Koki"
+        },
         "kqp": {
           "n": "Kimre",
           "v": "Kimré"
@@ -4696,6 +5664,9 @@
         },
         "ksd": {
           "n": "Kuanua"
+        },
+        "ksr": {
+          "n": "Borong"
         },
         "kto": {
           "n": "Kuot"
@@ -4716,6 +5687,19 @@
           "n": "Kusaal",
           "v": "Kʋsaal"
         },
+        "kvg": {
+          "n": "Kuni-Boazi"
+        },
+        "kvn": {
+          "n": "Border Kuna",
+          "v": "Kuna de la frontera"
+        },
+        "kwd": {
+          "n": "Kwaio"
+        },
+        "kwf": {
+          "n": "Kwara’ae"
+        },
         "kwg": {
           "n": "Kaba Dem, Sara",
           "v": "Kaba Ɗem, Saᶉa"
@@ -4731,14 +5715,58 @@
           "n": "Manu",
           "v": "Kawyaw"
         },
+        "kxw": {
+          "n": "Konai"
+        },
+        "kyc": {
+          "n": "Kyaka",
+          "v": "Kyaka Eŋa"
+        },
+        "kyf": {
+          "n": "Kouya"
+        },
+        "kyg": {
+          "n": "Keyagana"
+        },
         "kyq": {
           "n": "Kenga"
+        },
+        "kyz": {
+          "n": "Kayabi",
+          "v": "Kayabí"
         },
         "kze": {
           "n": "Kosena"
         },
+        "lac": {
+          "n": "Lacandón"
+        },
         "laj": {
           "n": "Lango"
+        },
+        "lat": {
+          "n": "Latin",
+          "v": "Latina"
+        },
+        "lbb": {
+          "n": "Label"
+        },
+        "lbk": {
+          "n": "bnc"
+        },
+        "lbm": {
+          "n": "Lodha",
+          "s": [
+            "Orya",
+            "Deva"
+          ]
+        },
+        "lcm": {
+          "n": "Tungag"
+        },
+        "ldb": {
+          "n": "Duya",
+          "v": "Idu"
         },
         "lee": {
           "n": "Lyele",
@@ -4753,20 +5781,32 @@
         "leu": {
           "n": "Kara (Papua New Guinea)"
         },
+        "lex": {
+          "n": "Luang"
+        },
+        "lga": {
+          "n": "Lungga"
+        },
         "lif": {
           "n": "Limbu",
           "v": "याक्थुङ् पान, ᤕᤠᤰᤌᤢᤱ ᤐᤠᤴ",
           "s": "Deva"
         },
+        "lin": {
+          "n": "Lingala"
+        },
         "lip": {
           "n": "Sekpele"
+        },
+        "lit": {
+          "n": "Lithuanian",
+          "v": "Leituvos"
         },
         "ljp": {
           "n": "Lampung"
         },
-        "lme": {
-          "n": "Peve",
-          "v": "Pévé"
+        "llg": {
+          "n": "Lole"
         },
         "lmk": {
           "n": "Lamkang"
@@ -4787,6 +5827,12 @@
         "lwo": {
           "n": "Luwo"
         },
+        "lww": {
+          "n": "Lewo"
+        },
+        "lyn": {
+          "n": "Luyana"
+        },
         "maa": {
           "n": "Mazatec, San Antonio",
           "v": "ꞌÉn-ná"
@@ -4799,6 +5845,10 @@
           "n": "Maithili",
           "v": "मैथिली",
           "s": "Deva"
+        },
+        "maj": {
+          "n": "Jalapa De Díaz Mazatec",
+          "v": "Kinꞌekꞌatiya, Ntaxjo̱"
         },
         "mak": {
           "n": "Makasar",
@@ -4817,15 +5867,74 @@
           "n": "Chiquihuitlán Mazatec",
           "v": "Hne naja, Nne nangui ngaxni"
         },
+        "mar": {
+          "n": "Marathi",
+          "v": "मराठी",
+          "s": "Deva"
+        },
+        "mau": {
+          "n": "Huautla Mazatec"
+        },
+        "mav": {
+          "n": "Satere-Mawe"
+        },
         "maw": {
           "n": "Mampruli: Togo",
           "v": "Ŋmampulli"
         },
+        "maz": {
+          "n": "Central Mazahua",
+          "v": "Mazahua, Central"
+        },
         "mbb": {
           "n": "Manobo, Western Bukidnon"
         },
+        "mbc": {
+          "n": "Macushi",
+          "v": "Macuxi"
+        },
+        "mbh": {
+          "n": "Mangseng"
+        },
+        "mbj": {
+          "n": "Nadeb"
+        },
+        "mbs": {
+          "n": "Sarangani Manobo"
+        },
         "mbt": {
           "n": "Matigsalug"
+        },
+        "mbu": {
+          "n": "Mbula-Bwazza",
+          "v": "Mbula"
+        },
+        "mca": {
+          "n": "Maca",
+          "v": "Maka"
+        },
+        "mcb": {
+          "n": "Machiguenga",
+          "v": "Matsigenka"
+        },
+        "mcd": {
+          "n": "Sharanahua"
+        },
+        "mcf": {
+          "n": "Matses"
+        },
+        "mco": {
+          "n": "Mixe de Coatlan",
+          "v": "Mixe, Coatlán"
+        },
+        "mcp": {
+          "n": "Makaa"
+        },
+        "mcq": {
+          "n": "Ese"
+        },
+        "mcr": {
+          "n": "Menya"
         },
         "mcu": {
           "n": "Cameroon Mambila",
@@ -4839,6 +5948,9 @@
           "v": "ማሌ",
           "s": "Ethi"
         },
+        "med": {
+          "n": "Melpa"
+        },
         "mee": {
           "n": "Mengen"
         },
@@ -4847,6 +5959,12 @@
         },
         "meq": {
           "n": "Merey"
+        },
+        "met": {
+          "n": "Mato"
+        },
+        "meu": {
+          "n": "Motu"
         },
         "mfe": {
           "n": "Mauritian Kreol",
@@ -4863,6 +5981,9 @@
           "n": "Moba",
           "v": "Moba Lok"
         },
+        "mfx": {
+          "n": "Melo"
+        },
         "mfy": {
           "n": "Mayo"
         },
@@ -4870,8 +5991,22 @@
           "n": "Makua",
           "v": "Emakhuwa"
         },
+        "mgv": {
+          "n": "Matengo"
+        },
         "mhl": {
           "n": "Mawake"
+        },
+        "mib": {
+          "n": "Atatláhuca Mixtec",
+          "v": "Mixteco, Atatláhuca"
+        },
+        "mic": {
+          "n": "Mi'kmaw"
+        },
+        "mie": {
+          "n": "Mixteco de Ocotepec",
+          "v": "Mixteco, Ocotepec"
         },
         "mif": {
           "n": "Mofu-Gudur"
@@ -4880,16 +6015,50 @@
           "n": "Mixtec San Miguel El Grande",
           "v": "Sahin sau"
         },
+        "mih": {
+          "n": "Mixteco de Mechoacán",
+          "v": "Tu’un savi"
+        },
+        "mil": {
+          "n": "Mixteco de Penoles",
+          "v": "Tnúhu dàú"
+        },
         "min": {
           "n": "Minangkabau"
+        },
+        "mio": {
+          "n": "Mixteco, Pinotepa Nacional",
+          "v": "Tuhun Ñuun Ñucaan"
+        },
+        "mir": {
+          "n": "Mixe, Guichicovi",
+          "v": "Ayuuk"
         },
         "mit": {
           "n": "Mixteco del Sur de Puebla",
           "v": "Da'an davi"
         },
+        "miz": {
+          "n": "Coatzospan Mixtec",
+          "v": "Mixteco, Coatzospan"
+        },
+        "mjc": {
+          "n": "Mixteco, San Juan Colorado",
+          "v": "Tu’un sav"
+        },
+        "mkl": {
+          "n": "Mokole"
+        },
         "mks": {
           "n": "Mixteco, Silacayoapan",
           "v": "Tu̱hun ndáhví"
+        },
+        "mkw": {
+          "n": "Kituba",
+          "v": "Munukutuba"
+        },
+        "mle": {
+          "n": "Manambu"
         },
         "mlh": {
           "n": "Mape"
@@ -4900,6 +6069,12 @@
         "mmo": {
           "n": "Buang - Mangga",
           "v": "Buang, Mangga"
+        },
+        "mmx": {
+          "n": "Madak"
+        },
+        "mna": {
+          "n": "Mbula"
         },
         "mnb": {
           "n": "Muna"
@@ -4923,12 +6098,21 @@
           "n": "Maya Mopán",
           "v": "Maya, Mopan"
         },
+        "mox": {
+          "n": "Molima"
+        },
+        "mpa": {
+          "n": "Mpoto"
+        },
         "mpg": {
           "n": "Azumeina"
         },
         "mpm": {
           "n": "Mixteco de Santiago Yosundúa",
           "v": "Mixteco, Yosondúa"
+        },
+        "mpp": {
+          "n": "Migabac"
         },
         "mps": {
           "n": "Dadibi"
@@ -4939,9 +6123,28 @@
         "mqb": {
           "n": "Mbuko"
         },
+        "mqj": {
+          "n": "Mamasa"
+        },
+        "msb": {
+          "n": "Masbatenyo"
+        },
+        "msk": {
+          "n": "Mansaka"
+        },
         "msm": {
           "n": "Agusan Manobo",
           "v": "Minanubu"
+        },
+        "msy": {
+          "n": "Aruamu"
+        },
+        "mti": {
+          "n": "Maiwa (Papua New Guinea)"
+        },
+        "mto": {
+          "n": "Mixe Totontepec",
+          "v": "Mixe, Totontepec"
         },
         "muh": {
           "n": "Mundu"
@@ -4949,21 +6152,59 @@
         "mux": {
           "n": "Bo-Ung"
         },
+        "muy": {
+          "n": "Muyang"
+        },
         "mva": {
           "n": "Manam"
+        },
+        "mvn": {
+          "n": "Minaveha"
         },
         "mvp": {
           "n": "Duri"
         },
+        "mwe": {
+          "n": "Mwera"
+        },
         "mwv": {
           "n": "Mentawai"
+        },
+        "mxb": {
+          "n": "Mixteco de Tezoatlan",
+          "v": "To̱ꞌon ndaꞌí"
+        },
+        "mxm": {
+          "n": "Meramera"
+        },
+        "mxp": {
+          "n": "Tlahuitoltepec Mixe"
+        },
+        "mxq": {
+          "n": "Juquila Mixe",
+          "v": "Mixe, Juquila"
+        },
+        "mxt": {
+          "n": "Jamiltepec Mixtec",
+          "v": "Mixteco, Jamiltepec"
+        },
+        "mya": {
+          "n": "Burmese",
+          "v": "မြန်မာစကား",
+          "s": "Mymr"
         },
         "myk": {
           "n": "Miniyanka",
           "v": "Mamara"
         },
+        "myu": {
+          "n": "Munduruku"
+        },
         "myw": {
           "n": "Muyuw"
+        },
+        "myy": {
+          "n": "Macuna"
         },
         "mza": {
           "n": "Mixteco, Zacatepeco",
@@ -4976,18 +6217,53 @@
         "mzm": {
           "n": "Mumuye"
         },
+        "nab": {
+          "n": "Nambikuara, Southern"
+        },
         "naf": {
           "n": "Nabak"
         },
+        "nag": {
+          "n": "Nagamese"
+        },
         "nak": {
           "n": "Nakanai"
+        },
+        "nal": {
+          "n": "Nalik"
+        },
+        "nas": {
+          "n": "Naasioi"
+        },
+        "nca": {
+          "n": "Iyo"
+        },
+        "ncf": {
+          "n": "Notsi"
+        },
+        "nch": {
+          "n": "Central Huasteca Nahuatl",
+          "v": "Nāhuatlahtōlli"
         },
         "ncj": {
           "n": "Nahuatl Norte Puebla",
           "v": "Mexicatl"
         },
+        "ncl": {
+          "n": "Michoacán Nahuatl",
+          "v": "Náhuatl, Michoacán"
+        },
+        "ncr": {
+          "n": "Ncane"
+        },
         "ncu": {
           "n": "Chumburung"
+        },
+        "nde": {
+          "n": "Ndebele, Zimbabwe"
+        },
+        "ndg": {
+          "n": "Ndengereko"
         },
         "ndj": {
           "n": "Ndamba"
@@ -5013,6 +6289,13 @@
           "n": "Eastern Huasteca Nahuatl",
           "v": "Mexkatl"
         },
+        "nhg": {
+          "n": "Tetelcingo Nahuatl"
+        },
+        "nhi": {
+          "n": "Nahuatl Tenango",
+          "v": "Mehcanohtlahtol"
+        },
         "nho": {
           "n": "Takuu"
         },
@@ -5024,19 +6307,38 @@
           "n": "Nahuatl Huasteca, Western",
           "v": "Nahuatl"
         },
+        "nhy": {
+          "n": "Náhuatl, Norte de Oaxaca",
+          "v": "Nāhuatlahtōlli"
+        },
         "nii": {
           "n": "Nii"
         },
         "nij": {
           "n": "Ngaju"
         },
+        "nin": {
+          "n": "Ninzo"
+        },
+        "nit": {
+          "n": "Southeastern Kolami"
+        },
         "nkf": {
           "n": "Inpui Naga",
           "v": "Naga, Inpui"
         },
+        "nko": {
+          "n": "Nkonya"
+        },
         "nld": {
           "n": "Dutch",
           "v": "Nederlands"
+        },
+        "nlg": {
+          "n": "Gela"
+        },
+        "nna": {
+          "n": "Nyangumarta"
         },
         "nnb": {
           "n": "Kinande",
@@ -5052,12 +6354,29 @@
           "n": "Woun Meu",
           "v": "Wounaan (Woun Meu)"
         },
+        "nob": {
+          "n": "Norwegian Bokmål",
+          "v": "norsk bokmål"
+        },
+        "nop": {
+          "n": "Numanggang",
+          "v": "Numaŋgaŋ"
+        },
         "nor": {
           "n": "Norwegian",
           "v": "Norsk"
         },
+        "not": {
+          "n": "Nomatsiguenga",
+          "v": "Nomatsigenga"
+        },
         "nou": {
           "n": "Ewage-Notu"
+        },
+        "npi": {
+          "n": "Nepali",
+          "v": "नेपाली",
+          "s": "Deva"
         },
         "npl": {
           "n": "Nahuatl, Southeastern Puebla",
@@ -5066,12 +6385,31 @@
         "npy": {
           "n": "Napu"
         },
+        "nrz": {
+          "n": "Lala"
+        },
         "nsn": {
           "n": "Nehan"
+        },
+        "ntj": {
+          "n": "Ngaanyatjarra"
+        },
+        "ntp": {
+          "n": "Northern Tepehuan",
+          "v": "Tepehuán del Norte"
+        },
+        "ntu": {
+          "n": "Natügu"
+        },
+        "nuq": {
+          "n": "Nukumanu"
         },
         "nus": {
           "n": "Nuer",
           "v": "Thok Nath"
+        },
+        "nuy": {
+          "n": "Wubuy"
         },
         "nvm": {
           "n": "Namiae"
@@ -5083,6 +6421,13 @@
           "n": "Nevhaar",
           "v": "Nɨvhaar"
         },
+        "nww": {
+          "n": "Ndwewe"
+        },
+        "nya": {
+          "n": "Chichewa",
+          "v": "Chicheŵa"
+        },
         "nyn": {
           "n": "Nyankole",
           "v": "Runyankore-Rukiga"
@@ -5091,18 +6436,51 @@
           "n": "Nyoro",
           "v": "Runyoro-Rutoro"
         },
+        "obo": {
+          "n": "Manobo",
+          "v": "Manobo, Obo"
+        },
         "okv": {
           "n": "Orokaiva"
+        },
+        "omw": {
+          "n": "Omwunra-Toqura",
+          "v": "Omwunra Toqura"
         },
         "ong": {
           "n": "Olo"
         },
+        "ons": {
+          "n": "Ono"
+        },
+        "ood": {
+          "n": "O’othham",
+          "v": "Oʼodham ha-ñeʼokĭ"
+        },
         "opm": {
           "n": "Oksapmin"
+        },
+        "ory": {
+          "n": "Oriya",
+          "v": "ଓଡ଼ିଆ",
+          "s": "Orya"
         },
         "ote": {
           "n": "Mezquital Otomi",
           "v": "Ñahñu (Otomí, Mezquital)"
+        },
+        "otm": {
+          "n": "Otomí de la Sierra"
+        },
+        "otq": {
+          "n": "Otomí de Querétaro",
+          "v": "Otomí, Querétaro"
+        },
+        "ots": {
+          "n": "Estado de México Otomi"
+        },
+        "oyd": {
+          "n": "Oyda"
         },
         "pab": {
           "n": "Parecis",
@@ -5116,6 +6494,15 @@
         },
         "pah": {
           "n": "Tenharim"
+        },
+        "pan": {
+          "n": "Panjabi",
+          "v": "ਪੰਜਾਬੀ, ਪੰਜਾਬੀ ਭਾਸ਼ਾ",
+          "s": "Guru"
+        },
+        "pao": {
+          "n": "Northern Paiute",
+          "v": "Paiute, Northern"
         },
         "pau": {
           "n": "Palauan"
@@ -5150,12 +6537,21 @@
           "d": "rtl",
           "s": "Arab"
         },
+        "pib": {
+          "n": "Yine",
+          "v": "Gerotu Tokanchi Gipiratkaluru"
+        },
+        "pio": {
+          "n": "Piapoco"
+        },
         "pir": {
           "n": "Piratapuyo"
         },
-        "plt": {
-          "n": "Malagasy, Merina",
-          "v": "Malagasy"
+        "piu": {
+          "n": "Pintupi-Luritja"
+        },
+        "pls": {
+          "n": "Ngigua, San Marcos Tlacoyalco"
         },
         "pma": {
           "n": "Paama"
@@ -5164,9 +6560,16 @@
           "n": "Ngiva, San Juan Atzingo",
           "v": "Popoloca, San Juan Atzingo"
         },
+        "poi": {
+          "n": "Highland Popoluca",
+          "v": "Popoluca, Sierra"
+        },
         "pol": {
           "n": "Polish",
           "v": "polski"
+        },
+        "pon": {
+          "n": "Pohnpeian"
         },
         "por": {
           "n": "Portuguese: Brasil",
@@ -5178,12 +6581,44 @@
         "ppo": {
           "n": "Folopa"
         },
+        "prf": {
+          "n": "Paranan"
+        },
+        "pri": {
+          "n": "Paicî"
+        },
         "ptp": {
           "n": "Patep"
+        },
+        "ptu": {
+          "n": "Bambam"
+        },
+        "pwg": {
+          "n": "Gapapaiwa"
+        },
+        "qub": {
+          "n": "Huallaga Huánuco Quechua",
+          "v": "Quechua, Huallaga Huánuco"
         },
         "quc": {
           "n": "Kʼicheʼ",
           "v": "K’iche’"
+        },
+        "quf": {
+          "n": "Lambayeque Quechua",
+          "v": "Quechua, Lambayeque"
+        },
+        "quh": {
+          "n": "Quechua, South Bolivian",
+          "v": "Quechua, Zona Sur de Bolivia"
+        },
+        "qul": {
+          "n": "North Bolivian Quechua",
+          "v": "Quechua, Zona Norte de Bolivia"
+        },
+        "qup": {
+          "n": "Quechua Southern Pastaza",
+          "v": "Quechua, Pastaza del Sur"
         },
         "quz": {
           "n": "Cusco Quechua",
@@ -5197,6 +6632,10 @@
           "n": "Eastern Apurímac Quechua",
           "v": "Quechua, Este de Apurímac"
         },
+        "qvh": {
+          "n": "Huamalíes-Dos de Mayo Huánuco Quechua",
+          "v": "Quechua, Huamalíes-Dos de Mayo"
+        },
         "qvm": {
           "n": "Margos-Yarowilca-Lauricocha Quechua",
           "v": "Quechua, Margos"
@@ -5205,9 +6644,72 @@
           "n": "North Junín Quechua",
           "v": "Quechua, Norte de Junín"
         },
+        "qvs": {
+          "n": "Quechua San Martin",
+          "v": "Quechua, San Martín"
+        },
+        "qvw": {
+          "n": "Huaylla Wanca Quechua",
+          "v": "Runa Simi, Wanca Nunashimi"
+        },
         "qvz": {
           "n": "Northern Pastaza Quichua",
           "v": "Quichua, Pastaza"
+        },
+        "qwh": {
+          "n": "Huaylas Ancash Quechua",
+          "v": "Anqas Qichwa, Qichwa"
+        },
+        "qxh": {
+          "n": "Panao Huánuco Quechua",
+          "v": "Quechua, Panao Huánuco"
+        },
+        "qxn": {
+          "n": "Northern Conchucos Ancash Quechua",
+          "v": "Quechua, Norte de Conchucos"
+        },
+        "qxo": {
+          "n": "Quechua Sur de Conchucos",
+          "v": "Quechua, Sur de Conchucos"
+        },
+        "rai": {
+          "n": "Ramoaaina"
+        },
+        "reg": {
+          "n": "Kara (Tanzania)"
+        },
+        "rgu": {
+          "n": "Rikou-Oepao"
+        },
+        "rhg": {
+          "n": "Rohingya",
+          "v": "Ruwainggya"
+        },
+        "rif": {
+          "n": "Riffian",
+          "v": "ثريفيث",
+          "d": [
+            "ltr",
+            "rtl"
+          ],
+          "s": [
+            "Latn",
+            "Arab"
+          ]
+        },
+        "rkb": {
+          "n": "Rikbaktsa"
+        },
+        "rki": {
+          "n": "Rakhine"
+        },
+        "rmc": {
+          "n": "Romani, Carpathian: Western Ukraine",
+          "v": "Romanes, Romani cib",
+          "s": [
+            "Cyrl",
+            "Latn"
+          ]
         },
         "rml": {
           "n": "Baltic Romani",
@@ -5217,8 +6719,23 @@
             "Latn"
           ]
         },
+        "rmn": {
+          "n": "Balkan Romani",
+          "s": [
+            "Latn",
+            "Cyrl"
+          ]
+        },
         "rmo": {
           "n": "Romani, Sinti"
+        },
+        "rmy": {
+          "n": "Romani, Vlakh",
+          "v": "Romané",
+          "s": [
+            "Latn",
+            "Cyrl"
+          ]
         },
         "ron": {
           "n": "Romanian",
@@ -5230,6 +6747,15 @@
         "rop": {
           "n": "Kriol"
         },
+        "rro": {
+          "n": "Waima"
+        },
+        "ruf": {
+          "n": "Luguru"
+        },
+        "rug": {
+          "n": "Roviana"
+        },
         "rus": {
           "n": "Russian",
           "v": "русский язык",
@@ -5238,21 +6764,68 @@
         "rwo": {
           "n": "Rawa"
         },
+        "sab": {
+          "n": "Buglere"
+        },
         "sag": {
           "n": "Sango"
+        },
+        "san": {
+          "n": "Sanskrit",
+          "v": "संस्कृत भाषा"
+        },
+        "sbk": {
+          "n": "Safwa"
+        },
+        "sbs": {
+          "n": "Kuhane"
+        },
+        "sby": {
+          "n": "Soli"
+        },
+        "sce": {
+          "n": "Dongxiang"
+        },
+        "sch": {
+          "n": "Sakachep"
+        },
+        "sey": {
+          "n": "Secoya"
         },
         "sgb": {
           "n": "Ayta Mag-antsi"
         },
+        "sgz": {
+          "n": "Sursurunga"
+        },
+        "shp": {
+          "n": "Shipibo"
+        },
+        "shr": {
+          "n": "Shi"
+        },
         "sim": {
           "n": "Mende (Papua New Guinea)",
           "v": "Mende"
+        },
+        "sja": {
+          "n": "Eperã pedee"
+        },
+        "sle": {
+          "n": "Sholaga"
+        },
+        "slk": {
+          "n": "Slovak",
+          "v": "Slovenská"
         },
         "sll": {
           "n": "Salt-Yui"
         },
         "smt": {
           "n": "Simte"
+        },
+        "sna": {
+          "n": "Shona"
         },
         "snc": {
           "n": "Sinaugoro"
@@ -5277,6 +6850,10 @@
         "soq": {
           "n": "Kanasi"
         },
+        "soy": {
+          "n": "Miyobe",
+          "v": "Sola"
+        },
         "spa": {
           "n": "Spanish",
           "v": "español"
@@ -5284,17 +6861,43 @@
         "spl": {
           "n": "Selepet"
         },
+        "spp": {
+          "n": "Senoufo, Supyire",
+          "v": "Supyire"
+        },
         "sps": {
           "n": "Saposa"
         },
         "sri": {
           "n": "Siriano"
         },
+        "srm": {
+          "n": "Saramaccan",
+          "v": "Gadu Buku"
+        },
+        "srn": {
+          "n": "Sranan Tongo",
+          "v": "Sranantongo"
+        },
         "srp": {
           "n": "Serbian"
         },
+        "srq": {
+          "n": "Sirionó"
+        },
+        "ssd": {
+          "n": "Siroi"
+        },
         "ssg": {
           "n": "Seimat"
+        },
+        "ssx": {
+          "n": "Samberigi",
+          "v": "Sembeleke"
+        },
+        "stp": {
+          "n": "Southeastern Tepehuan",
+          "v": "Tepehuán, Sureste"
         },
         "sua": {
           "n": "Sulka"
@@ -5309,18 +6912,49 @@
           "n": "Swedish",
           "v": "Svenska"
         },
+        "swh": {
+          "n": "Kiswahili"
+        },
+        "swp": {
+          "n": "Suau"
+        },
+        "sxb": {
+          "n": "Suba"
+        },
         "tab": {
           "n": "Tabassaran",
           "v": "табасаран чIал",
           "s": "Cyrl"
+        },
+        "tac": {
+          "n": "Lowland Tarahumara",
+          "v": "Tarahumara, Baja"
         },
         "taj": {
           "n": "Eastern Tamang",
           "v": "तामाङ",
           "s": "Deva"
         },
+        "tam": {
+          "n": "Tamil",
+          "v": "தமிழ்",
+          "s": "Taml"
+        },
+        "tav": {
+          "n": "Tatuyo"
+        },
+        "taw": {
+          "n": "Tai"
+        },
         "tbc": {
           "n": "Takia"
+        },
+        "tbf": {
+          "n": "Mandara"
+        },
+        "tbg": {
+          "n": "North Tairora",
+          "v": "Arau"
         },
         "tbo": {
           "n": "Tawala"
@@ -5328,8 +6962,14 @@
         "tby": {
           "n": "Tabaru"
         },
+        "tbz": {
+          "n": "Ditammari"
+        },
         "tca": {
           "n": "Ticuna"
+        },
+        "tcs": {
+          "n": "Yumplatok"
         },
         "tdc": {
           "n": "Embera Tadó",
@@ -5338,6 +6978,18 @@
         "tdt": {
           "n": "Tetun Dili"
         },
+        "tdx": {
+          "n": "Tandroy-Mahafaly Malagasy"
+        },
+        "tee": {
+          "n": "Huehuetla Tepehua",
+          "v": "Tepehua, Huehuetla"
+        },
+        "tel": {
+          "n": "Telugu",
+          "v": "తెలుగు",
+          "s": "Telu"
+        },
         "teo": {
           "n": "Ateso, Orom",
           "v": "Atεsᴐ"
@@ -5345,12 +6997,24 @@
         "ter": {
           "n": "Terena"
         },
+        "tet": {
+          "n": "Tetun"
+        },
         "tfr": {
           "n": "Teribe",
           "v": "Naso"
         },
+        "tgj": {
+          "n": "Tagin"
+        },
         "tgl": {
           "n": "Tagalog"
+        },
+        "tgo": {
+          "n": "Sudest"
+        },
+        "tgp": {
+          "n": "Tangoa"
         },
         "tha": {
           "n": "Thai",
@@ -5360,11 +7024,39 @@
         "thk": {
           "n": "Tharaka"
         },
+        "thr": {
+          "n": "Tharu, Rana",
+          "v": "राना थारू",
+          "s": "Deva"
+        },
+        "tif": {
+          "n": "Tifal"
+        },
         "tim": {
           "n": "Timbe"
         },
+        "tiy": {
+          "n": "Téduray"
+        },
+        "tku": {
+          "n": "Upper Necaxa Totonac"
+        },
         "tlf": {
           "n": "Telefol"
+        },
+        "tmd": {
+          "n": "Haruai"
+        },
+        "tna": {
+          "n": "Tacana"
+        },
+        "tnk": {
+          "n": "Kwamera",
+          "v": "Nǝfe"
+        },
+        "tnn": {
+          "n": "Nen-naka",
+          "v": "Nən-naka"
         },
         "tnp": {
           "n": "Nərak"
@@ -5373,9 +7065,21 @@
           "n": "Coyutla Totonac",
           "v": "Totonaco, Coyutla"
         },
+        "tod": {
+          "n": "Toma"
+        },
+        "tof": {
+          "n": "Gizrra"
+        },
+        "toj": {
+          "n": "Tojolabal"
+        },
         "ton": {
           "n": "Tonga (Tonga Islands)",
           "v": "Tongan"
+        },
+        "too": {
+          "n": "Xicotepec De Juárez Totonac"
         },
         "top": {
           "n": "Papantla Totonac",
@@ -5384,6 +7088,9 @@
         "tos": {
           "n": "Highland Totonac",
           "v": "Totonaco, Sierra"
+        },
+        "tpi": {
+          "n": "Tok Pisin"
         },
         "tpm": {
           "n": "Tampulma"
@@ -5403,12 +7110,65 @@
         "tqo": {
           "n": "Toaripi"
         },
+        "trc": {
+          "n": "Copala Triqui",
+          "v": "Xnaꞌánj nu̱ꞌ"
+        },
+        "tsn": {
+          "n": "Tswana"
+        },
+        "tsw": {
+          "n": "Tsishingini"
+        },
+        "ttc": {
+          "n": "Tektiteko"
+        },
+        "tte": {
+          "n": "Bwanabwana"
+        },
+        "tuc": {
+          "n": "Mutu",
+          "v": "Saveeng, Oov"
+        },
+        "tue": {
+          "n": "Tuyuca"
+        },
+        "tuf": {
+          "n": "Central Tunebo",
+          "v": "U’wa"
+        },
         "tuo": {
           "n": "Tucano (Brazil)",
           "v": "Dasea ye"
         },
+        "tur": {
+          "n": "Turkish",
+          "v": "Türkçe"
+        },
+        "tvk": {
+          "n": "Ambrym, Southeast"
+        },
+        "tvn": {
+          "n": "Tavoyan"
+        },
+        "tvt": {
+          "n": "Tutsa"
+        },
+        "twi": {
+          "n": "Akan"
+        },
         "twu": {
           "n": "Rote"
+        },
+        "txq": {
+          "n": "Tii"
+        },
+        "txu": {
+          "n": "Kayapo",
+          "v": "Kayapó"
+        },
+        "tyx": {
+          "n": "Teke-Tyee"
         },
         "tzj": {
           "n": "Tz’utujil",
@@ -5418,28 +7178,95 @@
           "n": "Central Atlas Tamazight",
           "v": "تمزيغت"
         },
+        "tzo": {
+          "n": "Tzotzil, Chenalhó"
+        },
         "ubr": {
           "n": "Ubir"
         },
         "ubu": {
           "n": "Umbu Ungu - Andelale"
         },
+        "udu": {
+          "n": "Uduk"
+        },
+        "uig": {
+          "n": "Uyghur",
+          "v": "ئۇيغۇرچە",
+          "d": [
+            "ltr",
+            "rtl"
+          ],
+          "s": [
+            "Cyrl",
+            "Arab"
+          ]
+        },
         "ukr": {
           "n": "Ukrainian",
           "v": "український",
           "s": "Cyrl"
         },
+        "uli": {
+          "n": "Ulithian"
+        },
+        "unx": {
+          "n": "Munda",
+          "v": "মুন্ডা",
+          "s": "Orya"
+        },
+        "upv": {
+          "n": "Uripiv"
+        },
         "ura": {
           "n": "Urarina"
+        },
+        "urb": {
+          "n": "Ka’apor"
+        },
+        "urd": {
+          "n": "Urdu, Pakistan",
+          "v": "اُردُو‎",
+          "d": [
+            "ltr",
+            "rtl"
+          ],
+          "s": [
+            "Arab",
+            "Deva",
+            "Latn"
+          ]
+        },
+        "uro": {
+          "n": "Ura"
+        },
+        "urt": {
+          "n": "Urat"
         },
         "usa": {
           "n": "Usarufa"
         },
+        "usp": {
+          "n": "Uspanteco"
+        },
+        "utr": {
+          "n": "Etulo"
+        },
+        "uvh": {
+          "n": "Uri"
+        },
         "uvl": {
           "n": "Lote"
         },
+        "vaa": {
+          "n": "Waghri Vathe",
+          "v": "Vaagri Booli"
+        },
         "vag": {
           "n": "Vagla"
+        },
+        "vgr": {
+          "n": "Vaghri"
         },
         "vid": {
           "n": "Vidunda"
@@ -5451,25 +7278,63 @@
         "viv": {
           "n": "Iduna"
         },
+        "vmy": {
+          "n": "Ayautla Mazatec",
+          "v": "Enre naxinanda nguifi"
+        },
         "waj": {
           "n": "Waffa"
+        },
+        "wap": {
+          "n": "Wapishana"
         },
         "war": {
           "n": "Samareno",
           "v": "Samareño"
         },
+        "wbi": {
+          "n": "Vwanji"
+        },
+        "wbp": {
+          "n": "Warlpiri"
+        },
+        "wed": {
+          "n": "Wedau"
+        },
+        "wer": {
+          "n": "Weri",
+          "v": "Amam"
+        },
         "wim": {
           "n": "Wik-Mungkan",
           "v": "Wik-Mungknh"
         },
+        "wiu": {
+          "n": "Wiru"
+        },
+        "wiv": {
+          "n": "Vitu"
+        },
+        "wlo": {
+          "n": "Wolio"
+        },
         "wmw": {
           "n": "Mwani"
+        },
+        "wnc": {
+          "n": "Wantoat"
         },
         "wnu": {
           "n": "Usan"
         },
         "wos": {
           "n": "Hanga Hundi"
+        },
+        "wrs": {
+          "n": "Waris"
+        },
+        "wsk": {
+          "n": "Waskia"
         },
         "wuv": {
           "n": "Wuvulu-Aua"
@@ -5480,12 +7345,18 @@
         "xav": {
           "n": "Xavante"
         },
+        "xed": {
+          "n": "Hdi"
+        },
         "xla": {
           "n": "Kamula"
         },
         "xmz": {
           "n": "Mori Bawah",
           "v": "XMZ (vernacular name not cached)"
+        },
+        "xnj": {
+          "n": "Kingoni"
         },
         "xon": {
           "n": "Konkomba, Lichabool",
@@ -5495,14 +7366,55 @@
           "n": "Eastern Karaboro",
           "v": "Karaboro"
         },
+        "xsi": {
+          "n": "Sio"
+        },
+        "xtd": {
+          "n": "Diuxi-Tilantongo Mixtec",
+          "v": "Mixteco, Diuxi-Tilantongo"
+        },
+        "xtm": {
+          "n": "Magdalena Peñasco Mixtec",
+          "v": "Mixtec, Magdalena Peñasco"
+        },
+        "yaa": {
+          "n": "Yaminahua",
+          "v": "Yamĩnãfa mekapã"
+        },
+        "yad": {
+          "n": "Yagua"
+        },
+        "yal": {
+          "n": "Yalunka"
+        },
         "yam": {
           "n": "Kaka: Mfe"
+        },
+        "yao": {
+          "n": "Chiyao",
+          "v": "Yao"
+        },
+        "yap": {
+          "n": "Yapese"
         },
         "yaq": {
           "n": "Yaqui"
         },
+        "yby": {
+          "n": "Yaweyuha"
+        },
         "ycn": {
           "n": "Yucuna"
+        },
+        "ydd": {
+          "n": "Eastern Yiddish",
+          "v": "יידיש"
+        },
+        "yer": {
+          "n": "Tarok"
+        },
+        "yka": {
+          "n": "Yakan"
         },
         "yle": {
           "n": "Yele"
@@ -5515,8 +7427,26 @@
           "n": "Ubuvala",
           "v": "Iamalele"
         },
+        "yns": {
+          "n": "Yansi"
+        },
+        "yom": {
+          "n": "Yombe"
+        },
+        "yon": {
+          "n": "Yonggom",
+          "v": "Yongkom"
+        },
+        "yor": {
+          "n": "Yoruba",
+          "v": "Èdè Yorùbá"
+        },
         "yrb": {
           "n": "Yareba"
+        },
+        "yre": {
+          "n": "Yaoure",
+          "v": "Yaouré"
         },
         "yss": {
           "n": "Yessan-Mayo Yawu"
@@ -5538,9 +7468,17 @@
           "n": "Sierra de Juárez Zapotec",
           "v": "Titsaꞌ"
         },
+        "zab": {
+          "n": "Western Tlacolula Valley Zapotec",
+          "v": "Dixza"
+        },
         "zac": {
           "n": "Ocotlán Zapotec",
           "v": "Dizë́"
+        },
+        "zad": {
+          "n": "Zapotec de Yaganiza",
+          "v": "Xtillꞌchonaꞌ"
         },
         "zai": {
           "n": "Zapoteco del Istmo",
@@ -5554,28 +7492,104 @@
           "n": "Miahuatlán Zapotec",
           "v": "Diiste"
         },
+        "zao": {
+          "n": "Ozolotepec Zapotec",
+          "v": "Dizte chaan zha Ozolotepec"
+        },
+        "zar": {
+          "n": "Rincón Zapotec",
+          "v": "Didza Xidza"
+        },
         "zas": {
           "n": "Santo Domingo Albarradas Zapotec",
           "v": "Diidxzaj"
+        },
+        "zat": {
+          "n": "Zapotec, Tabaa"
+        },
+        "zav": {
+          "n": "Yatzachi Zapotec",
+          "v": "Dižə’əxon"
+        },
+        "zaw": {
+          "n": "Mitla Zapotec",
+          "v": "Didxsaj"
         },
         "zca": {
           "n": "Coatecas Altas Zapotec",
           "v": "Diꞌzhzë"
         },
+        "zia": {
+          "n": "Zia"
+        },
+        "zin": {
+          "n": "Zinza",
+          "v": "Echiziinza, Zinza"
+        },
         "ziw": {
           "n": "Zigua"
+        },
+        "zlm": {
+          "n": "Malay",
+          "v": "Bahasa Melayu"
+        },
+        "zos": {
+          "n": "Francisco León Zoque",
+          "v": "Zoque, Francisco León"
+        },
+        "zpc": {
+          "n": "Choapan Zapotec",
+          "v": "Diꞌidzaꞌ xidzaꞌ"
         },
         "zpi": {
           "n": "Santa María Quiegolani Zapotec",
           "v": "Disa"
         },
+        "zpl": {
+          "n": "Lachixío Zapotec",
+          "v": "Dialu"
+        },
+        "zpm": {
+          "n": "Mixtepec Zapotec",
+          "v": "Diidz-zë"
+        },
+        "zpo": {
+          "n": "Amatlán Zapotec",
+          "v": "Dizhze"
+        },
         "zpq": {
           "n": "Zapoteco de Zoogocho",
           "v": "Diža'xon"
         },
+        "zpu": {
+          "n": "Yalálag Zapotec",
+          "v": "Dill Gurall ke Yararꞌj"
+        },
+        "zpv": {
+          "n": "Chichicapan Zapotec",
+          "v": "Dxiꞌzah"
+        },
+        "zpz": {
+          "n": "Texmelucan Zapotec",
+          "v": "Rixhquei"
+        },
         "zsr": {
           "n": "Zapotec, Rincon Sur",
           "v": "Didzaꞌ"
+        },
+        "ztp": {
+          "n": "Loxicha Zapotec"
+        },
+        "ztq": {
+          "n": "Quioquitani-Quierí Zapotec",
+          "v": "Tiitssë"
+        },
+        "zty": {
+          "n": "Yatee Zapotec",
+          "v": "Zapoteco, Yatée"
+        },
+        "zyp": {
+          "n": "Zyphe"
         }
       },
       "audio-only": {
@@ -7313,10 +9327,20 @@
             "Shaw"
           ]
         },
+        "fra": {
+          "n": "French",
+          "v": "français"
+        },
         "guj": {
           "n": "Gujarati",
           "v": "ગુજરાતી",
           "s": "Gujr"
+        },
+        "heb": {
+          "n": "Hebrew",
+          "v": "עברית",
+          "d": "rtl",
+          "s": "Hebr"
         },
         "hin": {
           "n": "Hindi",
@@ -7342,6 +9366,19 @@
           "n": "Panjabi",
           "v": "ਪੰਜਾਬੀ, ਪੰਜਾਬੀ ਭਾਸ਼ਾ",
           "s": "Guru"
+        },
+        "por": {
+          "n": "Portuguese: Brasil",
+          "v": "Português"
+        },
+        "rus": {
+          "n": "Russian",
+          "v": "русский язык",
+          "s": "Cyrl"
+        },
+        "swe": {
+          "n": "Swedish",
+          "v": "Svenska"
         },
         "tam": {
           "n": "Tamil",
@@ -7427,10 +9464,6 @@
             "Shaw"
           ]
         },
-        "fra": {
-          "n": "French",
-          "v": "français"
-        },
         "gaz": {
           "n": "Oromo, West Central",
           "v": "Afaan Oromoo"
@@ -7456,12 +9489,6 @@
         },
         "hch": {
           "n": "Huichol"
-        },
-        "heb": {
-          "n": "Hebrew",
-          "v": "עברית",
-          "d": "rtl",
-          "s": "Hebr"
         },
         "hil": {
           "n": "Hiligaynon"
@@ -7491,6 +9518,13 @@
         "lin": {
           "n": "Lingala"
         },
+        "lug": {
+          "n": "Ganda",
+          "v": "Luganda"
+        },
+        "luo": {
+          "n": "Luo"
+        },
         "mal": {
           "n": "Malayalam",
           "v": "മലയാളം",
@@ -7514,18 +9548,9 @@
           "n": "Chichewa",
           "v": "Chicheŵa"
         },
-        "por": {
-          "n": "Portuguese: Brasil",
-          "v": "Português"
-        },
         "quz": {
           "n": "Cusco Quechua",
           "v": "Quechua, Cusco"
-        },
-        "rus": {
-          "n": "Russian",
-          "v": "русский язык",
-          "s": "Cyrl"
         },
         "shu": {
           "n": "Arabe Choa, Chadian Arabic ",
@@ -7550,10 +9575,6 @@
         "srn": {
           "n": "Sranan Tongo",
           "v": "Sranantongo"
-        },
-        "swe": {
-          "n": "Swedish",
-          "v": "Svenska"
         },
         "tam": {
           "n": "Tamil",
@@ -7609,14 +9630,56 @@
         }
       },
       "text-only": {
+        "aaz": {
+          "n": "Amarasi"
+        },
+        "acu": {
+          "n": "Achuar",
+          "v": "Achuar-Shiwiar"
+        },
+        "aer": {
+          "n": "Arrernte, Eastern",
+          "v": "Arrernte"
+        },
+        "aey": {
+          "n": "Amele"
+        },
+        "agr": {
+          "n": "Aguaruna",
+          "v": "Awajun"
+        },
+        "agu": {
+          "n": "Aguacateco"
+        },
+        "aii": {
+          "n": "Assyrian Neo Aramaic",
+          "v": "ܐܬܘܪܝܐ‎, ܣܘܪܬ‎"
+        },
         "arb": {
           "n": "Arabic, Standard: Classical",
           "v": "العربية الفصحى",
           "d": "rtl",
           "s": "Arab"
         },
+        "asm": {
+          "n": "Assamese",
+          "v": "অসমীয়া",
+          "s": "Beng"
+        },
+        "ata": {
+          "n": "Pele-Ata"
+        },
+        "aui": {
+          "n": "Anuki"
+        },
         "ayr": {
           "n": "Aymara"
+        },
+        "azb": {
+          "n": "Azerbaijani, South",
+          "v": "آذربایجانجا‎",
+          "d": "rtl",
+          "s": "Arab"
         },
         "bam": {
           "n": "Bamanankan"
@@ -7629,46 +9692,173 @@
           "n": "Baatonum",
           "v": "Bariba"
         },
+        "bbb": {
+          "n": "Barai"
+        },
         "bbc": {
           "n": "Batak, Toba"
+        },
+        "bch": {
+          "n": "Bariai"
+        },
+        "bco": {
+          "n": "Kaluli"
+        },
+        "bel": {
+          "n": "Belarusian",
+          "v": "беларуская мова",
+          "s": "Cyrl"
         },
         "ben": {
           "n": "Bengali",
           "v": "বাংলা",
           "s": "Beng"
         },
+        "beo": {
+          "n": "Beami"
+        },
         "bfa": {
           "n": "Bari"
+        },
+        "bgs": {
+          "n": "Tagabawa"
+        },
+        "bhl": {
+          "n": "Bimin"
+        },
+        "bjr": {
+          "n": "Binumarien"
+        },
+        "bmu": {
+          "n": "Burum-Mindik"
+        },
+        "bnp": {
+          "n": "Bola"
+        },
+        "bod": {
+          "n": "Tibetan, Lhasa",
+          "v": "ལྷ་སའི་སྐད།",
+          "s": "Tibt"
+        },
+        "boj": {
+          "n": "Anjam"
+        },
+        "bps": {
+          "n": "Blaan, Sarangani"
+        },
+        "bqc": {
+          "n": "Illo Busa"
+        },
+        "bqp": {
+          "n": "Bisã",
+          "v": "Busa-Bisã"
         },
         "bul": {
           "n": "Bulgarian",
           "v": "български",
           "s": "Cyrl"
         },
+        "bus": {
+          "n": "Bokobaru"
+        },
+        "bvr": {
+          "n": "Burarra"
+        },
+        "bxh": {
+          "n": "Buhutu"
+        },
+        "byr": {
+          "n": "Baruya",
+          "v": "Yipma (Baruya)"
+        },
+        "byx": {
+          "n": "Qaqet"
+        },
+        "bzd": {
+          "n": "Bribri"
+        },
+        "caa": {
+          "n": "Chorti",
+          "v": "Chortí"
+        },
         "cac": {
           "n": "Chuj, San Mateo Ixtatan",
           "v": "Chuj, San Mateo Ixtatán"
+        },
+        "cbi": {
+          "n": "Chachi"
+        },
+        "cbr": {
+          "n": "Cashibo-Cacataibo",
+          "v": "Kakataibo"
+        },
+        "cbt": {
+          "n": "Chayahuita",
+          "v": "Shawi"
+        },
+        "cbu": {
+          "n": "Candoshi-Shapra",
+          "v": "Candoshi"
         },
         "ceb": {
           "n": "Cebuano",
           "v": "Binisaya"
         },
+        "cek": {
+          "n": "Chin, Khenlak-Asang"
+        },
         "ces": {
           "n": "Czech",
           "v": "čeština"
         },
-        "crh": {
-          "n": "Crimean Tatar",
-          "v": "къырымтатар тили",
-          "s": "Cyrl"
+        "chk": {
+          "n": "Chuukese"
+        },
+        "ckb": {
+          "n": "Kurdish, Sorani",
+          "v": "کوردیی سۆرانی",
+          "d": "rtl",
+          "s": "Arab"
+        },
+        "cmn": {
+          "n": "Chinese, Mandarin: Hui",
+          "v": "回族版圣经",
+          "s": "Hani"
+        },
+        "con": {
+          "n": "Cofán"
+        },
+        "cpy": {
+          "n": "Asheninka South Ucayali"
+        },
+        "crx": {
+          "n": "Carrier"
         },
         "ctd": {
           "n": "Tedim Chin",
           "v": "Chin, Tiddim (Zomi)"
         },
+        "cth": {
+          "n": "Thaiphum Chin"
+        },
+        "ctu": {
+          "n": "Chol Tumbala",
+          "v": "Chol, Tumbalá"
+        },
+        "cuk": {
+          "n": "Kuna, San Blas",
+          "v": "Kuna (San Blas)"
+        },
+        "cwe": {
+          "n": "Kwere",
+          "v": "Ching’hwele"
+        },
         "dan": {
           "n": "Danish",
           "v": "Dansk"
+        },
+        "ded": {
+          "n": "Dedua"
         },
         "deu": {
           "n": "German",
@@ -7678,11 +9868,29 @@
             "Runr"
           ]
         },
+        "dgr": {
+          "n": "Dogrib",
+          "v": "Tlicho"
+        },
+        "djr": {
+          "n": "Djambarrpuyngu"
+        },
         "dln": {
           "n": "Darlong"
         },
+        "dop": {
+          "n": "Lokpa"
+        },
         "dtp": {
           "n": "Kadazan Dusun"
+        },
+        "dwr": {
+          "n": "Dawro",
+          "v": "Dawrotsuwa, ዳውሮꬃዋ",
+          "s": [
+            "Latn",
+            "Ethi"
+          ]
         },
         "dyi": {
           "n": "Djimini Senoufo",
@@ -7697,6 +9905,15 @@
           "v": "Ελληνικά",
           "s": "Grek"
         },
+        "emi": {
+          "n": "Mussau-Emira"
+        },
+        "emp": {
+          "n": "Embera Northern"
+        },
+        "ena": {
+          "n": "Apal"
+        },
         "eng": {
           "n": "English: USA",
           "v": "English",
@@ -7704,6 +9921,13 @@
             "Latn",
             "Shaw"
           ]
+        },
+        "epo": {
+          "n": "Esperanto"
+        },
+        "ewe": {
+          "n": "Ewe",
+          "v": "Eʋegbe"
         },
         "eza": {
           "n": "Ezaa"
@@ -7716,15 +9940,115 @@
           "n": "French",
           "v": "français"
         },
+        "gax": {
+          "n": "Borana-Ethiopia",
+          "v": "Arsi"
+        },
+        "gfk": {
+          "n": "Patpatar"
+        },
         "gjn": {
           "n": "Gonja"
+        },
+        "gmv": {
+          "n": "Gamo",
+          "v": "Gamoththo"
+        },
+        "gnn": {
+          "n": "Gumatj"
+        },
+        "gof": {
+          "n": "Gofa",
+          "v": "Goofatho, ጎፋꬆ",
+          "s": [
+            "Ethi",
+            "Latn"
+          ]
+        },
+        "grc": {
+          "n": "Greek, Koine",
+          "v": "Ἑλληνική",
+          "s": [
+            "Grek",
+            "Linb"
+          ]
         },
         "gub": {
           "n": "Guajajara"
         },
+        "guj": {
+          "n": "Gujarati",
+          "v": "ગુજરાતી",
+          "s": "Gujr"
+        },
+        "gum": {
+          "n": "Guambiano"
+        },
+        "gun": {
+          "n": "Guaraní Mbyá"
+        },
+        "gup": {
+          "n": "Gunwinggu"
+        },
+        "gvn": {
+          "n": "Kuku Yalanji"
+        },
+        "gvs": {
+          "n": "Gumawana"
+        },
+        "hat": {
+          "n": "Haitian",
+          "v": "Kreyòl Ayisyen"
+        },
+        "hau": {
+          "n": "Hausa"
+        },
+        "haw": {
+          "n": "Hawaiian",
+          "v": "ʻŌlelo Hawaiʻi"
+        },
+        "hbo": {
+          "n": "Ancient Hebrew",
+          "d": "rtl"
+        },
+        "hch": {
+          "n": "Huichol"
+        },
+        "heb": {
+          "n": "Hebrew",
+          "v": "עברית",
+          "d": "rtl",
+          "s": "Hebr"
+        },
+        "heg": {
+          "n": "Helong"
+        },
+        "hil": {
+          "n": "Hiligaynon"
+        },
+        "hin": {
+          "n": "Hindi",
+          "v": "हिन्दी",
+          "s": "Deva"
+        },
+        "hlt": {
+          "n": "Chin, Matu"
+        },
         "hmo": {
           "n": "Hiri Motu",
           "v": "Motu, Hiri"
+        },
+        "hne": {
+          "n": "Baigani",
+          "v": "बैगानी"
+        },
+        "hoy": {
+          "n": "Holiya",
+          "s": "Deva"
+        },
+        "hrv": {
+          "n": "Croatian",
+          "v": "Hrvatski"
         },
         "hui": {
           "n": "Huli"
@@ -7755,12 +10079,25 @@
         "ikk": {
           "n": "Ika"
         },
+        "ilo": {
+          "n": "Ilokano"
+        },
         "ind": {
           "n": "Indonesian",
           "v": "Bahasa Indonesia"
         },
+        "iou": {
+          "n": "Tuma-Irumu"
+        },
+        "ipi": {
+          "n": "Ipili"
+        },
         "iqw": {
           "n": "Ikwo"
+        },
+        "isl": {
+          "n": "Icelandic",
+          "v": "íslenska"
         },
         "ita": {
           "n": "Italian",
@@ -7768,6 +10105,9 @@
         },
         "izz": {
           "n": "Izii"
+        },
+        "jae": {
+          "n": "Yabem"
         },
         "kac": {
           "n": "Kachin",
@@ -7783,6 +10123,33 @@
           "v": "Қазақша",
           "s": "Cyrl"
         },
+        "kbq": {
+          "n": "Kamano"
+        },
+        "kdc": {
+          "n": "Kutu"
+        },
+        "kde": {
+          "n": "Makonde",
+          "v": "Shimakonde"
+        },
+        "kew": {
+          "n": "Kewa, West"
+        },
+        "kgf": {
+          "n": "Kube"
+        },
+        "kij": {
+          "n": "Kilivila",
+          "v": "Kiriwina"
+        },
+        "kik": {
+          "n": "Gikuyu"
+        },
+        "knf": {
+          "n": "Mankanya",
+          "v": "Mancagne"
+        },
         "knj": {
           "n": "Akateco",
           "v": "K’anjob’al"
@@ -7792,15 +10159,77 @@
           "v": "한국말",
           "s": "Kore"
         },
+        "kos": {
+          "n": "Kosraean"
+        },
         "kpg": {
           "n": "Kapingamarangi"
+        },
+        "kpr": {
+          "n": "Korafe"
+        },
+        "kqc": {
+          "n": "Doromu",
+          "v": "Doromu-Koki"
         },
         "ksd": {
           "n": "Kuanua"
         },
+        "ksr": {
+          "n": "Borong"
+        },
+        "kvg": {
+          "n": "Kuni-Boazi"
+        },
+        "kwf": {
+          "n": "Kwara’ae"
+        },
+        "kyc": {
+          "n": "Kyaka",
+          "v": "Kyaka Eŋa"
+        },
+        "kyg": {
+          "n": "Keyagana"
+        },
+        "lat": {
+          "n": "Latin",
+          "v": "Latina"
+        },
+        "lbk": {
+          "n": "bnc"
+        },
+        "lbm": {
+          "n": "Lodha",
+          "s": [
+            "Orya",
+            "Deva"
+          ]
+        },
+        "lcm": {
+          "n": "Tungag"
+        },
         "lcp": {
           "n": "Lawa, Western",
           "s": "Thai"
+        },
+        "lex": {
+          "n": "Luang"
+        },
+        "lga": {
+          "n": "Lungga"
+        },
+        "lid": {
+          "n": "Nyindrou"
+        },
+        "lin": {
+          "n": "Lingala"
+        },
+        "lit": {
+          "n": "Lithuanian",
+          "v": "Leituvos"
+        },
+        "llg": {
+          "n": "Lole"
         },
         "lnd": {
           "n": "Lun Bawang - Lun Dayah",
@@ -7815,13 +10244,44 @@
           "v": "മലയാളം",
           "s": "Mlym"
         },
+        "mar": {
+          "n": "Marathi",
+          "v": "मराठी",
+          "s": "Deva"
+        },
         "mbb": {
           "n": "Manobo, Western Bukidnon"
+        },
+        "mbs": {
+          "n": "Sarangani Manobo"
+        },
+        "mbu": {
+          "n": "Mbula-Bwazza",
+          "v": "Mbula"
         },
         "mdy": {
           "n": "Maale",
           "v": "ማሌ",
           "s": "Ethi"
+        },
+        "met": {
+          "n": "Mato"
+        },
+        "meu": {
+          "n": "Motu"
+        },
+        "mkn": {
+          "n": "Kupang Malay"
+        },
+        "mkw": {
+          "n": "Kituba",
+          "v": "Munukutuba"
+        },
+        "mmx": {
+          "n": "Madak"
+        },
+        "mna": {
+          "n": "Mbula"
         },
         "mni": {
           "n": "Manipuri",
@@ -7836,23 +10296,94 @@
           "n": "Mon",
           "s": "Mymr"
         },
+        "mpp": {
+          "n": "Migabac"
+        },
         "mps": {
           "n": "Dadibi"
         },
+        "mpx": {
+          "n": "Misima-Panaeyati"
+        },
         "mrw": {
           "n": "Maranao"
+        },
+        "msy": {
+          "n": "Aruamu"
+        },
+        "mya": {
+          "n": "Burmese",
+          "v": "မြန်မာစကား",
+          "s": "Mymr"
+        },
+        "myk": {
+          "n": "Miniyanka",
+          "v": "Mamara"
+        },
+        "nas": {
+          "n": "Naasioi"
+        },
+        "nch": {
+          "n": "Central Huasteca Nahuatl",
+          "v": "Nāhuatlahtōlli"
+        },
+        "nde": {
+          "n": "Ndebele, Zimbabwe"
+        },
+        "nfa": {
+          "n": "Dhao",
+          "v": "Lii Dhao"
         },
         "nhe": {
           "n": "Eastern Huasteca Nahuatl",
           "v": "Mexkatl"
         },
+        "nhw": {
+          "n": "Nahuatl Huasteca, Western",
+          "v": "Nahuatl"
+        },
         "nld": {
           "n": "Dutch",
           "v": "Nederlands"
         },
+        "nlg": {
+          "n": "Gela"
+        },
+        "nop": {
+          "n": "Numanggang",
+          "v": "Numaŋgaŋ"
+        },
         "nor": {
           "n": "Norwegian",
           "v": "Norsk"
+        },
+        "npi": {
+          "n": "Nepali",
+          "v": "नेपाली",
+          "s": "Deva"
+        },
+        "ntj": {
+          "n": "Ngaanyatjarra"
+        },
+        "ntu": {
+          "n": "Natügu"
+        },
+        "nuy": {
+          "n": "Wubuy"
+        },
+        "nya": {
+          "n": "Chichewa",
+          "v": "Chicheŵa"
+        },
+        "ory": {
+          "n": "Oriya",
+          "v": "ଓଡ଼ିଆ",
+          "s": "Orya"
+        },
+        "pan": {
+          "n": "Panjabi",
+          "v": "ਪੰਜਾਬੀ, ਪੰਜਾਬੀ ਭਾਸ਼ਾ",
+          "s": "Guru"
         },
         "pck": {
           "n": "Chin, Paite"
@@ -7870,13 +10401,25 @@
         "pil": {
           "n": "Taneka"
         },
+        "piu": {
+          "n": "Pintupi-Luritja"
+        },
+        "pjt": {
+          "n": "Pitjantjatjara"
+        },
         "plt": {
           "n": "Malagasy, Merina",
           "v": "Malagasy"
         },
+        "pma": {
+          "n": "Paama"
+        },
         "pol": {
           "n": "Polish",
           "v": "polski"
+        },
+        "pon": {
+          "n": "Pohnpeian"
         },
         "por": {
           "n": "Portuguese: Brasil",
@@ -7885,6 +10428,32 @@
         "prk": {
           "n": "Parauk",
           "v": "Wa"
+        },
+        "ptu": {
+          "n": "Bambam"
+        },
+        "pwg": {
+          "n": "Gapapaiwa"
+        },
+        "qub": {
+          "n": "Huallaga Huánuco Quechua",
+          "v": "Quechua, Huallaga Huánuco"
+        },
+        "qvs": {
+          "n": "Quechua San Martin",
+          "v": "Quechua, San Martín"
+        },
+        "rif": {
+          "n": "Riffian",
+          "v": "ثريفيث",
+          "d": [
+            "ltr",
+            "rtl"
+          ],
+          "s": [
+            "Latn",
+            "Arab"
+          ]
         },
         "rmc": {
           "n": "Romani, Carpathian: Western Ukraine",
@@ -7912,6 +10481,9 @@
         "rop": {
           "n": "Kriol"
         },
+        "row": {
+          "n": "Dela-Oenale"
+        },
         "rug": {
           "n": "Roviana"
         },
@@ -7923,9 +10495,21 @@
         "sag": {
           "n": "Sango"
         },
+        "sav": {
+          "n": "Saafi"
+        },
         "sda": {
           "n": "Toraja",
           "v": "Basa Tora’a"
+        },
+        "shp": {
+          "n": "Shipibo"
+        },
+        "shr": {
+          "n": "Shi"
+        },
+        "sna": {
+          "n": "Shona"
         },
         "som": {
           "n": "Somali",
@@ -7935,36 +10519,98 @@
             "Osma"
           ]
         },
+        "soq": {
+          "n": "Kanasi"
+        },
         "spa": {
           "n": "Spanish",
           "v": "español"
         },
+        "spp": {
+          "n": "Senoufo, Supyire",
+          "v": "Supyire"
+        },
+        "sps": {
+          "n": "Saposa"
+        },
         "srp": {
           "n": "Serbian"
+        },
+        "ssd": {
+          "n": "Siroi"
+        },
+        "ssx": {
+          "n": "Samberigi",
+          "v": "Sembeleke"
+        },
+        "sus": {
+          "n": "Susu"
+        },
+        "suz": {
+          "n": "Sunuwar",
+          "v": "कोँइच",
+          "s": "Deva"
         },
         "swe": {
           "n": "Swedish",
           "v": "Svenska"
+        },
+        "swh": {
+          "n": "Kiswahili"
+        },
+        "swp": {
+          "n": "Suau"
         },
         "tam": {
           "n": "Tamil",
           "v": "தமிழ்",
           "s": "Taml"
         },
+        "tbg": {
+          "n": "North Tairora",
+          "v": "Arau"
+        },
         "tbz": {
           "n": "Ditammari"
+        },
+        "tcs": {
+          "n": "Yumplatok"
+        },
+        "tdx": {
+          "n": "Tandroy-Mahafaly Malagasy"
         },
         "tel": {
           "n": "Telugu",
           "v": "తెలుగు",
           "s": "Telu"
         },
+        "tet": {
+          "n": "Tetun"
+        },
+        "tfr": {
+          "n": "Teribe",
+          "v": "Naso"
+        },
         "tgl": {
           "n": "Tagalog"
+        },
+        "tgo": {
+          "n": "Sudest"
+        },
+        "tha": {
+          "n": "Thai",
+          "v": "ไทย",
+          "s": "Thai"
         },
         "tih": {
           "n": "Timugon Murut",
           "v": "Timugon"
+        },
+        "tod": {
+          "n": "Toma"
+        },
+        "tof": {
+          "n": "Gizrra"
         },
         "ton": {
           "n": "Tonga (Tonga Islands)",
@@ -7976,9 +10622,44 @@
         "tpm": {
           "n": "Tampulma"
         },
+        "tuc": {
+          "n": "Mutu",
+          "v": "Saveeng, Oov"
+        },
+        "tuo": {
+          "n": "Tucano (Brazil)",
+          "v": "Dasea ye"
+        },
         "tur": {
           "n": "Turkish",
           "v": "Türkçe"
+        },
+        "tvk": {
+          "n": "Ambrym, Southeast"
+        },
+        "twi": {
+          "n": "Akan"
+        },
+        "txq": {
+          "n": "Tii"
+        },
+        "ubr": {
+          "n": "Ubir"
+        },
+        "udu": {
+          "n": "Uduk"
+        },
+        "uig": {
+          "n": "Uyghur",
+          "v": "ئۇيغۇرچە",
+          "d": [
+            "ltr",
+            "rtl"
+          ],
+          "s": [
+            "Cyrl",
+            "Arab"
+          ]
         },
         "ukr": {
           "n": "Ukrainian",
@@ -7998,6 +10679,12 @@
             "Latn"
           ]
         },
+        "usa": {
+          "n": "Usarufa"
+        },
+        "vid": {
+          "n": "Vidunda"
+        },
         "vie": {
           "n": "Vietnamese",
           "v": "Tiếng Việt"
@@ -8010,29 +10697,101 @@
             "Ethi"
           ]
         },
+        "wbp": {
+          "n": "Warlpiri"
+        },
+        "wed": {
+          "n": "Wedau"
+        },
+        "wlo": {
+          "n": "Wolio"
+        },
         "wlx": {
           "n": "Wali",
           "v": "Waalii"
+        },
+        "wnc": {
+          "n": "Wantoat"
+        },
+        "wol": {
+          "n": "Wolof"
+        },
+        "wos": {
+          "n": "Hanga Hundi"
+        },
+        "wrs": {
+          "n": "Waris"
+        },
+        "wsk": {
+          "n": "Waskia"
+        },
+        "xla": {
+          "n": "Kamula"
         },
         "xon": {
           "n": "Konkomba, Lichabool",
           "v": "Konkomba, Likoonli"
         },
+        "xsi": {
+          "n": "Sio"
+        },
         "yal": {
           "n": "Yalunka"
+        },
+        "yap": {
+          "n": "Yapese"
         },
         "ydd": {
           "n": "Eastern Yiddish",
           "v": "יידיש"
+        },
+        "yer": {
+          "n": "Tarok"
+        },
+        "yka": {
+          "n": "Yakan"
+        },
+        "yom": {
+          "n": "Yombe"
+        },
+        "yon": {
+          "n": "Yonggom",
+          "v": "Yongkom"
+        },
+        "yor": {
+          "n": "Yoruba",
+          "v": "Èdè Yorùbá"
         },
         "yue": {
           "n": "Chinese, Cantonese",
           "v": "粵語",
           "s": "Hani"
         },
+        "yut": {
+          "n": "Yopno"
+        },
+        "yva": {
+          "n": "Yawa",
+          "v": "Yawa Unat"
+        },
+        "zaj": {
+          "n": "Zaramo",
+          "v": "Kizaramo"
+        },
+        "zar": {
+          "n": "Rincón Zapotec",
+          "v": "Didza Xidza"
+        },
+        "zat": {
+          "n": "Zapotec, Tabaa"
+        },
         "zlm": {
           "n": "Malay",
           "v": "Bahasa Melayu"
+        },
+        "zty": {
+          "n": "Yatee Zapotec",
+          "v": "Zapoteco, Yatée"
         }
       },
       "audio-only": {
@@ -8180,10 +10939,6 @@
         },
         "pdt": {
           "n": "Plautdietsch"
-        },
-        "por": {
-          "n": "Portuguese: Brasil",
-          "v": "Português"
         },
         "qub": {
           "n": "Huallaga Huánuco Quechua",
