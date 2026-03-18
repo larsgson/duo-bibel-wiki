@@ -2,7 +2,7 @@
   remote_images = ["https://bibel\\.wiki/img/.*"]
 
 [build]
-  command = "node scripts/build-story-locales.js && pnpm build"
+  command = "bash scripts/fetch-data.sh && node scripts/build-story-locales.js && pnpm build"
   publish = "dist"
 
 [build.environment]

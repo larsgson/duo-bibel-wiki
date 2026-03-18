@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "fetch-data": "bash scripts/fetch-data.sh",
     "build-image-index": "node scripts/build-image-index.js",
     "build-story-locales": "node scripts/build-story-locales.js",
     "preview": "astro preview",
