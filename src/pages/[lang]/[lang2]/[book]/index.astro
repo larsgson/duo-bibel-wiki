@@ -4,7 +4,7 @@ export const prerender = false;
 import Layout from "../../../../layouts/Layout.astro";
 import langsData from "../../../../data/ALL-langs-compact.json";
 import storyLocales from "../../../../generated/story-locales.json";
-import { BOOK_MAP } from "../../../../utils/chapterData";
+import { BOOK_MAP, getTemplateImageConfig, getTemplateThemeCSS } from "../../../../utils/chapterData";
 import { useTranslations } from "../../../../i18n";
 
 const { lang, lang2, book } = Astro.params;
@@ -25,8 +25,8 @@ const awt = langsData.canons.nt["audio-with-timecode"] as Record<
 >;
 const pInfo = wt[lang!] || awt[lang!];
 if (!pInfo) return Astro.redirect("/");
-const primaryCode = lang!;
-const primaryEnglish = pInfo.n || primaryCode;
+const learnCode = lang!;
+const learnEnglish = pInfo.n || learnCode;
 
 let sInfo: { n?: string; v?: string } | undefined;
 for (const canon of ["nt", "ot"] as const) {
@@ -40,20 +40,26 @@ for (const canon of ["nt", "ot"] as const) {
     }
     if (sInfo) break;
 }
-if (!sInfo) return Astro.redirect(`/${primaryCode}`);
-const secondaryCode = lang2!;
-const secondaryEnglish = sInfo.n || secondaryCode;
+if (!sInfo) return Astro.redirect(`/${learnCode}`);
+const mtCode = lang2!;
+const mtEnglish = sInfo.n || mtCode;
+const learnVernacular = pInfo.v || learnEnglish;
+const mtVernacular = sInfo.v || mtEnglish;
 
 // ── Build categories data for client ──
-const locales = (storyLocales as any).locales;
-const categoriesRaw = (storyLocales as any).categories;
-const locale = locales[secondaryCode] || locales["eng"] || {};
+const templateData = (storyLocales as any)[bookInfo.img];
+if (!templateData) {
+    return Astro.redirect(`/${learnCode}/${mtCode}`);
+}
+const locales = templateData.locales;
+const categoriesRaw = templateData.categories;
+const locale = locales[mtCode] || locales["eng"] || {};
 const engLocale = locales["eng"] || {};
 
 const bookTitle =
     locale.title || locale.longTitle || engLocale.title || bookInfo.img;
 
-const t = useTranslations(secondaryCode);
+const t = useTranslations(mtCode);
 const chapterLabel = t("chapter");
 
 const categoriesData: Array<{
@@ -61,7 +67,7 @@ const categoriesData: Array<{
     title: string;
     description: string;
     image: string | null;
-    stories: Array<{ chapter: number; title: string; image: string | null }>;
+    stories: Array<{ id: string; title: string; image: string | null }>;
 }> = [];
 
 for (const [catId, cat] of Object.entries(categoriesRaw) as [string, any][]) {
@@ -70,8 +76,8 @@ for (const [catId, cat] of Object.entries(categoriesRaw) as [string, any][]) {
         const storyLocale =
             locale[catId]?.[s.id] || engLocale[catId]?.[s.id] || {};
         return {
-            chapter: s.chapter,
-            title: storyLocale.title || `${chapterLabel} ${s.chapter}`,
+            id: s.id,
+            title: storyLocale.title || `${chapterLabel} ${s.id}`,
             image: s.image || null,
         };
     });
@@ -85,11 +91,22 @@ for (const [catId, cat] of Object.entries(categoriesRaw) as [string, any][]) {
 }
 
 const categoriesJSON = JSON.stringify(categoriesData);
-const backHref = `/${primaryCode}`;
+const imageConfig = getTemplateImageConfig(bookInfo.img);
+const imageBaseUrl = imageConfig.baseUrl;
+const imagePathPattern = imageConfig.pathPattern;
+const imageThumbsResize = imageConfig.thumbsResize;
+const bookImg = bookInfo.img;
+const backHref = `/${learnCode}/${mtCode}`;
+const themeCSS = getTemplateThemeCSS(bookInfo.img);
 ---
 
 <Layout
-    title={`${bookTitle} — ${primaryEnglish} + ${secondaryEnglish}`}
+    title={`${bookTitle} — ${learnEnglish} + ${mtEnglish}`}
+    themeCSS={themeCSS}
+    learnCode={learnCode}
+    learnName={learnVernacular}
+    mtCode={mtCode}
+    mtName={mtVernacular}
     backHref={backHref}
 >
     <style is:global>
@@ -100,7 +117,7 @@ const backHref = `/${primaryCode}`;
         }
         .chapter-picker-title {
             text-align: center;
-            color: #ccc;
+            color: var(--text-secondary);
             font-size: 1.3rem;
             font-weight: 600;
             margin: 0 0 1.25rem;
@@ -111,7 +128,7 @@ const backHref = `/${primaryCode}`;
             margin-bottom: 0.5rem;
             border-radius: 10px;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--bg-surface);
         }
         .accordion-header {
             display: flex;
@@ -121,7 +138,7 @@ const backHref = `/${primaryCode}`;
             padding: 12px 16px;
             border: none;
             background: none;
-            color: #ddd;
+            color: var(--text);
             cursor: pointer;
             font: inherit;
             font-size: 0.95rem;
@@ -132,7 +149,7 @@ const backHref = `/${primaryCode}`;
             box-sizing: border-box;
         }
         .accordion-header:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--bg-surface);
         }
         .accordion-thumb {
             width: 44px;
@@ -153,14 +170,14 @@ const backHref = `/${primaryCode}`;
             display: block;
             font-size: 0.72rem;
             font-weight: 400;
-            color: rgba(255, 255, 255, 0.4);
+            color: var(--text-secondary);
             margin-top: 2px;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
         .accordion-chevron {
             font-size: 1.1rem;
-            color: #777;
+            color: var(--chevron);
             transition: transform 0.25s ease;
             flex-shrink: 0;
         }
@@ -203,7 +220,7 @@ const backHref = `/${primaryCode}`;
             flex-direction: column;
             border-radius: 8px;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--bg-surface);
             text-decoration: none;
             color: inherit;
             transition:
@@ -212,7 +229,7 @@ const backHref = `/${primaryCode}`;
         }
         .chapter-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 16px var(--shadow-strong);
         }
         .chapter-card-img {
             width: 100%;
@@ -228,13 +245,44 @@ const backHref = `/${primaryCode}`;
         }
         .chapter-card-num {
             font-size: 0.7rem;
-            color: #5b9bd5;
+            color: var(--accent);
             font-weight: 600;
         }
         .chapter-card-title {
             font-size: 0.78rem;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text);
             line-height: 1.3;
+        }
+
+        /* ── Chapter progress badge ── */
+        .chapter-card { position: relative; }
+        .ch-progress {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+        }
+        .ch-progress-counter {
+            background: var(--overlay);
+            color: var(--success-bright);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+            font-family: monospace;
+        }
+        .ch-progress-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--success-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ch-progress-check svg {
+            width: 14px;
+            height: 14px;
         }
     </style>
 
@@ -243,32 +291,39 @@ const backHref = `/${primaryCode}`;
         <div id="accordion-container"></div>
     </div>
 
-    <script data-astro-rerun define:vars={{ categoriesJSON, bookTitle, book, chapterLabel }}>
+    <script data-astro-rerun define:vars={{ categoriesJSON, bookTitle, book, chapterLabel, imageBaseUrl, imagePathPattern, imageThumbsResize, learnCode, mtCode, bookImg }}>
         const categories = JSON.parse(categoriesJSON);
+        const IMG_BASE = imageBaseUrl ? imageBaseUrl + "/" : "";
         const bookKey = book.toLowerCase();
 
         // ── Determine which category to open ──
         let openCatId = categories[0]?.id || "01";
         try {
-            const lastChapter = parseInt(
-                localStorage.getItem(`lastVisitedChapter_${bookKey}`),
-                10,
-            );
-            if (lastChapter) {
-                for (const cat of categories) {
-                    if (cat.stories.some((s) => s.chapter === lastChapter)) {
-                        openCatId = cat.id;
-                        break;
-                    }
-                }
+            const lastCat = localStorage.getItem(`lastVisitedCategory_${bookKey}`);
+            if (lastCat) {
+                openCatId = lastCat;
             }
         } catch (e) {
             /* localStorage unavailable */
         }
 
+        function resolveImageUrl(filename) {
+            if (!filename) return "";
+            if (filename.startsWith("http")) return filename;
+            // Apply path pattern (e.g. "{book}/{filename}" where book = first 2 chars)
+            const resolved = imagePathPattern
+                .replace("{filename}", filename)
+                .replace("{book}", filename.substring(0, 2));
+            return `${IMG_BASE}${resolved}`;
+        }
+
         function imgProxy(url, w) {
             if (!url) return url;
-            return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+            const full = resolveImageUrl(url);
+            if (imageThumbsResize === "netlify") {
+                return `/.netlify/images?url=${encodeURIComponent(full)}&w=${w}`;
+            }
+            return full;
         }
 
         // ── Render ──
@@ -285,10 +340,10 @@ const backHref = `/${primaryCode}`;
             let cardsHTML = "";
             for (const story of cat.stories) {
                 const imgSrc = story.image || cat.image || "";
-                cardsHTML += `<a class="chapter-card" href="./${story.chapter}/">
+                cardsHTML += `<a class="chapter-card" href="./${cat.id}/${story.id}/" data-cat="${cat.id}" data-story="${story.id}">
                     ${imgSrc ? `<img class="chapter-card-img" src="${imgProxy(imgSrc, 300)}" alt="" loading="lazy">` : ""}
                     <div class="chapter-card-info">
-                        <span class="chapter-card-num">${chapterLabel} ${story.chapter}</span>
+                        <span class="chapter-card-num">${chapterLabel} ${parseInt(story.id, 10)}</span>
                         <span class="chapter-card-title">${story.title}</span>
                     </div>
                 </a>`;
@@ -329,5 +384,43 @@ const backHref = `/${primaryCode}`;
                 item.classList.add("open");
             }
         });
+
+        // ── Achievement progress badges on chapter cards ──
+        const EX_KEY_MAP = { "listen-fill": "f", "listen-order": "o", "sentence-builder": "s" };
+        const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+        function getActiveExKey() {
+            var ex = localStorage.getItem("activeExercise") || "listen-fill";
+            return EX_KEY_MAP[ex] || "f";
+        }
+
+        function renderProgressBadges() {
+            var exKey = getActiveExKey();
+            container.querySelectorAll(".chapter-card").forEach(function(card) {
+                var catId = card.getAttribute("data-cat");
+                var storyId = card.getAttribute("data-story");
+                if (!catId || !storyId) return;
+                var storageKey = "a:" + learnCode + "/" + mtCode + "/" + bookImg + "/" + catId + "/" + storyId;
+                var obj;
+                try { obj = JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch(e) { return; }
+                var arr = obj[exKey] || [];
+                var total = obj.t || 0;
+                if (arr.length === 0 || total === 0) return;
+
+                var existing = card.querySelector(".ch-progress");
+                if (existing) existing.remove();
+
+                var badge = document.createElement("div");
+                badge.className = "ch-progress";
+
+                if (arr.length >= total) {
+                    badge.innerHTML = '<div class="ch-progress-check">' + CHECK_SVG + '</div>';
+                } else {
+                    badge.innerHTML = '<span class="ch-progress-counter">' + arr.length + '/' + total + '</span>';
+                }
+                card.appendChild(badge);
+            });
+        }
+        renderProgressBadges();
     </script>
 </Layout>

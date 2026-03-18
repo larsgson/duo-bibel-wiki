@@ -20,6 +20,11 @@ pnpm-debug.log*
 # local image assets (served from bibel.wiki, not deployed)
 assets/john-pics/
 
+# Synced data (generated/downloaded from external sources, not hand-edited)
+src/data/ALL-langs-data/
+src/data/ALL-langs*.json
+src/data/templates-timings/
+
 # generated at build time from src/data/templates/ (see scripts/)
 # image-index.json is committed because its source (assets/john-pics/) is gitignored
 src/generated/story-locales.json

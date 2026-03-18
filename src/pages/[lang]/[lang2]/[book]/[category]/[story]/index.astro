@@ -1,0 +1,1074 @@
+---
+export const prerender = false;
+
+import Layout from "../../../../../../layouts/Layout.astro";
+import storyLocales from "../../../../../../generated/story-locales.json";
+import {
+    validateParams,
+    findTimingData,
+    getFilesetInfo,
+    getChapterTiming,
+    buildVerseEntries,
+    getChapterImageData,
+    buildChapterData,
+    getLangFontScale,
+    getTemplateImageConfig,
+    getTemplateThemeCSS,
+    templateHasOT,
+} from "../../../../../../utils/chapterData";
+import { useTranslations } from "../../../../../../i18n";
+
+const { lang, lang2, book, category, story } = Astro.params;
+
+const validated = validateParams({ lang, lang2, book, category, story });
+if (!validated) {
+    return Astro.redirect(`/${lang}/${lang2}`);
+}
+
+const { bookInfo, chapterNum: storyNum, learn, mt } = validated;
+const learnCode = learn.code;
+const learnEnglish = learn.english;
+const learnIsRTL = learn.isRTL;
+const mtCode = mt.code;
+const mtEnglish = mt.english;
+const mtIsRTL = mt.isRTL;
+const categoryId = category!;
+
+// ── Look up story data from story-locales ──
+const templateData = (storyLocales as any)[bookInfo.img];
+const storyData = templateData?.categories?.[categoryId]?.stories?.find(
+    (s: any) => s.id === story
+);
+
+// ── Determine canon for this story's Bible books ──
+const OT_BOOKS = new Set([
+    "GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA",
+    "1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO",
+    "ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO",
+    "OBA","JON","MIC","NAH","HAB","ZEP","HAG","ZEC","MAL",
+]);
+const storyCanon = storyData?.books?.some((b: string) => OT_BOOKS.has(b)) ? "ot" : "nt";
+
+// ── Fileset IDs (resolve both canons explicitly) ──
+const learnNtFileset = getFilesetInfo(learnCode, bookInfo.img, "nt");
+const mtNtFileset = getFilesetInfo(mtCode, bookInfo.img, "nt");
+const learnOtFileset = getFilesetInfo(learnCode, bookInfo.img, "ot");
+const mtOtFileset = getFilesetInfo(mtCode, bookInfo.img, "ot");
+// Use the story's canon fileset for timing resolution
+const learnFileset = storyCanon === "ot" ? learnOtFileset : learnNtFileset;
+const mtFileset = storyCanon === "ot" ? mtOtFileset : mtNtFileset;
+
+// ── Load timing data for the story's canon ──
+let learnTiming = findTimingData(
+    learnCode, learnFileset?.audioCategory, learnFileset?.audioDistinctId,
+    bookInfo.img, storyCanon,
+);
+if (!learnTiming) {
+    learnTiming = findTimingData(learnCode, undefined, undefined, bookInfo.img, storyCanon);
+}
+let mtTiming = findTimingData(
+    mtCode, mtFileset?.audioCategory, mtFileset?.audioDistinctId,
+    bookInfo.img, storyCanon,
+);
+if (!mtTiming) {
+    mtTiming = findTimingData(mtCode, undefined, undefined, bookInfo.img, storyCanon);
+}
+
+const chapterTiming = learnTiming
+    ? getChapterTiming(learnTiming.timingData, storyNum)
+    : null;
+
+if (!learnTiming || !chapterTiming) {
+    return Astro.redirect(`/${learnCode}/${mtCode}`);
+}
+
+const verseEntries = buildVerseEntries(chapterTiming, storyData?.verseRefs);
+
+let mtChapterTiming: Record<string, number[]> = {};
+if (mtTiming) {
+    const secChapter = getChapterTiming(mtTiming.timingData, storyNum);
+    if (secChapter) {
+        mtChapterTiming = secChapter;
+    }
+}
+
+const chapterImageData = getChapterImageData(bookInfo.img, storyNum);
+const imageConfig = getTemplateImageConfig(bookInfo.img);
+const imageBaseUrl = imageConfig.baseUrl;
+
+// Extract unique Bible book+chapter pairs from verse refs
+const bibleChapterSet = new Set<string>();
+for (const ve of verseEntries) {
+    const m = ve.ref.match(/^([A-Z0-9]{3})(\d+):/);
+    if (m) bibleChapterSet.add(`${m[1]}:${m[2]}`);
+}
+const bibleChapters = [...bibleChapterSet].map(bc => {
+    const [book, ch] = bc.split(":");
+    return { book, chapter: parseInt(ch, 10) };
+});
+
+const chapterData = buildChapterData({
+    bookInfo,
+    chapterNum: storyNum,
+    verseEntries,
+    learnFileset: learnNtFileset,
+    mtFileset: mtNtFileset,
+    learnOtFileset,
+    mtOtFileset,
+    chapterImageData,
+    mtChapterTiming,
+    learnWordTiming: null,
+    imageBaseUrl,
+    bibleChapters,
+    imagePathPattern: imageConfig.pathPattern,
+    imageMediumPattern: imageConfig.mediumPattern,
+    thumbsResize: imageConfig.thumbsResize,
+    cropPercent: imageConfig.cropPercent,
+    verseImages: storyData?.verseImages,
+});
+
+// ── Story locale data for section headers ──
+let storyMeta: {
+    title?: string;
+    description?: string;
+    headers: Record<string, string>;
+} = { headers: {} };
+const locales = templateData?.locales || {};
+{
+    const locale = locales[mtCode] || locales["eng"] || {};
+    const storyLocaleData = locale[categoryId]?.[story!];
+    if (storyLocaleData) {
+        storyMeta.title = storyLocaleData.title || "";
+        storyMeta.description = storyLocaleData.description || "";
+        for (const [key, val] of Object.entries(storyLocaleData)) {
+            if (
+                key !== "title" &&
+                key !== "description" &&
+                (val as any).p_hd
+            ) {
+                storyMeta.headers[key] = (val as any).p_hd;
+            }
+        }
+    }
+}
+
+const backHref = `/${learnCode}/${mtCode}/${book}/`;
+
+const learnFontScale = getLangFontScale(learnCode);
+const mtFontScale = getLangFontScale(mtCode);
+
+const t = useTranslations(mtCode);
+const uiLabels = JSON.stringify({
+    listenReveal: t("listenReveal"),
+    listenFill: t("listenFill"),
+    listenOrder: t("listenOrder"),
+    listen: t("listen"),
+    sentenceBuilder: t("sentenceBuilder"),
+    more: t("more"),
+    loading: t("loading"),
+    audioOnly: t("audioOnly"),
+});
+const themeCSS = getTemplateThemeCSS(bookInfo.img);
+---
+
+<Layout
+    title={`Listen — ${bookInfo.img} ${categoryId}/${story} — ${learnEnglish} + ${mtEnglish}`}
+    themeCSS={themeCSS}
+    flexMode={true}
+    noHeader={true}
+>
+    <style is:global>
+        /* ── Desktop layout ── */
+        .exercise-desktop-layout {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .chapter-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Mode FAB ── */
+        .mode-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: #555;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+            padding: 0;
+        }
+        .mode-fab:active { transform: scale(0.93); }
+        .fab-ring {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            transform: rotate(-90deg);
+        }
+        .fab-ring-bg {
+            fill: none;
+            stroke: rgb(111, 111, 111);
+            stroke-width: 3;
+        }
+        .fab-ring-fg {
+            fill: none;
+            stroke: var(--success-bright);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 169.65;
+            stroke-dashoffset: 169.65;
+            transition: stroke-dashoffset 0.4s ease;
+        }
+        .fab-icon {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fab-icon svg { width: 24px; height: 24px; }
+        /* ── Verse completion check ── */
+        .verse-done-check {
+            position: absolute;
+            top: -8px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--success-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .verse-done-check svg {
+            width: 12px;
+            height: 12px;
+        }
+        .mode-fab-toast {
+            position: fixed;
+            bottom: 90px;
+            right: 16px;
+            background: var(--bg-panel);
+            color: var(--text);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .mode-fab-toast.visible { opacity: 1; }
+
+        /* ── Listen scrollable area ── */
+        .listen-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+            padding-bottom: 200px; /* space for floating player */
+            position: relative;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-strong) transparent;
+        }
+        .listen-scroll-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        .listen-scroll-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .listen-scroll-area::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 3px;
+        }
+
+        .listen-verse-list {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .listen-story-header {
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+        .listen-story-title {
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+        }
+        .listen-story-description {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* ── Back button ── */
+        .listen-back-btn {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: var(--shadow-strong);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .listen-back-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .listen-back-btn svg {
+            width: 16px;
+            height: 16px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+        }
+
+        .listen-section-header {
+            color: #7ab8e0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.75rem 0 0.25rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+        }
+
+        .listen-verse-card {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 0.75rem;
+            overflow: visible;
+            background: var(--bg-surface);
+            transition: background 0.2s;
+            position: relative;
+        }
+        .listen-verse-card:hover {
+            background: var(--bg-surface-hover);
+        }
+        .listen-verse-card.active {
+            outline: 3px solid var(--error);
+            background: rgba(231, 76, 60, 0.08);
+        }
+
+        .listen-verse-images {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 0;
+            border-radius: 0.75rem 0.75rem 0 0;
+            overflow: hidden;
+        }
+        .listen-verse-images img {
+            width: 100%;
+            height: auto;
+            border-radius: 0;
+            display: block;
+        }
+
+        .listen-verse-ref {
+            display: block;
+            position: absolute;
+            bottom: 20px;
+            right: 8px;
+            padding: 4px 8px;
+            background: linear-gradient(to right,
+                transparent 0%,
+                rgba(0, 0, 0, 0.3) 40%,
+                rgba(0, 0, 0, 0.5) 100%);
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 2;
+            font-weight: 500;
+        }
+        /* Fallback when no images: inline ref */
+        .listen-verse-card > .listen-verse-ref {
+            position: static;
+            background: none;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: normal;
+            text-shadow: none;
+            padding: 0.5rem 0.75rem 0;
+            border-radius: 0;
+        }
+
+        .listen-verse-text-learn {
+            color: var(--text);
+            font-size: calc(0.9rem * var(--learn-font-scale, 1));
+            line-height: 1.5;
+            padding: 0 0.75rem;
+        }
+        /* When images present, overlay text with gradient for readability */
+        .listen-verse-images ~ .listen-verse-text-learn {
+            margin-top: -2.3rem;
+            padding: 1.1rem 0.75rem 0;
+            color: var(--img-text, var(--text));
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                var(--bg) 30%
+            );
+            position: relative;
+            z-index: 1;
+            text-shadow: var(--img-text-shadow, none);
+        }
+        .listen-verse-images ~ .listen-verse-text-mt {
+            background: var(--bg);
+        }
+        .listen-verse-text-mt {
+            color: var(--text);
+            font-size: calc(0.85rem * var(--mt-font-scale, 1));
+            line-height: 1.5;
+            padding: 0.4rem 0.75rem 0.75rem;
+        }
+
+        .listen-loading {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 3rem 1rem;
+        }
+
+    </style>
+
+    <div class="chapter-content">
+        <div class="exercise-desktop-layout">
+            <div class="listen-scroll-area" id="listen-scroll">
+                <a class="listen-back-btn" href={backHref} aria-label="Back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </a>
+                <div class="listen-verse-list" id="verse-list">
+                    <div class="listen-loading" id="listen-loading">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="mode-fab" id="mode-fab" aria-label="Toggle mode">
+        <svg class="fab-ring" viewBox="0 0 60 60">
+            <circle class="fab-ring-bg" cx="30" cy="30" r="27" />
+            <circle class="fab-ring-fg" id="fab-ring-fg" cx="30" cy="30" r="27" />
+        </svg>
+        <span class="fab-icon" id="fab-icon"></span>
+    </button>
+    <div class="mode-fab-toast" id="mode-fab-toast"></div>
+
+    <script
+        data-astro-rerun
+        define:vars={{
+            chapterData,
+            learnCode,
+            mtCode,
+            learnIsRTL,
+            mtIsRTL,
+            learnFontScale,
+            mtFontScale,
+            storyMeta,
+            uiLabels,
+            categoryId,
+        }}
+    >
+        const CHAPTER = JSON.parse(chapterData);
+
+        // Remember last visited category for the chapter picker accordion
+        try {
+            localStorage.setItem(
+                `lastVisitedCategory_${CHAPTER.bookImg.toLowerCase()}`,
+                categoryId,
+            );
+        } catch (e) {}
+
+        // ── Per-language font scaling ──
+        document.documentElement.style.setProperty('--learn-font-scale', String(learnFontScale));
+        document.documentElement.style.setProperty('--mt-font-scale', String(mtFontScale));
+
+        const mtHasText = Boolean(CHAPTER.mtTextFilesetId);
+
+        // ══════════════════════════════════════════
+        // MODE FAB (toggle listen / exercise)
+        // ══════════════════════════════════════════
+        const UI = JSON.parse(uiLabels);
+        const PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+        const BOLT_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+        const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+        const EX_KEY_MAP = { "listen-fill": "f", "listen-order": "o", "sentence-builder": "s" };
+        const RING_CIRCUMFERENCE = 169.65; // 2 * PI * 27
+
+        const fabEl = document.getElementById("mode-fab");
+        const fabIconEl = document.getElementById("fab-icon");
+        const fabRingFg = document.getElementById("fab-ring-fg");
+        const fabToast = document.getElementById("mode-fab-toast");
+        let pageMode = sessionStorage.getItem("listenPageMode") || "exercise";
+        let toastTimer = null;
+
+        function getActiveExKey() {
+            var ex = localStorage.getItem("activeExercise") || "listen-fill";
+            return EX_KEY_MAP[ex] || "f";
+        }
+
+        function getAchievements() {
+            var key = "a:" + learnCode + "/" + mtCode + "/" + CHAPTER.bookImg + "/" + categoryId + "/" + CHAPTER.chapterNum;
+            try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch(e) { return {}; }
+        }
+
+        function getCompletedVerses() {
+            var ach = getAchievements();
+            return new Set(ach[getActiveExKey()] || []);
+        }
+
+        // Check if all individual verses in a range entry are completed
+        function isCardComplete(entry, doneSet) {
+            for (var v = entry.verseStart; v <= entry.verseEnd; v++) {
+                if (!doneSet.has(v)) return false;
+            }
+            return true;
+        }
+
+        function updateFabRing() {
+            var done = getCompletedVerses();
+            var total = CHAPTER.verseEntries.length;
+            var count = 0;
+            for (var i = 0; i < total; i++) {
+                if (isCardComplete(CHAPTER.verseEntries[i], done)) count++;
+            }
+            var pct = total > 0 ? count / total : 0;
+            fabRingFg.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pct));
+        }
+
+        function updateFab() {
+            fabIconEl.innerHTML = pageMode === "listen" ? PLAY_SVG : BOLT_SVG;
+            updateFabRing();
+        }
+        function showToast(msg) {
+            fabToast.textContent = msg;
+            fabToast.classList.add("visible");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => fabToast.classList.remove("visible"), 1500);
+        }
+        updateFab();
+
+        fabEl.addEventListener("click", () => {
+            pageMode = pageMode === "listen" ? "exercise" : "listen";
+            sessionStorage.setItem("listenPageMode", pageMode);
+            updateFab();
+            updateVerseCheckmarks();
+            showToast(pageMode === "listen" ? "Listen mode" : "Exercise mode");
+        });
+
+        function updateVerseCheckmarks() {
+            var cards = document.querySelectorAll(".listen-verse-card");
+            if (pageMode !== "exercise") {
+                cards.forEach(c => { var ch = c.querySelector(".verse-done-check"); if (ch) ch.remove(); });
+                return;
+            }
+            var done = getCompletedVerses();
+            cards.forEach(c => {
+                var idx = parseInt(c.dataset.verseIdx, 10);
+                var entry = CHAPTER.verseEntries[idx];
+                var existing = c.querySelector(".verse-done-check");
+                if (entry && isCardComplete(entry, done)) {
+                    if (!existing) {
+                        var badge = document.createElement("div");
+                        badge.className = "verse-done-check";
+                        badge.innerHTML = CHECK_SVG;
+                        c.style.position = "relative";
+                        c.appendChild(badge);
+                    }
+                } else if (existing) {
+                    existing.remove();
+                }
+            });
+        }
+
+        // ══════════════════════════════════════════
+        // IMAGE URL LOOKUP
+        // ══════════════════════════════════════════
+        const IMG_BASE = CHAPTER.imageBaseUrl ? CHAPTER.imageBaseUrl + "/" : "";
+        const imgPathPattern = CHAPTER.imagePathPattern || "{filename}";
+        const hasImageIndex = Object.keys(CHAPTER.chapterImageData).length > 0;
+
+        function resolveImageUrl(filename) {
+            if (!filename) return "";
+            if (filename.startsWith("http")) return filename;
+            const resolved = imgPathPattern
+                .replace("{filename}", filename)
+                .replace("{book}", filename.substring(0, 2));
+            return `${IMG_BASE}${resolved}`;
+        }
+
+        const verseImages = CHAPTER.verseImages || {};
+        const hasVerseImages = Object.keys(verseImages).length > 0;
+
+        function getFiles(verse) {
+            return CHAPTER.chapterImageData[String(verse)] || [];
+        }
+
+        function findBestImage(ch, v, ref) {
+            // Check verseImages (from .md files) first
+            if (hasVerseImages && ref) {
+                var vi = verseImages[ref];
+                if (vi && vi.length > 0) return resolveImageUrl(vi[0]);
+            }
+            // Fall back to image-index data
+            if (!hasImageIndex) return "";
+            var files = getFiles(v);
+            if (files.length > 0) return resolveImageUrl(files[0]);
+            for (let prev = v - 1; prev >= 1; prev--) {
+                var pf = getFiles(prev);
+                if (pf.length > 0) return resolveImageUrl(pf[0]);
+            }
+            return "";
+        }
+
+        function findAllImages(ch, v, ref) {
+            // Check verseImages first
+            if (hasVerseImages && ref) {
+                var vi = verseImages[ref];
+                if (vi && vi.length > 0) return vi.map((f) => resolveImageUrl(f));
+            }
+            // Fall back to image-index data
+            var files = getFiles(v);
+            if (files.length > 0) return files.map((f) => resolveImageUrl(f));
+            if (!hasImageIndex) return [];
+            var best = findBestImage(ch, v, ref);
+            return best ? [best] : [];
+        }
+
+        const imageMediumPattern = CHAPTER.imageMediumPattern || "";
+
+        function imgProxy(url, w) {
+            if (!url) return url;
+            // Use Netlify Image CDN when configured (thumbs_resize = "netlify")
+            if (CHAPTER.thumbsResize === "netlify") {
+                return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+            }
+            // Use pre-sized medium images when template provides a medium pattern
+            if (imageMediumPattern && url.startsWith(IMG_BASE) && IMG_BASE) {
+                const filename = url.substring(IMG_BASE.length).split("/").pop();
+                const medium = imageMediumPattern
+                    .replace("{filename}", filename)
+                    .replace("{book}", filename.substring(0, 2));
+                return `${IMG_BASE}${medium}`;
+            }
+            // Fallback: return original URL
+            return url;
+        }
+
+        // ══════════════════════════════════════════
+        // DATA FETCHING
+        // ══════════════════════════════════════════
+        let cachedLearnTexts = null;
+        let cachedMtTexts = null;
+        let cachedLearnAudioUrl = null;
+        let cachedMtAudioUrl = null;
+
+        const bibleChapters = CHAPTER.bibleChapters;
+
+        // OT books for fileset selection
+        const OT_BOOKS = new Set([
+            "GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA",
+            "1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO",
+            "ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO",
+            "OBA","JON","MIC","NAH","HAB","ZEP","HAG","ZEC","MAL",
+        ]);
+        function isOT(bookId) { return OT_BOOKS.has(bookId); }
+        function getLearnTextFilesetId(bookId) {
+            return isOT(bookId)
+                ? (CHAPTER.learnOtTextFilesetId || CHAPTER.learnTextFilesetId)
+                : CHAPTER.learnTextFilesetId;
+        }
+        function getMtTextFilesetId(bookId) {
+            return isOT(bookId)
+                ? (CHAPTER.mtOtTextFilesetId || CHAPTER.mtTextFilesetId)
+                : CHAPTER.mtTextFilesetId;
+        }
+        function getLearnAudioFilesetId(bookId) {
+            return isOT(bookId)
+                ? (CHAPTER.learnOtAudioFilesetId || CHAPTER.learnAudioFilesetId)
+                : CHAPTER.learnAudioFilesetId;
+        }
+        function getMtAudioFilesetId(bookId) {
+            return isOT(bookId)
+                ? (CHAPTER.mtOtAudioFilesetId || CHAPTER.mtAudioFilesetId)
+                : CHAPTER.mtAudioFilesetId;
+        }
+
+        async function fetchChapterTextForBookChapter(filesetId, bookId, chapterId) {
+            const verses = new Map();
+            if (!filesetId) return verses;
+            try {
+                if (filesetId.startsWith("helloao:")) {
+                    const tid = filesetId.slice(8);
+                    const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.chapter?.content) {
+                            for (const item of data.chapter.content) {
+                                if (item.type === "verse") {
+                                    const text = item.content.map(c => typeof c === "string" ? c : c.text || "").join(" ").trim();
+                                    verses.set(item.number, text);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    const url = `/.netlify/functions/dbt-proxy?type=text&fileset_id=${filesetId}&book_id=${bookId}&chapter_id=${chapterId}`;
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.data && Array.isArray(data.data)) {
+                            for (const v of data.data) {
+                                const num = parseInt(v.verse_start, 10);
+                                verses.set(num, v.verse_text?.trim() || "");
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return verses;
+        }
+
+        async function fetchChapterText(getFilesetForBook) {
+            const allVerses = new Map();
+            // Fetch text for each Bible book+chapter, using the right fileset per book
+            const fetches = bibleChapters.map(bc =>
+                fetchChapterTextForBookChapter(getFilesetForBook(bc.book), bc.book, bc.chapter)
+            );
+            const results = await Promise.all(fetches);
+            // Merge: key by "BOOK+CHAPTER:VERSE" (matching the verse ref format)
+            for (let i = 0; i < bibleChapters.length; i++) {
+                const bc = bibleChapters[i];
+                const verses = results[i];
+                for (const [num, text] of verses) {
+                    allVerses.set(`${bc.book}${bc.chapter}:${num}`, text);
+                }
+            }
+            return allVerses;
+        }
+
+        async function fetchAudioUrlForBookChapter(audioFilesetId, bookId, chapterId) {
+            if (!audioFilesetId) return "";
+            try {
+                if (audioFilesetId.startsWith("helloao:")) {
+                    const tid = audioFilesetId.slice(8);
+                    const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const links = data.thisChapterAudioLinks || {};
+                        const urls = Object.values(links);
+                        if (urls.length > 0) return urls[0];
+                    }
+                } else {
+                    const url = `/.netlify/functions/dbt-proxy?type=audio&fileset_id=${audioFilesetId}&book_id=${bookId}&chapter_id=${chapterId}`;
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.data?.[0]?.path) return data.data[0].path;
+                    }
+                }
+            } catch (e) {
+                /* silent */
+            }
+            return "";
+        }
+
+        async function fetchAudioUrl(getAudioFilesetForBook) {
+            // For single book+chapter, return the URL directly
+            if (bibleChapters.length === 1) {
+                var fsid = getAudioFilesetForBook(bibleChapters[0].book);
+                if (!fsid) return "";
+                return fetchAudioUrlForBookChapter(fsid, bibleChapters[0].book, bibleChapters[0].chapter);
+            }
+            // For multi book+chapter stories, fetch all audio URLs
+            // Return a map keyed by "BOOK:CHAPTER"
+            const audioMap = {};
+            const fetches = bibleChapters.map(bc => {
+                var fsid = getAudioFilesetForBook(bc.book);
+                return fsid ? fetchAudioUrlForBookChapter(fsid, bc.book, bc.chapter) : Promise.resolve("");
+            });
+            const results = await Promise.all(fetches);
+            for (let i = 0; i < bibleChapters.length; i++) {
+                const bc = bibleChapters[i];
+                audioMap[`${bc.book}:${bc.chapter}`] = results[i];
+            }
+            return audioMap;
+        }
+
+        async function ensureData() {
+            if (cachedLearnTexts !== null) return;
+            const [pt, st, pa, sa] = await Promise.all([
+                fetchChapterText(getLearnTextFilesetId),
+                fetchChapterText(getMtTextFilesetId),
+                fetchAudioUrl(getLearnAudioFilesetId),
+                fetchAudioUrl(getMtAudioFilesetId),
+            ]);
+            cachedLearnTexts = pt;
+            cachedMtTexts = st;
+            cachedLearnAudioUrl = pa;
+            cachedMtAudioUrl = sa;
+        }
+
+        function getTextForVerse(texts, entry) {
+            const parts = [];
+            // Extract book+chapter prefix from ref
+            const colonIdx = entry.ref.indexOf(":");
+            const refPrefix = colonIdx > 0 ? entry.ref.substring(0, colonIdx) : "";
+            for (let v = entry.verseStart; v <= entry.verseEnd; v++) {
+                // Try full ref key first, then plain verse number
+                const t = texts.get(`${refPrefix}:${v}`) || texts.get(v);
+                if (t) parts.push(t);
+            }
+            return parts.join(" ") || "";
+        }
+
+        // ══════════════════════════════════════════
+        // RENDER VERSE LIST
+        // ══════════════════════════════════════════
+        const verseListEl = document.getElementById("verse-list");
+        const loadingEl = document.getElementById("listen-loading");
+        const learnRtlAttr = learnIsRTL ? ' dir="rtl"' : "";
+        const mtRtlAttr = mtIsRTL ? ' dir="rtl"' : "";
+
+        async function renderVerseList() {
+            await ensureData();
+            loadingEl.style.display = "none";
+
+            let html = "";
+
+            // Story header
+            if (storyMeta.title) {
+                html += `<div class="listen-story-header">
+                    <h2 class="listen-story-title">${storyMeta.title}</h2>
+                    ${storyMeta.description ? `<p class="listen-story-description">${storyMeta.description}</p>` : ""}
+                </div>`;
+            }
+
+            // Format a verse ref like "GEN3:1-5" into "GEN 3:1-5"
+            function formatRef(ref) {
+                const m = ref.match(/^([A-Z0-9]+?)(\d+:\d+(?:-\d+)?)$/);
+                return m ? `${m[1]} ${m[2]}` : ref;
+            }
+
+            const entries = CHAPTER.verseEntries;
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const reference = formatRef(entry.ref);
+
+                // Section header? Key format is "chapter_verse" (e.g. "3_1" for GEN3:1)
+                const refMatch = entry.ref.match(/(\d+):(\d+)/);
+                const headerKey = refMatch ? `${refMatch[1]}_${refMatch[2]}` : "";
+                const headerText = storyMeta.headers[headerKey];
+                if (headerText) {
+                    html += `<div class="listen-section-header">${headerText}</div>`;
+                }
+
+                // All images for this verse (skip for continuation of a range split)
+                // Use sourceRef for image lookup (matches the .md file's range ref)
+                const imageRef = entry.sourceRef || entry.ref;
+                const images = entry.rangeContin
+                    ? []
+                    : findAllImages(CHAPTER.chapterNum, entry.verseStart, imageRef);
+                const cropPct = CHAPTER.cropPercent || 0;
+                const imagesHTML = images
+                    .map((url) => {
+                        const src = imgProxy(url, 600);
+                        if (cropPct > 0) {
+                            return `<div style="overflow:hidden;border-radius:6px"><img src="${src}" alt="${reference}" loading="lazy" style="display:block;margin:-${cropPct}%;width:calc(100% + ${cropPct * 2}%)"></div>`;
+                        }
+                        return `<img src="${src}" alt="${reference}" loading="lazy">`;
+                    })
+                    .join("");
+
+                const learnText = getTextForVerse(cachedLearnTexts, entry);
+                const mtText = getTextForVerse(
+                    cachedMtTexts,
+                    entry,
+                );
+
+                const secLine = mtHasText
+                    ? `<div class="listen-verse-text-mt"${mtRtlAttr}>${mtText || "..."}</div>`
+                    : "";
+                html += `<div class="listen-verse-card" data-verse-idx="${i}" id="verse-${i}">
+                    ${imagesHTML
+                        ? `<div class="listen-verse-images">${imagesHTML}<div class="listen-verse-ref">${reference}</div></div>`
+                        : `<div class="listen-verse-ref">${reference}</div>`}
+                    <div class="listen-verse-text-learn"${learnRtlAttr}>${learnText || "..."}</div>
+                    ${secLine}
+                </div>`;
+            }
+
+            verseListEl.innerHTML = html;
+
+            // Attach click handlers
+            verseListEl
+                .querySelectorAll(".listen-verse-card")
+                .forEach((card) => {
+                    card.addEventListener("click", () => {
+                        const idx = parseInt(card.dataset.verseIdx, 10);
+                        if (pageMode === "exercise") {
+                            const entry = CHAPTER.verseEntries[idx];
+                            const verseNum = entry ? entry.verseStart : 1;
+                            window.location.href = "./learn#" + verseNum;
+                        } else {
+                            jumpToVerse(idx);
+                        }
+                    });
+                });
+
+            // Show checkmarks and ring for exercise mode
+            updateVerseCheckmarks();
+            updateFabRing();
+        }
+
+        // ══════════════════════════════════════════
+        // AUDIO (via shared audio store)
+        // ══════════════════════════════════════════
+        // Wait for audio store module (Layout script may load async)
+        function getStore() { return window.__audioStore; }
+        function waitForStore() {
+            return new Promise((resolve) => {
+                if (getStore()) return resolve(getStore());
+                const check = setInterval(() => {
+                    if (getStore()) { clearInterval(check); resolve(getStore()); }
+                }, 10);
+            });
+        }
+
+        let store = null;
+
+        function jumpToVerse(idx) {
+            if (!store) return;
+            store.playVerse(idx, true);
+            scrollToVerse(idx);
+        }
+
+        // ══════════════════════════════════════════
+        // UI HELPERS
+        // ══════════════════════════════════════════
+        function highlightVerse(idx) {
+            verseListEl
+                .querySelectorAll(".listen-verse-card.active")
+                .forEach((el) => el.classList.remove("active"));
+            const card = document.getElementById(`verse-${idx}`);
+            if (card) card.classList.add("active");
+        }
+
+        function scrollToVerse(idx) {
+            const card = document.getElementById(`verse-${idx}`);
+            if (!card) return;
+            const scrollArea = card.closest(".listen-scroll-area");
+            if (scrollArea) {
+                // Center card at viewport midpoint, not scroll area midpoint
+                // (accounts for bottom nav bar offset on mobile)
+                const cardRect = card.getBoundingClientRect();
+                const viewportCenter = window.innerHeight / 2;
+                const cardCenter = cardRect.top + cardRect.height / 2;
+                const delta = cardCenter - viewportCenter;
+                scrollArea.scrollBy({ top: delta, behavior: "smooth" });
+            } else {
+                card.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        // ══════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════
+        (async function init() {
+            const [, s] = await Promise.all([ensureData(), waitForStore()]);
+            store = s;
+            renderVerseList();
+
+            // Register image callbacks and set up audio store context
+            store.registerImageCallbacks(findBestImage, imgProxy);
+            store.setAudioForChapter({
+                learnCode,
+                mtCode,
+                book: window.location.pathname.split("/")[3] || "john",
+                chapter: CHAPTER.chapterNum,
+                bookImg: CHAPTER.bookImg,
+                audioUrl: cachedLearnAudioUrl,
+                verseEntries: CHAPTER.verseEntries,
+                mtAudioUrl: cachedMtAudioUrl,
+                mtTimingMap: CHAPTER.mtChapterTiming || {},
+            });
+
+            // Subscribe to audio store state changes for verse highlighting
+            let prevFocus = false;
+            let prevIdx = -1;
+            store.subscribe(() => {
+                const state = store.getState();
+                if (state.audioPlayState !== "idle") {
+                    highlightVerse(state.currentVerseIdx);
+                } else if (!state.pausedState) {
+                    verseListEl
+                        .querySelectorAll(".listen-verse-card.active")
+                        .forEach((el) => el.classList.remove("active"));
+                }
+                // Scroll to active verse only in focus mode
+                const focusChanged = state.focusMode !== prevFocus;
+                const verseChanged = state.currentVerseIdx !== prevIdx;
+                if ((focusChanged || verseChanged) && state.focusMode && (state.audioPlayState !== "idle" || state.pausedState)) {
+                    requestAnimationFrame(() => scrollToVerse(state.currentVerseIdx));
+                }
+                prevFocus = state.focusMode;
+                prevIdx = state.currentVerseIdx;
+
+            });
+
+            // Hide FAB during any audio activity (playing or paused)
+            // Reappear only after stop/close
+            store.subscribe(() => {
+                const st = store.getState();
+                var audioActive = st.audioPlayState !== "idle" || st.pausedState;
+                fabEl.style.display = audioActive ? "none" : "";
+            });
+        })();
+    </script>
+</Layout>

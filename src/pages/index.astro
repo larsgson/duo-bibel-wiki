@@ -6,34 +6,34 @@ import { useTranslations } from "../i18n";
 
 const base = "src/data/ALL-langs-data/nt";
 const dirs = ["with-timecode", "audio-with-timecode"];
-const primaryCodes = new Set<string>();
+const learnCodes = new Set<string>();
 
 for (const dir of dirs) {
     const fullPath = path.resolve(base, dir);
     if (fs.existsSync(fullPath)) {
         for (const entry of fs.readdirSync(fullPath)) {
             if (/^[a-z]{3}$/.test(entry)) {
-                primaryCodes.add(entry);
+                learnCodes.add(entry);
             }
         }
     }
 }
 
-// Count secondary languages: must have at least one non-failed NT category
-const secondaryCodes = new Set<string>();
+// Count mother tongue languages: must have at least one non-failed NT category
+const mtCodes = new Set<string>();
 const ntCanon = (langsData.canons as any).nt;
 if (ntCanon) {
     for (const cat of Object.keys(ntCanon)) {
         if (cat === "failed") continue;
         for (const code of Object.keys(ntCanon[cat])) {
-            secondaryCodes.add(code);
+            mtCodes.add(code);
         }
     }
 }
 
-const primaryCount = primaryCodes.size;
-const secondaryCount = secondaryCodes.size;
-const combinations = primaryCount * secondaryCount;
+const learnCount = learnCodes.size;
+const mtCount = mtCodes.size;
+const combinations = learnCount * mtCount;
 const combinationsFormatted = combinations.toLocaleString("en-US");
 
 const wt = langsData.canons.nt["with-timecode"] as Record<
@@ -45,7 +45,7 @@ const awt = langsData.canons.nt["audio-with-timecode"] as Record<
     { n?: string; v?: string }
 >;
 
-const languages = [...primaryCodes].sort().map((code) => {
+const languages = [...learnCodes].sort().map((code) => {
     const info = wt[code] || awt[code] || {};
     return { code, name: info.n || code, vernacular: info.v || "" };
 });
@@ -69,8 +69,8 @@ for (const loc of heroLocales) {
         heroTagline: t("heroTagline"),
         heroHeadline: t("heroHeadline"),
         heroSub: t("heroSub")
-            .replace("{primary}", String(primaryCount))
-            .replace("{secondary}", secondaryCount.toLocaleString("en-US")),
+            .replace("{primary}", String(learnCount))
+            .replace("{secondary}", mtCount.toLocaleString("en-US")),
         selectMotherTongue: t("selectMotherTongue"),
         selectLanguageToLearn: t("selectLanguageToLearn"),
         searchPlaceholder: t("searchPlaceholder"),
@@ -88,8 +88,8 @@ for (const loc of heroLocales) {
 }
 const heroJSON = JSON.stringify(heroTranslations);
 
-// Build secondary languages array for the modal grid
-const secondaryLanguages: { code: string; name: string; vernacular: string }[] =
+// Build mother tongue languages array for the modal grid
+const mtLanguages: { code: string; name: string; vernacular: string }[] =
     [];
 const seenSec = new Set<string>();
 for (const cat of Object.keys(ntCanon)) {
@@ -98,7 +98,7 @@ for (const cat of Object.keys(ntCanon)) {
     for (const [lc, info] of Object.entries(catData)) {
         if (!seenSec.has(lc)) {
             seenSec.add(lc);
-            secondaryLanguages.push({
+            mtLanguages.push({
                 code: lc,
                 name: info.n || lc,
                 vernacular: info.v || "",
@@ -106,11 +106,11 @@ for (const cat of Object.keys(ntCanon)) {
         }
     }
 }
-secondaryLanguages.sort((a, b) => a.name.localeCompare(b.name));
+mtLanguages.sort((a, b) => a.name.localeCompare(b.name));
 
 const langDataJSON = JSON.stringify({
-    primary: languages,
-    secondary: secondaryLanguages,
+    learn: languages,
+    mt: mtLanguages,
 });
 ---
 
@@ -181,6 +181,59 @@ const langDataJSON = JSON.stringify({
             }
             .language-text {
                 font-weight: 500;
+            }
+            /* Lang pair buttons (JS-injected in continue-view) */
+            :global(.header-langs) {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            :global(.language-button.compact) {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.4rem 0.6rem;
+                min-height: 36px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 6px;
+                color: white;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-decoration: none;
+            }
+            :global(.language-button.compact:hover) {
+                background: rgba(255, 255, 255, 0.18);
+            }
+            :global(.language-icon-wrapper) {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.15rem;
+                flex-shrink: 0;
+            }
+            :global(.language-code-label) {
+                font-size: 0.55rem;
+                font-family: monospace;
+                font-weight: 600;
+                text-transform: uppercase;
+                line-height: 1;
+                opacity: 0.8;
+            }
+            :global(.lang-pair-arrow) {
+                font-size: 1.1rem;
+                opacity: 0.7;
+                flex-shrink: 0;
+            }
+            :global(.lang-pair-name) {
+                font-weight: 500;
+                white-space: nowrap;
+            }
+            @media (max-width: 768px) {
+                :global(.lang-pair-name) {
+                    display: none;
+                }
             }
 
             /* ── Hero ── */
@@ -531,70 +584,247 @@ const langDataJSON = JSON.stringify({
                 border-radius: 2px;
             }
 
-            /* ── Continue view ── */
+            /* ── Continue view (hero card) ── */
             .continue-view {
                 display: none;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                min-height: calc(100vh - 60px);
-                min-height: calc(100dvh - 60px);
-                padding: 2rem 1rem;
-                text-align: center;
+                padding: 1.5rem 1rem 2rem;
             }
             .continue-view.visible {
                 display: flex;
             }
-            .continue-image-link {
-                display: block;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-                transition:
-                    transform 0.2s,
-                    box-shadow 0.2s;
-                max-width: 500px;
+            .continue-welcome {
+                font-size: 0.95rem;
+                color: rgba(255, 255, 255, 0.5);
+                margin-bottom: 1rem;
+                letter-spacing: 0.03em;
+            }
+            .hero-card {
+                position: relative;
+                max-width: 480px;
                 width: 100%;
-            }
-            .continue-image-link:hover {
-                transform: scale(1.02);
+                border-radius: 16px;
+                overflow: hidden;
                 box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+                cursor: pointer;
+                transition: transform 0.2s, box-shadow 0.2s;
             }
-            .continue-image-link:active {
+            .hero-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+            }
+            .hero-card:active {
                 transform: scale(0.99);
             }
-            .continue-image-link img {
+            .hero-card-img {
                 width: 100%;
-                height: auto;
+                aspect-ratio: 16 / 10;
+                object-fit: cover;
                 display: block;
             }
-            .continue-info {
-                margin-top: 1.25rem;
-                color: rgba(255, 255, 255, 0.5);
-                font-size: 0.9rem;
+            .hero-card-overlay {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    to top,
+                    rgba(10, 10, 30, 0.95) 0%,
+                    rgba(10, 10, 30, 0.6) 40%,
+                    transparent 70%
+                );
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                padding: 1.25rem;
             }
-            .continue-langs {
+            .hero-card-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                background: rgba(91, 155, 213, 0.3);
+                border: 1px solid rgba(91, 155, 213, 0.5);
+                color: #8ec5fc;
+                font-size: 0.75rem;
                 font-weight: 600;
-                color: rgba(255, 255, 255, 0.7);
+                padding: 0.2rem 0.6rem;
+                border-radius: 6px;
+                width: fit-content;
+                margin-bottom: 0.5rem;
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
+                letter-spacing: 0.04em;
             }
-            .continue-ref {
-                margin-top: 0.25rem;
+            .hero-card-ref {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 0.25rem;
             }
-            .continue-reset {
-                margin-top: 2rem;
+            .hero-card-exercise {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.6);
+            }
+            .hero-card-progress {
+                margin-top: 0.75rem;
+                height: 3px;
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+            .hero-card-progress-bar {
+                height: 100%;
+                background: #22ff00;
+                border-radius: 2px;
+                transition: width 0.3s;
+            }
+            .continue-cta {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                margin-top: 1.25rem;
+                max-width: 480px;
+                width: 100%;
+                padding: 0.9rem;
+                background: #5b9bd5;
+                color: #fff;
+                font-size: 1.05rem;
+                font-weight: 700;
+                border: none;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background 0.15s, transform 0.1s;
+                text-decoration: none;
+            }
+            .continue-cta:hover {
+                background: #4a8bc4;
+            }
+            .continue-cta:active {
+                transform: scale(0.98);
+            }
+            .continue-secondary {
+                display: flex;
+                gap: 1.5rem;
+                margin-top: 1rem;
+            }
+            .continue-secondary-btn {
                 background: none;
                 border: none;
-                color: rgba(255, 255, 255, 0.25);
-                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.35);
+                font-size: 0.8rem;
                 cursor: pointer;
-                padding: 0.5rem 1rem;
+                padding: 0.4rem 0;
                 transition: color 0.2s;
             }
-            .continue-reset:hover {
-                color: rgba(255, 255, 255, 0.5);
+            .continue-secondary-btn:hover {
+                color: rgba(255, 255, 255, 0.6);
             }
+            /* ── Recently studied row (JS-generated, needs :global) ── */
+            .history-section {
+                width: 100%;
+                max-width: 480px;
+                margin-top: 1.75rem;
+            }
+            .history-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.6rem;
+            }
+            .history-label {
+                font-size: 0.8rem;
+                color: rgba(255, 255, 255, 0.35);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+            .history-clear {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.3);
+                font-size: 0.75rem;
+                cursor: pointer;
+                padding: 0;
+                transition: color 0.2s;
+            }
+            .history-clear:hover {
+                color: rgba(255, 255, 255, 0.6);
+            }
+            :global(.history-row) {
+                display: flex;
+                gap: 0.6rem;
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding-bottom: 0.25rem;
+            }
+            :global(.history-row)::-webkit-scrollbar {
+                display: none;
+            }
+            :global(.history-card) {
+                position: relative;
+                flex-shrink: 0;
+                width: 120px;
+                border-radius: 10px;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                text-decoration: none;
+                color: #e0e0e0;
+                transition: background 0.15s, border-color 0.15s;
+            }
+            :global(.history-card-close) {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: rgba(0, 0, 0, 0.6);
+                border: none;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.7rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.15s;
+                z-index: 1;
+            }
+            :global(.history-card:hover .history-card-close) {
+                opacity: 1;
+            }
+            :global(.history-card-close:hover) {
+                background: rgba(0, 0, 0, 0.8);
+                color: #fff;
+            }
+            :global(.history-card:hover) {
+                background: rgba(255, 255, 255, 0.14);
+                border-color: rgba(91, 155, 213, 0.4);
+            }
+            :global(.history-card-img) {
+                width: 100%;
+                aspect-ratio: 16 / 10;
+                object-fit: cover;
+                display: block;
+            }
+            :global(.history-card-body) {
+                padding: 0.35rem 0.45rem;
+            }
+            :global(.history-card-ref) {
+                font-size: 0.7rem;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            :global(.history-card-langs) {
+                font-size: 0.6rem;
+                color: rgba(255, 255, 255, 0.4);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
             .landing-content.hidden {
                 display: none;
             }
@@ -705,16 +935,32 @@ const langDataJSON = JSON.stringify({
 
         <!-- Continue view (shown when saved state exists) -->
         <div class="continue-view" id="continue-view">
-            <a class="continue-image-link" id="continue-link">
-                <img id="continue-image" src="" alt="Continue learning" />
+            <div class="continue-welcome">Welcome back</div>
+            <a class="hero-card" id="continue-link">
+                <img class="hero-card-img" id="continue-image" src="" alt="" />
+                <div class="hero-card-overlay">
+                    <div class="hero-card-badge" id="continue-langs"></div>
+                    <div class="hero-card-ref" id="continue-ref"></div>
+                    <div class="hero-card-exercise" id="continue-exercise"></div>
+                    <div class="hero-card-progress">
+                        <div class="hero-card-progress-bar" id="continue-progress" style="width:0%"></div>
+                    </div>
+                </div>
             </a>
-            <div class="continue-info">
-                <div class="continue-langs" id="continue-langs"></div>
-                <div class="continue-ref" id="continue-ref"></div>
+            <a class="continue-cta" id="continue-cta">
+                Continue &rarr;
+            </a>
+            <div class="continue-secondary">
+                <button class="continue-secondary-btn" id="continue-reset">Start fresh</button>
+                <button class="continue-secondary-btn" id="continue-change">Change language</button>
             </div>
-            <button class="continue-reset" id="continue-reset"
-                >Start fresh</button
-            >
+            <div class="history-section" id="history-section" style="display:none">
+                <div class="history-header">
+                    <div class="history-label">Recently studied</div>
+                    <button class="history-clear" id="history-clear">Clear all</button>
+                </div>
+                <div class="history-row" id="history-row"></div>
+            </div>
         </div>
 
         <!-- Landing content -->
@@ -728,8 +974,8 @@ const langDataJSON = JSON.stringify({
                     The unmatched multilingual learning experience
                 </h2>
                 <p class="hero-sub" id="hero-sub">
-                    Listen to any of {primaryCount} languages - with exercises in
-                    {secondaryCount.toLocaleString("en-US")} mother-tongues
+                    Listen to any of {learnCount} languages - with exercises in
+                    {mtCount.toLocaleString("en-US")} mother-tongues
                 </p>
                 <button class="hero-cta" id="hero-cta">
                     <span id="hero-cta-text">Select language to learn</span>
@@ -746,13 +992,13 @@ const langDataJSON = JSON.stringify({
             <!-- Stats -->
             <section class="stats">
                 <div class="stat">
-                    <div class="stat-value">{primaryCount}</div>
-                    <div class="stat-label">primary languages</div>
+                    <div class="stat-value">{learnCount}</div>
+                    <div class="stat-label">learn languages</div>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat">
                     <div class="stat-value">
-                        {secondaryCount.toLocaleString("en-US")}
+                        {mtCount.toLocaleString("en-US")}
                     </div>
                     <div class="stat-label">mother-tongue languages</div>
                 </div>
@@ -905,6 +1151,16 @@ const langDataJSON = JSON.stringify({
                 }
             } catch (e) {}
 
+            // Build code → vernacular lookup from lang data
+            const _ld = JSON.parse(document.getElementById("lang-data")!.textContent!);
+            const vernMap: Record<string, string> = {};
+            for (const l of [..._ld.learn, ..._ld.mt]) {
+                if (!vernMap[l.code]) vernMap[l.code] = l.vernacular || l.name || l.code;
+            }
+            function getVern(code: string): string {
+                return vernMap[code] || code;
+            }
+
             // Check for saved state and show continue view
             const lastState = localStorage.getItem("lastState");
             if (lastState) {
@@ -918,6 +1174,9 @@ const langDataJSON = JSON.stringify({
                         const continueLink = document.getElementById(
                             "continue-link",
                         ) as HTMLAnchorElement;
+                        const continueCta = document.getElementById(
+                            "continue-cta",
+                        ) as HTMLAnchorElement;
                         const continueImage = document.getElementById(
                             "continue-image",
                         ) as HTMLImageElement;
@@ -925,22 +1184,137 @@ const langDataJSON = JSON.stringify({
                             document.getElementById("continue-langs")!;
                         const continueRef =
                             document.getElementById("continue-ref")!;
+                        const continueExercise =
+                            document.getElementById("continue-exercise")!;
+                        const continueProgress =
+                            document.getElementById("continue-progress")!;
                         const continueReset =
                             document.getElementById("continue-reset")!;
+                        const continueChange =
+                            document.getElementById("continue-change")!;
 
                         continueLink.href = state.url;
+                        continueCta.href = state.url;
                         continueImage.src = state.imageUrl;
-                        continueLangs.textContent = `${state.lang} \u2194 ${state.lang2}`;
+                        continueLangs.textContent = `${state.lang} \u2190 ${state.lang2}`;
                         continueRef.textContent = state.reference || "";
+
+                        // Exercise type label
+                        if (state.exercise) {
+                            const labels: Record<string, string> = {
+                                listen: "Listening",
+                                read: "Reading",
+                                speak: "Speaking",
+                                write: "Writing",
+                                quiz: "Quiz",
+                            };
+                            const exName = state.exercise.replace(/^exercise-/, "");
+                            continueExercise.textContent = labels[exName] || exName;
+                        }
+
+                        // Achievement progress for active exercise in this chapter
+                        const EX_KEY_MAP: Record<string, string> = { "listen-fill": "f", "listen-order": "o", "sentence-builder": "s" };
+                        const refMatch = (state.reference || "").match(/^(\w+)\s+(\d+)/);
+                        if (refMatch) {
+                            const bookName = refMatch[1];
+                            const chNum = refMatch[2];
+                            const exKey = EX_KEY_MAP[localStorage.getItem("activeExercise") || "listen-fill"] || "f";
+                            const aKey = "a:" + state.lang + "/" + state.lang2 + "/" + bookName + "/" + chNum;
+                            try {
+                                const ach = JSON.parse(localStorage.getItem(aKey) || "{}");
+                                const done = (ach[exKey] || []).length;
+                                const total = ach.t || 0;
+                                if (total > 0) {
+                                    const pct = Math.min(Math.round((done / total) * 100), 100);
+                                    continueProgress.style.width = pct + "%";
+                                }
+                            } catch (e) {}
+                        }
+
                         continueView.classList.add("visible");
                         landingContent.classList.add("hidden");
+
+                        // Inject lang pair buttons into header
+                        const existingBtn = document.getElementById("open-lang-selector");
+                        if (existingBtn) {
+                            const langPairDiv = document.createElement("div");
+                            langPairDiv.className = "header-langs";
+                            langPairDiv.innerHTML = `<a class="language-button compact" href="/">`
+                                + `<div class="language-icon-wrapper"><span class="language-icon">\uD83C\uDF10</span>`
+                                + `<span class="language-code-label">${state.lang}</span></div>`
+                                + `<span class="lang-pair-name">${getVern(state.lang)}</span></a>`
+                                + `<a class="language-button compact" href="/${state.lang}">`
+                                + `<span class="lang-pair-arrow">\u2190</span>`
+                                + `<div class="language-icon-wrapper"><span class="language-icon">\uD83C\uDF10</span>`
+                                + `<span class="language-code-label">${state.lang2}</span></div>`
+                                + `<span class="lang-pair-name">${getVern(state.lang2)}</span></a>`;
+                            existingBtn.replaceWith(langPairDiv);
+                        }
 
                         continueReset.addEventListener("click", () => {
                             localStorage.removeItem("lastState");
                             localStorage.removeItem("activeExercise");
+                            localStorage.removeItem("studyHistory");
                             continueView.classList.remove("visible");
                             landingContent.classList.remove("hidden");
                         });
+
+                        continueChange.addEventListener("click", () => {
+                            continueView.classList.remove("visible");
+                            landingContent.classList.remove("hidden");
+                        });
+
+                        // Populate recently studied row
+                        try {
+                            const hist = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                            // Skip the first entry (it's the hero card)
+                            const older = hist.slice(1).filter((h: any) => h.imageUrl);
+                            if (older.length > 0) {
+                                const histSection = document.getElementById("history-section")!;
+                                const histRow = document.getElementById("history-row")!;
+                                for (let i = 0; i < older.length; i++) {
+                                    const h = older[i];
+                                    const card = document.createElement("a");
+                                    card.className = "history-card";
+                                    card.href = h.url;
+                                    card.innerHTML = `<button class="history-card-close" data-idx="${i + 1}">\u00d7</button>`
+                                        + `<img class="history-card-img" src="${h.imageUrl}" alt="" />`
+                                        + `<div class="history-card-body">`
+                                        + `<div class="history-card-ref">${h.reference || ""}</div>`
+                                        + `<div class="history-card-langs">${h.lang} \u2190 ${h.lang2}</div>`
+                                        + `</div>`;
+                                    histRow.appendChild(card);
+                                }
+                                histSection.style.display = "";
+
+                                // Per-card × close
+                                histRow.addEventListener("click", function(e) {
+                                    var btn = (e.target as HTMLElement).closest(".history-card-close") as HTMLElement | null;
+                                    if (!btn) return;
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    var idx = parseInt(btn.dataset.idx!, 10);
+                                    try {
+                                        var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                        h2.splice(idx, 1);
+                                        localStorage.setItem("studyHistory", JSON.stringify(h2));
+                                    } catch (ex) {}
+                                    var card2 = btn.closest(".history-card") as HTMLElement;
+                                    if (card2) card2.remove();
+                                    if (histRow.children.length === 0) histSection.style.display = "none";
+                                });
+
+                                // Clear all
+                                document.getElementById("history-clear")!.addEventListener("click", function() {
+                                    try {
+                                        var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                        localStorage.setItem("studyHistory", JSON.stringify(h2.slice(0, 1)));
+                                    } catch (ex) {}
+                                    histRow.innerHTML = "";
+                                    histSection.style.display = "none";
+                                });
+                            }
+                        } catch (e) {}
                     }
                 } catch (e) {
                     localStorage.removeItem("lastState");
@@ -951,8 +1325,8 @@ const langDataJSON = JSON.stringify({
             const langData = JSON.parse(
                 document.getElementById("lang-data")!.textContent!,
             );
-            const primaryLangs = langData.primary;
-            const secondaryLangs = langData.secondary;
+            const learnLangs = langData.learn;
+            const mtLangs = langData.mt;
 
             // ── DOM refs ──
             const overlay = document.getElementById("modal-overlay")!;
@@ -980,7 +1354,7 @@ const langDataJSON = JSON.stringify({
             } | null = null;
 
             // ── Grid rendering ──
-            function renderGrid(langs: typeof primaryLangs) {
+            function renderGrid(langs: typeof learnLangs) {
                 let html = "";
                 for (const lang of langs) {
                     const vern = lang.vernacular
@@ -1012,7 +1386,7 @@ const langDataJSON = JSON.stringify({
                         ui.selectLanguageToLearn || "Select language to learn";
                     backBtn.style.display = "none";
                     selectedBadge.style.display = "none";
-                    renderGrid(primaryLangs);
+                    renderGrid(learnLangs);
                 } else {
                     modalTitle.textContent =
                         ui.selectMotherTongue || "Select mother-tongue";
@@ -1024,7 +1398,7 @@ const langDataJSON = JSON.stringify({
                     selectedBadge.textContent = (
                         ui.learningLangBadge || "Learning: {label}"
                     ).replace("{label}", label);
-                    renderGrid(secondaryLangs);
+                    renderGrid(mtLangs);
                 }
                 search.focus();
             }
@@ -1147,7 +1521,7 @@ const langDataJSON = JSON.stringify({
             });
 
             // ── Initialize grid for direct page load (modal closed) ──
-            renderGrid(secondaryLangs);
+            renderGrid(mtLangs);
 
             // ── Screenshot carousel (mobile) ──
             (() => {

@@ -105,8 +105,7 @@ const uiJSON = JSON.stringify(uiTranslations);
 <Layout
     title={`${nameEnglish} (${code})`}
     langCode={code}
-    langName={nameEnglish}
-    backHref="/"
+    langName={nameVernacular || nameEnglish}
 >
     <style>
         .page {
@@ -231,6 +230,229 @@ const uiJSON = JSON.stringify(uiTranslations);
             color: #6ea8fe;
             border-radius: 2px;
         }
+        /* ── Continue view (hero card) ── */
+        .continue-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem 2rem;
+        }
+        .continue-view.visible {
+            display: flex;
+        }
+        .page.hidden {
+            display: none;
+        }
+        .continue-welcome {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1rem;
+            letter-spacing: 0.03em;
+        }
+        .hero-card {
+            position: relative;
+            max-width: 480px;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+        .hero-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+        }
+        .hero-card-img {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+            display: block;
+        }
+        .hero-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10,10,30,0.95) 0%, rgba(10,10,30,0.6) 40%, transparent 70%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.25rem;
+        }
+        .hero-card-badge {
+            display: inline-flex;
+            background: rgba(91,155,213,0.3);
+            border: 1px solid rgba(91,155,213,0.5);
+            color: #8ec5fc;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            width: fit-content;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .hero-card-ref {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+        .hero-card-exercise {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+        .hero-card-progress {
+            margin-top: 0.75rem;
+            height: 3px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .hero-card-progress-bar {
+            height: 100%;
+            background: #22ff00;
+            border-radius: 2px;
+        }
+        .continue-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+            max-width: 480px;
+            width: 100%;
+            padding: 0.9rem;
+            background: #5b9bd5;
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .continue-cta:hover { background: #4a8bc4; }
+        .continue-secondary {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .continue-secondary-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.35);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.4rem 0;
+            transition: color 0.2s;
+        }
+        .continue-secondary-btn:hover { color: rgba(255,255,255,0.6); }
+        .history-section {
+            width: 100%;
+            max-width: 480px;
+            margin-top: 1.75rem;
+        }
+        .history-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.6rem;
+        }
+        :global(.history-row) {
+            display: flex;
+            gap: 0.6rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 0.25rem;
+        }
+        :global(.history-row)::-webkit-scrollbar { display: none; }
+        :global(.history-card) {
+            position: relative;
+            flex-shrink: 0;
+            width: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        :global(.history-card:hover) {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(91,155,213,0.4);
+        }
+        :global(.history-card-close) {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 1;
+        }
+        :global(.history-card:hover .history-card-close) {
+            opacity: 1;
+        }
+        :global(.history-card-close:hover) {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+        .history-header .history-label {
+            margin-bottom: 0;
+        }
+        .history-clear {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 0.2rem 0;
+            transition: color 0.2s;
+        }
+        .history-clear:hover { color: rgba(255,255,255,0.6); }
+        :global(.history-card-img) {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+            display: block;
+        }
+        :global(.history-card-body) { padding: 0.35rem 0.45rem; }
+        :global(.history-card-ref) {
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        :global(.history-card-langs) {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.4);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         @media (min-width: 769px) {
             .page {
                 height: 100vh;
@@ -247,7 +469,34 @@ const uiJSON = JSON.stringify(uiTranslations);
         }
     </style>
 
-    <div class="page">
+    <!-- Continue view (shown when saved state exists for this lang) -->
+    <div class="continue-view" id="continue-view">
+        <div class="continue-welcome">Welcome back</div>
+        <a class="hero-card" id="continue-link">
+            <img class="hero-card-img" id="continue-image" src="" alt="" />
+            <div class="hero-card-overlay">
+                <div class="hero-card-badge" id="continue-langs"></div>
+                <div class="hero-card-ref" id="continue-ref"></div>
+                <div class="hero-card-exercise" id="continue-exercise"></div>
+                <div class="hero-card-progress">
+                    <div class="hero-card-progress-bar" id="continue-progress" style="width:0%"></div>
+                </div>
+            </div>
+        </a>
+        <a class="continue-cta" id="continue-cta">Continue &rarr;</a>
+        <div class="continue-secondary">
+            <button class="continue-secondary-btn" id="continue-choose">Choose different</button>
+        </div>
+        <div class="history-section" id="history-section" style="display:none">
+            <div class="history-header">
+                <div class="history-label">Recently studied</div>
+                <button class="history-clear" id="history-clear">Clear all</button>
+            </div>
+            <div class="history-row" id="history-row"></div>
+        </div>
+    </div>
+
+    <div class="page" id="lang-page">
         <div class="sticky-top">
             <h2 id="secondary-heading"></h2>
             <div class="header-pills">
@@ -294,6 +543,107 @@ const uiJSON = JSON.stringify(uiTranslations);
         <p class="no-results" id="no-results" style="display:none"></p>
         </div>
     </div>
+
+    <script id="page-lang" type="application/json" set:html={JSON.stringify({ code, vernacular: nameVernacular || nameEnglish || code })} />
+    <script>
+        // Continue view logic for /{lang}/ page
+        (() => {
+            const pageData = JSON.parse(document.getElementById("page-lang")!.textContent!);
+            const pageLang = pageData.code;
+
+            const lastState = localStorage.getItem("lastState");
+            if (!lastState) return;
+            try {
+                const state = JSON.parse(lastState);
+                if (!state.url || !state.imageUrl || state.lang !== pageLang) return;
+
+                const continueView = document.getElementById("continue-view")!;
+                const langPage = document.getElementById("lang-page")!;
+                const continueLink = document.getElementById("continue-link") as HTMLAnchorElement;
+                const continueCta = document.getElementById("continue-cta") as HTMLAnchorElement;
+                const continueImage = document.getElementById("continue-image") as HTMLImageElement;
+
+                continueLink.href = state.url;
+                continueCta.href = state.url;
+                continueImage.src = state.imageUrl;
+                document.getElementById("continue-langs")!.textContent = `${state.lang} \u2190 ${state.lang2}`;
+                document.getElementById("continue-ref")!.textContent = state.reference || "";
+
+                const labels: Record<string, string> = {
+                    listen: "Listening", read: "Reading", speak: "Speaking", write: "Writing", quiz: "Quiz"
+                };
+                if (state.exercise) {
+                    const exName = state.exercise.replace(/^exercise-/, "");
+                    document.getElementById("continue-exercise")!.textContent = labels[exName] || exName;
+                }
+
+                const chMatch = (state.reference || "").match(/(\d+)/);
+                if (chMatch) {
+                    const pct = Math.min(Math.round((parseInt(chMatch[1], 10) / 21) * 100), 100);
+                    document.getElementById("continue-progress")!.style.width = pct + "%";
+                }
+
+                continueView.classList.add("visible");
+                langPage.classList.add("hidden");
+
+                document.getElementById("continue-choose")!.addEventListener("click", () => {
+                    continueView.classList.remove("visible");
+                    langPage.classList.remove("hidden");
+                });
+
+                // History row
+                try {
+                    const hist = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                    const older = hist.slice(1).filter((h: any) => h.imageUrl);
+                    if (older.length > 0) {
+                        const histRow = document.getElementById("history-row")!;
+                        const histSection = document.getElementById("history-section")!;
+                        for (let i = 0; i < older.length; i++) {
+                            const h = older[i];
+                            const card = document.createElement("a");
+                            card.className = "history-card";
+                            card.href = h.url;
+                            card.innerHTML = `<button class="history-card-close" data-idx="${i + 1}">\u00d7</button>`
+                                + `<img class="history-card-img" src="${h.imageUrl}" alt="" />`
+                                + `<div class="history-card-body">`
+                                + `<div class="history-card-ref">${h.reference || ""}</div>`
+                                + `<div class="history-card-langs">${h.lang} \u2190 ${h.lang2}</div>`
+                                + `</div>`;
+                            histRow.appendChild(card);
+                        }
+                        histSection.style.display = "";
+
+                        // Per-card × close
+                        histRow.addEventListener("click", function(e) {
+                            var btn = (e.target as HTMLElement).closest(".history-card-close") as HTMLElement | null;
+                            if (!btn) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var idx = parseInt(btn.dataset.idx!, 10);
+                            try {
+                                var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                h2.splice(idx, 1);
+                                localStorage.setItem("studyHistory", JSON.stringify(h2));
+                            } catch (ex) {}
+                            var card2 = btn.closest(".history-card") as HTMLElement;
+                            if (card2) card2.remove();
+                            if (histRow.children.length === 0) histSection.style.display = "none";
+                        });
+
+                        // Clear all
+                        document.getElementById("history-clear")!.addEventListener("click", function() {
+                            try {
+                                var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                localStorage.setItem("studyHistory", JSON.stringify(h2.slice(0, 1)));
+                            } catch (ex) {}
+                            histRow.innerHTML = "";
+                            histSection.style.display = "none";
+                        });
+                    }
+                } catch (e) {}
+            } catch (e) {}
+        })();
+    </script>
 
     <script id="ui-i18n" type="application/json" set:html={uiJSON} />
     <script>

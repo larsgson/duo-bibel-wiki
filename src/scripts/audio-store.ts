@@ -16,8 +16,8 @@ export interface VerseEntry {
 export type AudioPlayState = "idle" | "playing_primary" | "playing_secondary";
 
 export interface ChapterAudioContext {
-  primaryCode: string;
-  secondaryCode: string;
+  learnCode: string;
+  mtCode: string;
   book: string;
   chapter: number;
   bookImg: string;
@@ -35,9 +35,9 @@ let audioPlayState: AudioPlayState = "idle";
 let chapterCtx: ChapterAudioContext | null = null;
 let currentVerseIdx = 0;
 let verseEntries: VerseEntry[] = [];
-let secondaryTimingMap: Record<string, number[]> = {};
+let mtTimingMap: Record<string, number[]> = {};
 let cachedPrimaryAudioUrl = "";
-let cachedSecondaryAudioUrl = "";
+let cachedMtAudioUrl = "";
 let pausedState: PausedState | null = null;
 let playerVisible = false;
 let focusMode = false;
@@ -147,7 +147,7 @@ export function getState() {
     playerVisible,
     focusMode,
     cachedPrimaryAudioUrl,
-    cachedSecondaryAudioUrl,
+    cachedMtAudioUrl,
   };
 }
 
@@ -214,14 +214,14 @@ function updatePlayerCardInfo(idx: number, langLabel?: string) {
   };
 }
 
-// ── Secondary timing lookup ──
+// ── MT timing lookup ──
 
-function getSecondaryTiming(
+function getMtTiming(
   entry: VerseEntry,
 ): { startTime: number; endTime: number } | null {
-  if (!secondaryTimingMap || Object.keys(secondaryTimingMap).length === 0)
+  if (!mtTimingMap || Object.keys(mtTimingMap).length === 0)
     return null;
-  for (const [ref, times] of Object.entries(secondaryTimingMap)) {
+  for (const [ref, times] of Object.entries(mtTimingMap)) {
     const colonIdx = ref.indexOf(":");
     const verseSpec = ref.substring(colonIdx + 1);
     const parts = verseSpec.split("-");
@@ -324,14 +324,14 @@ function playSegment(
 function onPrimarySegmentEnded() {
   if (audioPlayState !== "playing_primary") return;
 
-  if (cachedSecondaryAudioUrl) {
-    playSecondaryForVerse(currentVerseIdx);
+  if (cachedMtAudioUrl) {
+    playMtForVerse(currentVerseIdx);
   } else {
     advanceToNextVerse();
   }
 }
 
-function onSecondarySegmentEnded() {
+function onMtSegmentEnded() {
   if (audioPlayState !== "playing_secondary") return;
   advanceToNextVerse();
 }
@@ -349,7 +349,7 @@ export function playVerse(idx: number, enterFocusMode?: boolean) {
   playerVisible = true;
   if (enterFocusMode) focusMode = true;
 
-  updatePlayerCardInfo(idx, "primary");
+  updatePlayerCardInfo(idx, "learn");
   notify();
 
   const audio = getPrimaryAudio();
@@ -362,25 +362,25 @@ export function playVerse(idx: number, enterFocusMode?: boolean) {
   );
 }
 
-function playSecondaryForVerse(idx: number) {
+function playMtForVerse(idx: number) {
   const entry = verseEntries[idx];
-  const secTiming = getSecondaryTiming(entry);
-  if (!cachedSecondaryAudioUrl || !secTiming) {
+  const mtTiming = getMtTiming(entry);
+  if (!cachedMtAudioUrl || !mtTiming) {
     advanceToNextVerse();
     return;
   }
 
   audioPlayState = "playing_secondary";
-  updatePlayerCardInfo(idx, "secondary");
+  updatePlayerCardInfo(idx, "mt");
   notify();
 
   const audio = getSecondaryAudio();
   playSegment(
     audio,
-    cachedSecondaryAudioUrl,
-    secTiming.startTime,
-    secTiming.endTime,
-    onSecondarySegmentEnded,
+    cachedMtAudioUrl,
+    mtTiming.startTime,
+    mtTiming.endTime,
+    onMtSegmentEnded,
   );
 }
 
@@ -423,18 +423,18 @@ export function resumePlayback() {
   currentVerseIdx = verseIdx;
   pausedState = null;
 
-  if (wasSecondary && cachedSecondaryAudioUrl) {
-    const secTiming = getSecondaryTiming(entry);
-    if (secTiming) {
+  if (wasSecondary && cachedMtAudioUrl) {
+    const mtTiming = getMtTiming(entry);
+    if (mtTiming) {
       audioPlayState = "playing_secondary";
       notify();
       const audio = getSecondaryAudio();
       playSegment(
         audio,
-        cachedSecondaryAudioUrl,
+        cachedMtAudioUrl,
         pausedAt,
-        secTiming.endTime,
-        onSecondarySegmentEnded,
+        mtTiming.endTime,
+        onMtSegmentEnded,
       );
     }
   } else {
@@ -685,20 +685,20 @@ export function preloadBuffer(url: string, which: "primary" | "secondary") {
  * Returns true if the same chapter was already playing/paused (state preserved).
  */
 export function setAudioForChapter(params: {
-  primaryCode: string;
-  secondaryCode: string;
+  learnCode: string;
+  mtCode: string;
   book: string;
   chapter: number;
   bookImg: string;
   audioUrl: string;
   verseEntries: VerseEntry[];
-  secondaryAudioUrl?: string;
-  secondaryTimingMap?: Record<string, number[]>;
+  mtAudioUrl?: string;
+  mtTimingMap?: Record<string, number[]>;
 }): boolean {
   const isSameChapter =
     chapterCtx &&
-    chapterCtx.primaryCode === params.primaryCode &&
-    chapterCtx.secondaryCode === params.secondaryCode &&
+    chapterCtx.learnCode === params.learnCode &&
+    chapterCtx.mtCode === params.mtCode &&
     chapterCtx.book === params.book &&
     chapterCtx.chapter === params.chapter;
 
@@ -708,16 +708,16 @@ export function setAudioForChapter(params: {
   }
 
   chapterCtx = {
-    primaryCode: params.primaryCode,
-    secondaryCode: params.secondaryCode,
+    learnCode: params.learnCode,
+    mtCode: params.mtCode,
     book: params.book,
     chapter: params.chapter,
     bookImg: params.bookImg,
   };
   cachedPrimaryAudioUrl = params.audioUrl || "";
   verseEntries = params.verseEntries;
-  cachedSecondaryAudioUrl = params.secondaryAudioUrl || "";
-  secondaryTimingMap = params.secondaryTimingMap || {};
+  cachedMtAudioUrl = params.mtAudioUrl || "";
+  mtTimingMap = params.mtTimingMap || {};
   // If returning to the same chapter that was playing/paused, preserve state
   if (isSameChapter && (audioPlayState !== "idle" || pausedState)) {
     return true;

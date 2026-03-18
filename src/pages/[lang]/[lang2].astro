@@ -1,11 +1,15 @@
 ---
 export const prerender = false;
 
+import Layout from "../../layouts/Layout.astro";
 import langsData from "../../data/ALL-langs-compact.json";
+import fs from "node:fs";
+import path from "node:path";
+import { parse } from "smol-toml";
 
 const { lang, lang2 } = Astro.params;
 
-// Validate primary language
+// Validate learn language
 const wt = langsData.canons.nt["with-timecode"] as Record<
     string,
     { n?: string; v?: string }
@@ -18,7 +22,7 @@ if (!wt[lang!] && !awt[lang!]) {
     return Astro.redirect("/");
 }
 
-// Validate secondary language
+// Validate mother tongue
 let found = false;
 for (const canon of ["nt", "ot"] as const) {
     const canonData = (langsData.canons as any)[canon];
@@ -35,6 +39,543 @@ if (!found) {
     return Astro.redirect(`/${lang}`);
 }
 
-// Redirect to chapter picker
-return Astro.redirect(`/${lang}/${lang2}/john/`);
+const pInfo = wt[lang!] || awt[lang!] || {};
+const learnEnglish = pInfo.n || lang!;
+const learnVernacular = pInfo.v || pInfo.n || lang!;
+
+// Look up mother tongue vernacular
+let sInfo: { n?: string; v?: string } | undefined;
+for (const canon of ["nt", "ot"] as const) {
+    const canonData = (langsData.canons as any)[canon];
+    if (!canonData) continue;
+    for (const cat of Object.keys(canonData)) {
+        if (canonData[cat][lang2!]) {
+            sInfo = canonData[cat][lang2!];
+            break;
+        }
+    }
+    if (sInfo) break;
+}
+const mtVernacular = sInfo?.v || sInfo?.n || lang2!;
+
+// Detect available templates and OT data
+const templatesDir = path.join(process.cwd(), "src/data/templates");
+const timingsDir = path.join(process.cwd(), "src/data/templates-timings");
+const templateDirs = fs.readdirSync(templatesDir).filter((d: string) =>
+    fs.statSync(path.join(templatesDir, d)).isDirectory()
+);
+
+// Check if this language has OT timing data for any template
+const hasOTData = templateDirs.some((tpl: string) => {
+    const otLangDir = path.join(timingsDir, tpl, "ALL-timings", "ot", lang!);
+    return fs.existsSync(otLangDir);
+});
+
+// Build template info when OT data is available
+interface TemplateInfo {
+    slug: string;
+    dirName: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+}
+const templates: TemplateInfo[] = [];
+
+if (hasOTData) {
+    for (const tplDir of templateDirs) {
+        // Check if this language has any timing data for this template
+        const ntDir = path.join(timingsDir, tplDir, "ALL-timings", "nt", lang!);
+        const otDir = path.join(timingsDir, tplDir, "ALL-timings", "ot", lang!);
+        if (!fs.existsSync(ntDir) && !fs.existsSync(otDir)) continue;
+
+        // Parse index.toml for image info
+        const indexToml = path.join(templatesDir, tplDir, "index.toml");
+        if (!fs.existsSync(indexToml)) continue;
+        const tplConfig = parse(fs.readFileSync(indexToml, "utf-8")) as any;
+
+        // Get locale title (prefer lang2, fallback to eng)
+        let title = tplDir;
+        let description = "";
+        for (const loc of [lang2!, "eng"]) {
+            const locFile = path.join(templatesDir, tplDir, "locales", `${loc}.toml`);
+            if (fs.existsSync(locFile)) {
+                const locData = parse(fs.readFileSync(locFile, "utf-8")) as any;
+                title = locData.title || tplDir;
+                description = locData.description || "";
+                break;
+            }
+        }
+
+        // Build image URL
+        const images = tplConfig.images || {};
+        const imageFilename = tplConfig.image?.filename || "";
+        let imageUrl = "";
+        if (images.base_url && imageFilename) {
+            if (images.medium_pattern) {
+                const book = imageFilename.substring(0, 2);
+                imageUrl = `${images.base_url}/${images.medium_pattern.replace("{book}", book).replace("{filename}", imageFilename)}`;
+            } else {
+                imageUrl = `${images.base_url}/${imageFilename}`;
+            }
+        }
+
+        templates.push({
+            slug: tplDir.toLowerCase(),
+            dirName: tplDir,
+            title,
+            description,
+            imageUrl,
+        });
+    }
+}
 ---
+
+<Layout
+    title={`${learnEnglish} (${lang})`}
+    learnCode={lang!}
+    learnName={learnVernacular}
+    mtCode={lang2!}
+    mtName={mtVernacular}
+>
+    <style>
+        .continue-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem 2rem;
+        }
+        .continue-view.visible {
+            display: flex;
+        }
+        .continue-welcome {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            letter-spacing: 0.03em;
+        }
+        .hero-card {
+            position: relative;
+            max-width: 480px;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+        .hero-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+        }
+        .hero-card-img {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+            display: block;
+        }
+        .hero-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, var(--overlay) 0%, rgba(0,0,0,0.3) 40%, transparent 70%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.25rem;
+        }
+        .hero-card-badge {
+            display: inline-flex;
+            background: rgba(91,155,213,0.3);
+            border: 1px solid rgba(91,155,213,0.5);
+            color: #8ec5fc;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            width: fit-content;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .hero-card-ref {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-on-accent);
+            margin-bottom: 0.25rem;
+        }
+        .hero-card-exercise {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+        .hero-card-progress {
+            margin-top: 0.75rem;
+            height: 3px;
+            background: var(--bg-surface);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .hero-card-progress-bar {
+            height: 100%;
+            background: var(--success-bright);
+            border-radius: 2px;
+        }
+        .continue-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+            max-width: 480px;
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--accent);
+            color: var(--text-on-accent);
+            font-size: 1.05rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .continue-cta:hover { background: var(--accent-hover); }
+        .continue-secondary {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .continue-secondary-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.4rem 0;
+            transition: color 0.2s;
+        }
+        .continue-secondary-btn:hover { color: var(--text); }
+        .history-section {
+            width: 100%;
+            max-width: 480px;
+            margin-top: 1.75rem;
+        }
+        .history-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.6rem;
+        }
+        :global(.history-row) {
+            display: flex;
+            gap: 0.6rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 0.25rem;
+        }
+        :global(.history-row)::-webkit-scrollbar { display: none; }
+        :global(.history-card) {
+            position: relative;
+            flex-shrink: 0;
+            width: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--bg-surface-hover);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text);
+            transition: background 0.15s, border-color 0.15s;
+        }
+        :global(.history-card:hover) {
+            background: var(--bg-surface-hover);
+            border-color: rgba(91,155,213,0.4);
+        }
+        :global(.history-card-close) {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 1;
+        }
+        :global(.history-card:hover .history-card-close) {
+            opacity: 1;
+        }
+        :global(.history-card-close:hover) {
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--text-on-accent);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+        .history-header .history-label {
+            margin-bottom: 0;
+        }
+        .history-clear {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 0.2rem 0;
+            transition: color 0.2s;
+        }
+        .history-clear:hover { color: var(--text); }
+        :global(.history-card-img) {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+            display: block;
+        }
+        :global(.history-card-body) { padding: 0.35rem 0.45rem; }
+        :global(.history-card-ref) {
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        :global(.history-card-langs) {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .template-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem 2rem;
+            width: 100%;
+        }
+        .template-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.02em;
+        }
+        .template-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 480px;
+        }
+        .template-card {
+            display: flex;
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text);
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        .template-card:hover {
+            background: var(--bg-surface-hover);
+            border-color: rgba(91, 155, 213, 0.4);
+            transform: translateY(-1px);
+        }
+        .template-card-img {
+            width: 140px;
+            min-height: 100px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .template-card-body {
+            padding: 0.85rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.3rem;
+            min-width: 0;
+        }
+        .template-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .template-card-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+
+    <div class="continue-view" id="continue-view">
+        <div class="continue-welcome">Welcome back</div>
+        <a class="hero-card" id="continue-link">
+            <img class="hero-card-img" id="continue-image" src="" alt="" />
+            <div class="hero-card-overlay">
+                <div class="hero-card-badge" id="continue-langs"></div>
+                <div class="hero-card-ref" id="continue-ref"></div>
+                <div class="hero-card-exercise" id="continue-exercise"></div>
+                <div class="hero-card-progress">
+                    <div class="hero-card-progress-bar" id="continue-progress" style="width:0%"></div>
+                </div>
+            </div>
+        </a>
+        <a class="continue-cta" id="continue-cta">Continue &rarr;</a>
+        <div class="continue-secondary">
+            <button class="continue-secondary-btn" id="continue-browse">Browse all</button>
+        </div>
+        <div class="history-section" id="history-section" style="display:none">
+            <div class="history-header">
+                <div class="history-label">Recently studied</div>
+                <button class="history-clear" id="history-clear">Clear all</button>
+            </div>
+            <div class="history-row" id="history-row"></div>
+        </div>
+    </div>
+
+    {hasOTData && templates.length > 0 ? (
+        <div class="template-selection" id="template-selection">
+            <div class="template-section-title">Choose a study</div>
+            <div class="template-grid">
+                {templates.map((tpl) => (
+                    <a class="template-card" href={`/${lang}/${lang2}/${tpl.slug}/`}>
+                        {tpl.imageUrl && (
+                            <img class="template-card-img" src={tpl.imageUrl} alt={tpl.title} loading="lazy" />
+                        )}
+                        <div class="template-card-body">
+                            <div class="template-card-title">{tpl.title}</div>
+                            <div class="template-card-desc">{tpl.description}</div>
+                        </div>
+                    </a>
+                ))}
+            </div>
+        </div>
+    ) : null}
+
+    <script
+        id="page-params"
+        type="application/json"
+        set:html={JSON.stringify({ lang: lang!, lang2: lang2!, langName: learnVernacular, lang2Name: mtVernacular, hasOTData })}
+    />
+    <script>
+        const params = JSON.parse(document.getElementById("page-params")!.textContent!);
+        const defaultRedirectUrl = `/${params.lang}/${params.lang2}/john/`;
+
+        // Continue view logic
+        const lastState = localStorage.getItem("lastState");
+        let continueShown = false;
+
+        if (lastState) {
+            try {
+                const state = JSON.parse(lastState);
+                if (state.url && state.imageUrl && state.lang === params.lang && state.lang2 === params.lang2) {
+                    const continueView = document.getElementById("continue-view")!;
+                    const continueLink = document.getElementById("continue-link") as HTMLAnchorElement;
+                    const continueCta = document.getElementById("continue-cta") as HTMLAnchorElement;
+
+                    continueLink.href = state.url;
+                    continueCta.href = state.url;
+                    (document.getElementById("continue-image") as HTMLImageElement).src = state.imageUrl;
+                    document.getElementById("continue-langs")!.textContent = `${state.lang} \u2190 ${state.lang2}`;
+                    document.getElementById("continue-ref")!.textContent = state.reference || "";
+
+                    const labels: Record<string, string> = {
+                        listen: "Listening", read: "Reading", speak: "Speaking", write: "Writing", quiz: "Quiz"
+                    };
+                    if (state.exercise) {
+                        const exName = state.exercise.replace(/^exercise-/, "");
+                        document.getElementById("continue-exercise")!.textContent = labels[exName] || exName;
+                    }
+
+                    const chMatch = (state.reference || "").match(/(\d+)/);
+                    if (chMatch) {
+                        const pct = Math.min(Math.round((parseInt(chMatch[1], 10) / 21) * 100), 100);
+                        document.getElementById("continue-progress")!.style.width = pct + "%";
+                    }
+
+                    continueView.classList.add("visible");
+                    continueShown = true;
+
+                    document.getElementById("continue-browse")!.addEventListener("click", () => {
+                        // Scroll to template selection if it exists, otherwise go to john
+                        const tplSection = document.getElementById("template-selection");
+                        if (tplSection) {
+                            tplSection.scrollIntoView({ behavior: "smooth" });
+                        } else {
+                            window.location.href = defaultRedirectUrl;
+                        }
+                    });
+
+                    // History row
+                    try {
+                        const hist = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                        const older = hist.slice(1).filter((h: any) => h.imageUrl);
+                        if (older.length > 0) {
+                            const histRow = document.getElementById("history-row")!;
+                            const histSection = document.getElementById("history-section")!;
+                            for (let i = 0; i < older.length; i++) {
+                                const h = older[i];
+                                const card = document.createElement("a");
+                                card.className = "history-card";
+                                card.href = h.url;
+                                card.innerHTML = `<button class="history-card-close" data-idx="${i + 1}">\u00d7</button>`
+                                    + `<img class="history-card-img" src="${h.imageUrl}" alt="" />`
+                                    + `<div class="history-card-body">`
+                                    + `<div class="history-card-ref">${h.reference || ""}</div>`
+                                    + `<div class="history-card-langs">${h.lang} \u2190 ${h.lang2}</div>`
+                                    + `</div>`;
+                                histRow.appendChild(card);
+                            }
+                            histSection.style.display = "";
+
+                            histRow.addEventListener("click", function(e) {
+                                var btn = (e.target as HTMLElement).closest(".history-card-close") as HTMLElement | null;
+                                if (!btn) return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                var idx = parseInt(btn.dataset.idx!, 10);
+                                try {
+                                    var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                    h2.splice(idx, 1);
+                                    localStorage.setItem("studyHistory", JSON.stringify(h2));
+                                } catch (ex) {}
+                                var card2 = btn.closest(".history-card") as HTMLElement;
+                                if (card2) card2.remove();
+                                if (histRow.children.length === 0) histSection.style.display = "none";
+                            });
+
+                            document.getElementById("history-clear")!.addEventListener("click", function() {
+                                try {
+                                    var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                                    localStorage.setItem("studyHistory", JSON.stringify(h2.slice(0, 1)));
+                                } catch (ex) {}
+                                histRow.innerHTML = "";
+                                histSection.style.display = "none";
+                            });
+                        }
+                    } catch (e) {}
+                }
+            } catch (e) {}
+        }
+
+        // If no OT data (single-template mode): redirect to john if no continue view
+        if (!params.hasOTData && !continueShown) {
+            window.location.replace(defaultRedirectUrl);
+        }
+    </script>
+</Layout>

@@ -3,14 +3,22 @@ import imageIndex from "../generated/image-index.json";
 import languageStyles from "../data/language-styles.json";
 import fs from "node:fs";
 import path from "node:path";
+import { parse as parseToml } from "smol-toml";
 
-// ── Book mapping ──
-export const BOOK_MAP: Record<
-  string,
-  { dbt: string; img: string; timingPrefix: string }
-> = {
-  john: { dbt: "JHN", img: "John", timingPrefix: "JHN" },
-};
+// ── Template discovery (auto-generated from src/data/templates/) ──
+export interface TemplateInfo {
+  img: string; // directory name (e.g. "John", "TGS")
+}
+
+const _templatesDir = path.join(process.cwd(), "src/data/templates");
+export const BOOK_MAP: Record<string, TemplateInfo> = {};
+if (fs.existsSync(_templatesDir)) {
+  for (const d of fs.readdirSync(_templatesDir)) {
+    if (fs.statSync(path.join(_templatesDir, d)).isDirectory()) {
+      BOOK_MAP[d.toLowerCase()] = { img: d };
+    }
+  }
+}
 
 // ── RTL detection ──
 const RTL_REGEX =
@@ -23,6 +31,8 @@ export interface VerseEntry {
   verseEnd: number;
   startTime: number;
   endTime: number;
+  rangeContin?: boolean; // true for 2nd+ verses expanded from a range (no image on listen page)
+  sourceRef?: string;    // original .md ref before range expansion (e.g. "GEN3:2-3")
 }
 
 export interface LangInfo {
@@ -33,10 +43,10 @@ export interface LangInfo {
 }
 
 export interface ValidatedParams {
-  bookInfo: { dbt: string; img: string; timingPrefix: string };
+  bookInfo: TemplateInfo;
   chapterNum: number;
-  primary: LangInfo;
-  secondary: LangInfo;
+  learn: LangInfo;
+  mt: LangInfo;
 }
 
 /**
@@ -48,16 +58,24 @@ export function validateParams(params: {
   lang2?: string;
   book?: string;
   chapter?: string;
+  category?: string;
+  story?: string;
 }): ValidatedParams | null {
-  const { lang, lang2, book, chapter } = params;
+  const { lang, lang2, book, chapter, category, story } = params;
 
   const bookInfo = BOOK_MAP[book?.toLowerCase() ?? ""];
   if (!bookInfo) return null;
 
-  const chapterNum = parseInt(chapter!, 10);
+  // Support both old [chapter] and new [category]/[story] routes
+  let chapterNum: number;
+  if (category && story) {
+    chapterNum = parseInt(story, 10);
+  } else {
+    chapterNum = parseInt(chapter!, 10);
+  }
   if (isNaN(chapterNum) || chapterNum < 1) return null;
 
-  // Validate primary language
+  // Validate learn language
   const wt = langsData.canons.nt["with-timecode"] as Record<
     string,
     { n?: string; v?: string }
@@ -69,9 +87,9 @@ export function validateParams(params: {
   const pInfo = wt[lang!] || awt[lang!];
   if (!pInfo) return null;
 
-  const primaryIsRTL = !!(pInfo.v && RTL_REGEX.test(pInfo.v));
+  const learnIsRTL = !!(pInfo.v && RTL_REGEX.test(pInfo.v));
 
-  // Validate secondary language
+  // Validate mother tongue
   let sInfo: { n?: string; v?: string } | undefined;
   for (const canon of ["nt", "ot"] as const) {
     const canonData = (langsData.canons as any)[canon];
@@ -86,35 +104,78 @@ export function validateParams(params: {
   }
   if (!sInfo) return null;
 
-  const secondaryIsRTL = !!(sInfo.v && RTL_REGEX.test(sInfo.v));
+  const mtIsRTL = !!(sInfo.v && RTL_REGEX.test(sInfo.v));
 
   return {
     bookInfo,
     chapterNum,
-    primary: {
+    learn: {
       code: lang!,
       english: pInfo.n || lang!,
-      isRTL: primaryIsRTL,
+      isRTL: learnIsRTL,
       info: pInfo,
     },
-    secondary: {
+    mt: {
       code: lang2!,
       english: sInfo.n || lang2!,
-      isRTL: secondaryIsRTL,
+      isRTL: mtIsRTL,
       info: sInfo,
     },
   };
 }
 
 /**
- * Load timing data for a language code.
- * If preferredVersion is given (from getFilesetInfo), use that exact
- * version so timing matches the audio recording.
+ * Scan a version directory for timing data.
+ * Handles per-book layout (version/BOOK/timing.json).
+ *
+ * New format: fileset > story > chapter > verse > [start, end]
+ * Merges across books into a flat structure per story:
+ *   timingData[storyNum] = { "BOOK+CH:VERSE": [start, end], ... }
+ * This allows buildVerseEntries to match refs from verseRefs.
  */
+function loadTimingFromVersionDir(versionDir: string): {
+  filesetKey: string;
+  timingData: any;
+} | null {
+  if (!fs.existsSync(versionDir)) return null;
+  const bookDirs = fs.readdirSync(versionDir).filter((d: string) => {
+    const full = path.join(versionDir, d);
+    return fs.statSync(full).isDirectory() && fs.existsSync(path.join(full, "timing.json"));
+  });
+  if (bookDirs.length === 0) return null;
+
+  let mergedFilesetKey = "";
+  const mergedTiming: Record<string, Record<string, [number, number]>> = {};
+
+  for (const bookCode of bookDirs) {
+    const data = JSON.parse(fs.readFileSync(path.join(versionDir, bookCode, "timing.json"), "utf-8"));
+    const filesetKey = Object.keys(data)[0];
+    if (!mergedFilesetKey) mergedFilesetKey = filesetKey;
+    const bookTiming = data[filesetKey];
+
+    for (const [storyKey, storyData] of Object.entries(bookTiming) as [string, any][]) {
+      if (!mergedTiming[storyKey]) {
+        mergedTiming[storyKey] = {};
+      }
+      // New format: storyData = { chapter: { verse: [start, end] } }
+      // Flatten to "BOOK+CH:VERSE" keys for compatibility with verseRefs
+      for (const [chapter, verses] of Object.entries(storyData) as [string, any][]) {
+        for (const [verse, times] of Object.entries(verses) as [string, any][]) {
+          const ref = `${bookCode}${chapter}:${verse}`;
+          mergedTiming[storyKey][ref] = times;
+        }
+      }
+    }
+  }
+  return { filesetKey: mergedFilesetKey, timingData: mergedTiming };
+}
+
 export function findTimingData(
   langCode: string,
   preferredCategory?: string,
   preferredVersion?: string,
+  templateName: string,
+  canon: string = "nt",
 ): {
   filesetKey: string;
   timingData: any;
@@ -122,53 +183,52 @@ export function findTimingData(
   category: string;
 } | null {
   const categories = ["with-timecode", "audio-with-timecode"];
+  const basePath = path.join(
+    process.cwd(),
+    "src/data/templates-timings",
+    templateName,
+    "ALL-timings",
+    canon,
+  );
 
   // If a preferred version is specified, try it first
   if (preferredCategory && preferredVersion) {
-    const timingFile = path.join(
-      process.cwd(),
-      "src/data/templates/John/ALL-timings/nt",
-      preferredCategory,
-      langCode,
-      preferredVersion,
-      "timing.json",
-    );
-    if (fs.existsSync(timingFile)) {
-      const data = JSON.parse(fs.readFileSync(timingFile, "utf-8"));
-      const filesetKey = Object.keys(data)[0];
-      return {
-        filesetKey,
-        timingData: data[filesetKey],
-        distinctId: preferredVersion,
-        category: preferredCategory,
-      };
+    const versionDir = path.join(basePath, preferredCategory, langCode, preferredVersion);
+    const result = loadTimingFromVersionDir(versionDir);
+    if (result) {
+      return { ...result, distinctId: preferredVersion, category: preferredCategory };
     }
   }
 
-  // Fall back to scanning all versions
+  // Fall back to scanning — first try with category subdirs, then direct lang dirs
   for (const cat of categories) {
-    const catPath = path.join(
-      process.cwd(),
-      "src/data/templates/John/ALL-timings/nt",
-      cat,
-      langCode,
-    );
+    const catPath = path.join(basePath, cat, langCode);
     if (!fs.existsSync(catPath)) continue;
-    const versions = fs.readdirSync(catPath);
+    const versions = fs.readdirSync(catPath).filter(
+      (d: string) => fs.statSync(path.join(catPath, d)).isDirectory()
+    );
     for (const ver of versions) {
-      const timingFile = path.join(catPath, ver, "timing.json");
-      if (fs.existsSync(timingFile)) {
-        const data = JSON.parse(fs.readFileSync(timingFile, "utf-8"));
-        const filesetKey = Object.keys(data)[0];
-        return {
-          filesetKey,
-          timingData: data[filesetKey],
-          distinctId: ver,
-          category: cat,
-        };
+      const result = loadTimingFromVersionDir(path.join(catPath, ver));
+      if (result) {
+        return { ...result, distinctId: ver, category: cat };
       }
     }
   }
+
+  // Also try direct lang dir (no category subdir) — e.g. nt/heb/HEBM95/
+  const directLangPath = path.join(basePath, langCode);
+  if (fs.existsSync(directLangPath)) {
+    const versions = fs.readdirSync(directLangPath).filter(
+      (d: string) => fs.statSync(path.join(directLangPath, d)).isDirectory()
+    );
+    for (const ver of versions) {
+      const result = loadTimingFromVersionDir(path.join(directLangPath, ver));
+      if (result) {
+        return { ...result, distinctId: ver, category: "with-timecode" };
+      }
+    }
+  }
+
   return null;
 }
 
@@ -178,29 +238,69 @@ export function findTimingData(
  */
 export function findWordTimingData(
   langCode: string,
-  chapterNum: number,
+  storyNum: number,
   category: string,
   distinctId: string,
+  templateName: string,
+  canon: string = "nt",
 ): Record<string, (number | null)[]> | null {
-  const wordsFile = path.join(
+  const basePath = path.join(
     process.cwd(),
-    "src/data/templates/John/ALL-timings/nt",
-    category,
-    langCode,
-    distinctId,
-    "words.json",
+    "src/data/templates-timings",
+    templateName,
+    "ALL-timings",
+    canon,
   );
-  if (!fs.existsSync(wordsFile)) return null;
+
+  // Scan for words.json in version dir and book subdirs
+  const versionPaths = [
+    path.join(basePath, category, langCode, distinctId),
+    path.join(basePath, langCode, distinctId),
+  ];
+
+  for (const versionDir of versionPaths) {
+    if (!fs.existsSync(versionDir)) continue;
+
+    // Try flat: version/words.json
+    const flatFile = path.join(versionDir, "words.json");
+    if (fs.existsSync(flatFile)) {
+      const result = extractWordTiming(flatFile, storyNum);
+      if (result) return result;
+    }
+
+    // Try per-book: version/BOOK/words.json
+    const bookDirs = fs.readdirSync(versionDir).filter((d: string) => {
+      const full = path.join(versionDir, d);
+      return fs.statSync(full).isDirectory() && fs.existsSync(path.join(full, "words.json"));
+    });
+    // Merge word timing from all book subdirs
+    const merged: Record<string, (number | null)[]> = {};
+    for (const bookDir of bookDirs) {
+      const result = extractWordTiming(path.join(versionDir, bookDir, "words.json"), storyNum);
+      if (result) Object.assign(merged, result);
+    }
+    if (Object.keys(merged).length > 0) return merged;
+  }
+
+  return null;
+}
+
+function extractWordTiming(
+  wordsFile: string,
+  storyNum: number,
+): Record<string, (number | null)[]> | null {
   const data = JSON.parse(fs.readFileSync(wordsFile, "utf-8"));
   const filesetKey = Object.keys(data)[0];
-  const storyData = data[filesetKey]?.[String(chapterNum)];
+  const storyData = data[filesetKey]?.[String(storyNum)];
   if (!storyData) return null;
-  // Navigate: { book: { chapter: { verse: [...] } } }
-  const bookKey = Object.keys(storyData)[0];
-  if (!bookKey) return null;
-  const chapterObj = storyData[bookKey]?.[String(chapterNum)];
-  if (!chapterObj) return null;
-  return chapterObj as Record<string, (number | null)[]>;
+  // New format: { chapter: { verse: [timestamps] } } (book from file path)
+  const merged: Record<string, (number | null)[]> = {};
+  for (const [ch, verses] of Object.entries(storyData) as [string, any][]) {
+    for (const [verse, timings] of Object.entries(verses) as [string, any][]) {
+      merged[verse] = timings;
+    }
+  }
+  return Object.keys(merged).length > 0 ? merged : null;
 }
 
 function parseTextFilesetId(
@@ -221,7 +321,7 @@ function parseTextFilesetId(
  * Also returns the distinctId/category of the audio source,
  * so timing data can be loaded from the matching version.
  */
-export function getFilesetInfo(langCode: string): {
+export function getFilesetInfo(langCode: string, templateName: string, canon: string = "nt"): {
   audioFilesetId: string;
   textFilesetId: string;
   audioDistinctId: string;
@@ -241,7 +341,8 @@ export function getFilesetInfo(langCode: string): {
   for (const cat of allCategories) {
     const catPath = path.join(
       process.cwd(),
-      "src/data/ALL-langs-data/nt",
+      "src/data/ALL-langs-data",
+      canon,
       cat,
       langCode,
     );
@@ -265,7 +366,10 @@ export function getFilesetInfo(langCode: string): {
             for (const tc of ["with-timecode", "audio-with-timecode"]) {
               const timingCatPath = path.join(
                 process.cwd(),
-                "src/data/templates/John/ALL-timings/nt",
+                "src/data/templates-timings",
+                templateName,
+                "ALL-timings",
+                canon,
                 tc,
                 langCode,
               );
@@ -304,31 +408,67 @@ export function getFilesetInfo(langCode: string): {
 }
 
 /**
- * Build sorted verse entries from chapter timing data.
+ * Extract timing data for a story by its number (parseInt of storyId).
+ */
+export function getChapterTiming(
+  timingData: any,
+  storyNum: number,
+): Record<string, number[]> | null {
+  return timingData[String(storyNum)] || null;
+}
+
+/**
+ * Build verse entries from an ordered list of refs (from the .md file).
+ * Timing data is consulted for start/end times but the order comes from verseRefs.
+ *
+ * For .md ranges like "GEN3:1-5", expands into individual verse entries
+ * using the timing data (which now has per-verse [start, end]).
  */
 export function buildVerseEntries(
-  chapterTiming: Record<string, number[]>,
+  chapterTiming: Record<string, [number, number]>,
+  verseRefs?: string[],
 ): VerseEntry[] {
+  const refs = verseRefs && verseRefs.length > 0
+    ? verseRefs
+    : Object.keys(chapterTiming);
+
   const verseEntries: VerseEntry[] = [];
-  for (const [ref, times] of Object.entries(chapterTiming) as [
-    string,
-    number[],
-  ][]) {
+  for (const ref of refs) {
     const colonIdx = ref.indexOf(":");
+    const refPrefix = ref.substring(0, colonIdx); // e.g. "GEN3"
     const verseSpec = ref.substring(colonIdx + 1);
     const parts = verseSpec.split("-");
     const verseStart = parseInt(parts[0], 10);
     const verseEnd =
       parts.length > 1 ? parseInt(parts[parts.length - 1], 10) : verseStart;
-    verseEntries.push({
-      ref,
-      verseStart,
-      verseEnd,
-      startTime: times[0],
-      endTime: times[times.length - 1],
-    });
+
+    if (verseStart === verseEnd) {
+      // Single verse
+      const times = chapterTiming[ref];
+      verseEntries.push({
+        ref,
+        verseStart,
+        verseEnd: verseStart,
+        startTime: times ? times[0] : 0,
+        endTime: times ? times[1] : 0,
+      });
+    } else {
+      // Range — expand into individual verses using per-verse timing
+      for (let v = verseStart; v <= verseEnd; v++) {
+        const singleRef = `${refPrefix}:${v}`;
+        const times = chapterTiming[singleRef];
+        verseEntries.push({
+          ref: singleRef,
+          verseStart: v,
+          verseEnd: v,
+          startTime: times ? times[0] : 0,
+          endTime: times ? times[1] : 0,
+          rangeContin: v > verseStart,
+          sourceRef: ref, // original range ref from .md (for image lookup)
+        });
+      }
+    }
   }
-  verseEntries.sort((a, b) => a.verseStart - b.verseStart);
   return verseEntries;
 }
 
@@ -366,29 +506,132 @@ export function getLangGapScale(langCode: string): number {
 }
 
 /**
+ * Read image config from a template's index.toml.
+ */
+export interface TemplateImageConfig {
+  baseUrl: string;
+  pathPattern: string;
+  mediumPattern: string;
+  thumbsPattern: string;
+  thumbsResize: string;
+  cropPercent: number;
+}
+let _imageConfigCache: Record<string, TemplateImageConfig> = {};
+export function getTemplateImageConfig(templateName: string): TemplateImageConfig {
+  if (_imageConfigCache[templateName]) return _imageConfigCache[templateName];
+  const tomlPath = path.join(
+    process.cwd(),
+    "src/data/templates",
+    templateName,
+    "index.toml",
+  );
+  const defaultConfig: TemplateImageConfig = { baseUrl: "", pathPattern: "{filename}", mediumPattern: "", thumbsPattern: "", thumbsResize: "", cropPercent: 0 };
+  if (fs.existsSync(tomlPath)) {
+    const data = parseToml(fs.readFileSync(tomlPath, "utf-8")) as any;
+    const config: TemplateImageConfig = {
+      baseUrl: data.images?.base_url || "",
+      pathPattern: data.images?.path_pattern || "{filename}",
+      mediumPattern: data.images?.medium_pattern || "",
+      thumbsPattern: data.images?.thumbs_pattern || "",
+      thumbsResize: data.images?.thumbs_resize || "",
+      cropPercent: data.images?.crop_percent || 0,
+    };
+    _imageConfigCache[templateName] = config;
+    return config;
+  }
+  return defaultConfig;
+}
+
+/**
+ * Read image base URL from a template's index.toml.
+ */
+export function getTemplateImageBaseUrl(templateName: string): string {
+  return getTemplateImageConfig(templateName).baseUrl;
+}
+
+/**
+ * Load a template's theme CSS file if specified in index.toml (layout_theme field).
+ * Returns the CSS string, or empty string if no theme configured.
+ */
+export function getTemplateThemeCSS(templateName: string): string {
+  const tomlPath = path.join(
+    process.cwd(),
+    "src/data/templates",
+    templateName,
+    "index.toml",
+  );
+  if (!fs.existsSync(tomlPath)) return "";
+  const data = parseToml(fs.readFileSync(tomlPath, "utf-8")) as any;
+  const themeFile = data.layout_theme;
+  if (!themeFile) return "";
+  const cssPath = path.join(
+    process.cwd(),
+    "src/data/templates",
+    templateName,
+    themeFile,
+  );
+  return fs.existsSync(cssPath)
+    ? fs.readFileSync(cssPath, "utf-8")
+    : "";
+}
+
+/**
+ * Check if a template has OT timing data (i.e. is multi-canon).
+ */
+export function templateHasOT(templateName: string): boolean {
+  const otDir = path.join(
+    process.cwd(),
+    "src/data/templates-timings",
+    templateName,
+    "ALL-timings",
+    "ot",
+  );
+  return fs.existsSync(otDir);
+}
+
+/**
  * Build the full chapterData JSON object for client-side use.
  */
 export function buildChapterData(params: {
-  bookInfo: { dbt: string; img: string };
+  bookInfo: TemplateInfo;
   chapterNum: number;
   verseEntries: VerseEntry[];
-  primaryFileset: { audioFilesetId: string; textFilesetId: string } | null;
-  secondaryFileset: { audioFilesetId: string; textFilesetId: string } | null;
+  learnFileset: { audioFilesetId: string; textFilesetId: string } | null;
+  mtFileset: { audioFilesetId: string; textFilesetId: string } | null;
+  learnOtFileset?: { audioFilesetId: string; textFilesetId: string } | null;
+  mtOtFileset?: { audioFilesetId: string; textFilesetId: string } | null;
   chapterImageData: Record<string, string[]>;
-  secondaryChapterTiming: Record<string, number[]>;
-  primaryWordTiming: Record<string, (number | null)[]> | null;
+  mtChapterTiming: Record<string, number[]>;
+  learnWordTiming: Record<string, (number | null)[]> | null;
+  imageBaseUrl: string;
+  bibleChapters?: { book: string; chapter: number }[];
+  imagePathPattern?: string;
+  imageMediumPattern?: string;
+  thumbsResize?: string;
+  cropPercent?: number;
+  verseImages?: Record<string, string[]>;
 }): string {
   return JSON.stringify({
-    bookDbt: params.bookInfo.dbt,
     bookImg: params.bookInfo.img,
     chapterNum: params.chapterNum,
     verseEntries: params.verseEntries,
-    primaryTextFilesetId: params.primaryFileset?.textFilesetId || "",
-    secondaryTextFilesetId: params.secondaryFileset?.textFilesetId || "",
-    primaryAudioFilesetId: params.primaryFileset?.audioFilesetId || "",
-    secondaryAudioFilesetId: params.secondaryFileset?.audioFilesetId || "",
+    learnTextFilesetId: params.learnFileset?.textFilesetId || "",
+    mtTextFilesetId: params.mtFileset?.textFilesetId || "",
+    learnAudioFilesetId: params.learnFileset?.audioFilesetId || "",
+    mtAudioFilesetId: params.mtFileset?.audioFilesetId || "",
+    learnOtTextFilesetId: params.learnOtFileset?.textFilesetId || "",
+    mtOtTextFilesetId: params.mtOtFileset?.textFilesetId || "",
+    learnOtAudioFilesetId: params.learnOtFileset?.audioFilesetId || "",
+    mtOtAudioFilesetId: params.mtOtFileset?.audioFilesetId || "",
     chapterImageData: params.chapterImageData,
-    secondaryChapterTiming: params.secondaryChapterTiming,
-    primaryWordTiming: params.primaryWordTiming,
+    mtChapterTiming: params.mtChapterTiming,
+    learnWordTiming: params.learnWordTiming,
+    imageBaseUrl: params.imageBaseUrl,
+    bibleChapters: params.bibleChapters || [],
+    imagePathPattern: params.imagePathPattern || "{filename}",
+    imageMediumPattern: params.imageMediumPattern || "",
+    thumbsResize: params.thumbsResize || "",
+    cropPercent: params.cropPercent || 0,
+    verseImages: params.verseImages || {},
   });
 }
