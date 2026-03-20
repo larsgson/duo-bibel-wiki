@@ -176,39 +176,44 @@ if (hasOTData) {
         }
         .hero-card-overlay {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, var(--overlay) 0%, rgba(0,0,0,0.3) 40%, transparent 70%);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            padding: 1.25rem;
+            padding: 0.75rem 1.25rem;
+        }
+        .hero-card-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
         .hero-card-badge {
             display: inline-flex;
             background: rgba(91,155,213,0.3);
             border: 1px solid rgba(91,155,213,0.5);
             color: #8ec5fc;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            padding: 0.2rem 0.6rem;
+            padding: 0.15rem 0.5rem;
             border-radius: 6px;
-            width: fit-content;
-            margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
         .hero-card-ref {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: var(--text-on-accent);
-            margin-bottom: 0.25rem;
+            color: #fff;
         }
         .hero-card-exercise {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: rgba(255,255,255,0.6);
         }
         .hero-card-progress {
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
             height: 3px;
             background: var(--bg-surface);
             border-radius: 2px;
@@ -297,9 +302,9 @@ if (hasOTData) {
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             border: none;
-            color: var(--text-secondary);
+            color: #fff;
             font-size: 0.7rem;
             cursor: pointer;
             display: flex;
@@ -307,14 +312,19 @@ if (hasOTData) {
             justify-content: center;
             opacity: 0;
             transition: opacity 0.15s;
-            z-index: 1;
+            z-index: 2;
         }
         :global(.history-card:hover .history-card-close) {
             opacity: 1;
         }
         :global(.history-card-close:hover) {
             background: rgba(0, 0, 0, 0.8);
-            color: var(--text-on-accent);
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            :global(.history-card-close) {
+                opacity: 1;
+            }
         }
         .history-header {
             display: flex;
@@ -341,20 +351,28 @@ if (hasOTData) {
             object-fit: cover;
             display: block;
         }
-        :global(.history-card-body) { padding: 0.35rem 0.45rem; }
+        :global(.history-card-body) {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+            padding: 0.35rem 0.45rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.3rem;
+            z-index: 1;
+        }
         :global(.history-card-ref) {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
+            color: #fff;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         :global(.history-card-langs) {
-            font-size: 0.6rem;
-            color: var(--text-secondary);
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.7);
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         .template-selection {
             display: flex;
@@ -427,9 +445,11 @@ if (hasOTData) {
         <a class="hero-card" id="continue-link">
             <img class="hero-card-img" id="continue-image" src="" alt="" />
             <div class="hero-card-overlay">
-                <div class="hero-card-badge" id="continue-langs"></div>
-                <div class="hero-card-ref" id="continue-ref"></div>
-                <div class="hero-card-exercise" id="continue-exercise"></div>
+                <div class="hero-card-info">
+                    <div class="hero-card-ref" id="continue-ref"></div>
+                    <div class="hero-card-badge" id="continue-langs"></div>
+                    <div class="hero-card-exercise" id="continue-exercise"></div>
+                </div>
                 <div class="hero-card-progress">
                     <div class="hero-card-progress-bar" id="continue-progress" style="width:0%"></div>
                 </div>

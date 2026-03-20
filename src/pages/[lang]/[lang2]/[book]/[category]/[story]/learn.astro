@@ -1830,8 +1830,8 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                 wordTimings,
             };
 
-            // Preload AudioBuffer for word-level playback
-            if (VERSE.learnAudioUrl && CHAPTER.learnWordTiming) {
+            // Preload AudioBuffer for verse and word-level playback
+            if (VERSE.learnAudioUrl) {
                 const store = getStore();
                 if (store) store.preloadBuffer(VERSE.learnAudioUrl, "learn");
             }

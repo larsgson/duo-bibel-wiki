@@ -13,7 +13,7 @@ export interface VerseEntry {
   endTime: number;
 }
 
-export type AudioPlayState = "idle" | "playing_primary" | "playing_secondary";
+export type AudioPlayState = "idle" | "playing_learn" | "playing_mt";
 
 export interface ChapterAudioContext {
   learnCode: string;
@@ -44,19 +44,19 @@ let focusMode = false;
 
 // ── HTML Audio elements (reused for verse-level playback) ──
 
-let primaryAudio: HTMLAudioElement | null = null;
-let secondaryAudio: HTMLAudioElement | null = null;
+let learnAudio: HTMLAudioElement | null = null;
+let mtAudio: HTMLAudioElement | null = null;
 let segmentEndTimer: number | null = null;
 
 // ── Web Audio API state (used for sample-accurate word/exercise playback) ──
 
 let ctx: AudioContext | null = null;
-let waBufferUrl = "";
-let waBuffer: AudioBuffer | null = null;
-let waBufferLoading: Promise<AudioBuffer | null> | null = null;
-let waSecBufferUrl = "";
-let waSecBuffer: AudioBuffer | null = null;
-let waSecBufferLoading: Promise<AudioBuffer | null> | null = null;
+let waLearnBufUrl = "";
+let waLearnBuf: AudioBuffer | null = null;
+let waLearnBufLoading: Promise<AudioBuffer | null> | null = null;
+let waMtBufUrl = "";
+let waMtBuf: AudioBuffer | null = null;
+let waMtBufLoading: Promise<AudioBuffer | null> | null = null;
 
 function getCtx(): AudioContext {
   if (!ctx) {
@@ -67,58 +67,58 @@ function getCtx(): AudioContext {
 
 async function ensureWABuffer(
   url: string,
-  which: "primary" | "secondary",
+  which: "learn" | "mt",
 ): Promise<AudioBuffer | null> {
   if (!url) return null;
-  if (which === "primary" && waBuffer && waBufferUrl === url) return waBuffer;
-  if (which === "secondary" && waSecBuffer && waSecBufferUrl === url)
-    return waSecBuffer;
+  if (which === "learn" && waLearnBuf && waLearnBufUrl === url) return waLearnBuf;
+  if (which === "mt" && waMtBuf && waMtBufUrl === url)
+    return waMtBuf;
 
   // If already loading, wait for the in-flight request instead of returning null
-  if (which === "primary" && waBufferLoading) return waBufferLoading;
-  if (which === "secondary" && waSecBufferLoading) return waSecBufferLoading;
+  if (which === "learn" && waLearnBufLoading) return waLearnBufLoading;
+  if (which === "mt" && waMtBufLoading) return waMtBufLoading;
 
   const loadPromise = (async (): Promise<AudioBuffer | null> => {
     try {
       const resp = await fetch(url);
       const arrayBuf = await resp.arrayBuffer();
       const decoded = await getCtx().decodeAudioData(arrayBuf);
-      if (which === "primary") {
-        waBuffer = decoded;
-        waBufferUrl = url;
+      if (which === "learn") {
+        waLearnBuf = decoded;
+        waLearnBufUrl = url;
       } else {
-        waSecBuffer = decoded;
-        waSecBufferUrl = url;
+        waMtBuf = decoded;
+        waMtBufUrl = url;
       }
       return decoded;
     } catch {
       return null;
     } finally {
-      if (which === "primary") waBufferLoading = null;
-      else waSecBufferLoading = null;
+      if (which === "learn") waLearnBufLoading = null;
+      else waMtBufLoading = null;
     }
   })();
 
-  if (which === "primary") waBufferLoading = loadPromise;
-  else waSecBufferLoading = loadPromise;
+  if (which === "learn") waLearnBufLoading = loadPromise;
+  else waMtBufLoading = loadPromise;
 
   return loadPromise;
 }
 
-function getPrimaryAudio(): HTMLAudioElement {
-  if (!primaryAudio) {
-    primaryAudio = new Audio();
-    primaryAudio.preload = "auto";
+function getLearnAudio(): HTMLAudioElement {
+  if (!learnAudio) {
+    learnAudio = new Audio();
+    learnAudio.preload = "auto";
   }
-  return primaryAudio;
+  return learnAudio;
 }
 
-function getSecondaryAudio(): HTMLAudioElement {
-  if (!secondaryAudio) {
-    secondaryAudio = new Audio();
-    secondaryAudio.preload = "auto";
+function getMtAudio(): HTMLAudioElement {
+  if (!mtAudio) {
+    mtAudio = new Audio();
+    mtAudio.preload = "auto";
   }
-  return secondaryAudio;
+  return mtAudio;
 }
 
 // ── Subscriber pattern ──
@@ -322,7 +322,7 @@ function playSegment(
 // ── Verse playback ──
 
 function onPrimarySegmentEnded() {
-  if (audioPlayState !== "playing_primary") return;
+  if (audioPlayState !== "playing_learn") return;
 
   if (cachedMtAudioUrl) {
     playMtForVerse(currentVerseIdx);
@@ -332,7 +332,7 @@ function onPrimarySegmentEnded() {
 }
 
 function onMtSegmentEnded() {
-  if (audioPlayState !== "playing_secondary") return;
+  if (audioPlayState !== "playing_mt") return;
   advanceToNextVerse();
 }
 
@@ -344,7 +344,7 @@ export function playVerse(idx: number, enterFocusMode?: boolean) {
 
   const entry = verseEntries[idx];
   currentVerseIdx = idx;
-  audioPlayState = "playing_primary";
+  audioPlayState = "playing_learn";
   pausedState = null;
   playerVisible = true;
   if (enterFocusMode) focusMode = true;
@@ -352,7 +352,7 @@ export function playVerse(idx: number, enterFocusMode?: boolean) {
   updatePlayerCardInfo(idx, "learn");
   notify();
 
-  const audio = getPrimaryAudio();
+  const audio = getLearnAudio();
   playSegment(
     audio,
     cachedPrimaryAudioUrl,
@@ -370,11 +370,11 @@ function playMtForVerse(idx: number) {
     return;
   }
 
-  audioPlayState = "playing_secondary";
+  audioPlayState = "playing_mt";
   updatePlayerCardInfo(idx, "mt");
   notify();
 
-  const audio = getSecondaryAudio();
+  const audio = getMtAudio();
   playSegment(
     audio,
     cachedMtAudioUrl,
@@ -403,7 +403,7 @@ export function stopAll() {
 }
 
 export function pausePlayback() {
-  const wasSecondary = audioPlayState === "playing_secondary";
+  const wasSecondary = audioPlayState === "playing_mt";
   const pausedAt = activeAudioEl ? activeAudioEl.currentTime : 0;
 
   pausedState = { verseIdx: currentVerseIdx, wasSecondary, pausedAt };
@@ -426,9 +426,9 @@ export function resumePlayback() {
   if (wasSecondary && cachedMtAudioUrl) {
     const mtTiming = getMtTiming(entry);
     if (mtTiming) {
-      audioPlayState = "playing_secondary";
+      audioPlayState = "playing_mt";
       notify();
-      const audio = getSecondaryAudio();
+      const audio = getMtAudio();
       playSegment(
         audio,
         cachedMtAudioUrl,
@@ -438,9 +438,9 @@ export function resumePlayback() {
       );
     }
   } else {
-    audioPlayState = "playing_primary";
+    audioPlayState = "playing_learn";
     notify();
-    const audio = getPrimaryAudio();
+    const audio = getLearnAudio();
     playSegment(
       audio,
       cachedPrimaryAudioUrl,
@@ -505,7 +505,7 @@ export async function playWordAudio(
 
   stopWordAudio();
 
-  const buffer = await ensureWABuffer(audioUrl, "primary");
+  const buffer = await ensureWABuffer(audioUrl, "learn");
   if (!buffer) return false;
 
   const audioCtx = getCtx();
@@ -579,7 +579,7 @@ export async function playExerciseVerse(
     pausePlayback();
   }
 
-  const buffer = await ensureWABuffer(audioUrl, "primary");
+  const buffer = await ensureWABuffer(audioUrl, "learn");
   if (!buffer) return false;
 
   const audioCtx = getCtx();
@@ -623,7 +623,7 @@ export async function playExerciseSecondary(
 ): Promise<boolean> {
   stopExerciseAudio();
 
-  const buffer = await ensureWABuffer(audioUrl, "secondary");
+  const buffer = await ensureWABuffer(audioUrl, "mt");
   if (!buffer) return false;
 
   const audioCtx = getCtx();
@@ -661,16 +661,16 @@ export async function playExerciseSecondary(
 
 // ── Preload ──
 
-export function preloadBuffer(url: string, which: "primary" | "secondary") {
+export function preloadBuffer(url: string, which: "learn" | "mt") {
   // Preload HTML audio element (for verse playback)
-  if (which === "primary") {
-    const audio = getPrimaryAudio();
+  if (which === "learn") {
+    const audio = getLearnAudio();
     if (audio.src !== url) {
       audio.src = url;
       audio.load();
     }
   } else {
-    const audio = getSecondaryAudio();
+    const audio = getMtAudio();
     if (audio.src !== url) {
       audio.src = url;
       audio.load();
@@ -762,25 +762,23 @@ export function unlockAudio() {
 
   // Unlock ALL audio elements synchronously within the user gesture.
   // Each element needs its own .play() call in the gesture context.
-  const primary = getPrimaryAudio();
-  const secondary = getSecondaryAudio();
+  const learnEl = getLearnAudio();
+  const mtEl = getMtAudio();
 
-  primary.src = url;
+  learnEl.src = url;
   // Chain Web Audio context resume AFTER HTML audio play resolves.
   // On iOS, HTML audio.play() sets the audio session to "playback" mode,
   // which then allows Web Audio to produce sound (bypasses mute switch).
-  // This matches the pattern proven by the green test button.
-  primary
+  learnEl
     .play()
     .then(() => {
-      primary.pause();
-      // Now that iOS audio session is active, resume Web Audio context
+      learnEl.pause();
       return getCtx().resume();
     })
     .catch(() => {});
 
-  secondary.src = url;
-  secondary.play().then(() => secondary.pause()).catch(() => {});
+  mtEl.src = url;
+  mtEl.play().then(() => mtEl.pause()).catch(() => {});
 
   // Also create the AudioContext eagerly within the gesture (required by some browsers)
   getCtx();
