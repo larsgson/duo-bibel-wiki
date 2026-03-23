@@ -1283,8 +1283,13 @@ const langDataJSON = JSON.stringify({
                         });
 
                         continueChange.addEventListener("click", () => {
-                            continueView.classList.remove("visible");
-                            landingContent.classList.remove("hidden");
+                            // Open the language modal directly
+                            const modal = document.getElementById("modal-overlay");
+                            if (modal) {
+                                modal.classList.add("open");
+                                const searchInput = document.getElementById("search") as HTMLInputElement;
+                                if (searchInput) searchInput.focus();
+                            }
                         });
 
                         // Populate recently studied row
@@ -1353,8 +1358,8 @@ const langDataJSON = JSON.stringify({
 
             // ── DOM refs ──
             const overlay = document.getElementById("modal-overlay")!;
-            const openBtn = document.getElementById("open-lang-selector")!;
-            const heroCta = document.getElementById("hero-cta")!;
+            const openBtn = document.getElementById("open-lang-selector");
+            const heroCta = document.getElementById("hero-cta");
             const closeBtn = document.getElementById("modal-close")!;
             const backBtn = document.getElementById("modal-back")!;
             const modalTitle = document.getElementById("modal-title")!;
@@ -1458,8 +1463,8 @@ const langDataJSON = JSON.stringify({
                 overlay.classList.remove("open");
             }
 
-            openBtn.addEventListener("click", openModal);
-            heroCta.addEventListener("click", openModal);
+            openBtn?.addEventListener("click", openModal);
+            heroCta?.addEventListener("click", openModal);
             closeBtn.addEventListener("click", closeModal);
             backBtn.addEventListener("click", () => showStep(1));
             overlay.addEventListener("click", (e) => {
