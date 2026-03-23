@@ -742,7 +742,22 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             const verses = new Map();
             if (!filesetId) return verses;
             try {
-                if (filesetId.startsWith("helloao:")) {
+                if (filesetId.startsWith("contrib:")) {
+                    // Local contributed text: /audio/{path}/{FILESET}_{BOOK}_{CHAPTER}.txt
+                    // e.g. contrib:nor_NBS → /audio/nor/NBS/NORNBS_JHN_1.txt
+                    const contribId = filesetId.slice(8); // "nor_NBS"
+                    const fid = contribId.replace("/", "").replace("_", "").toUpperCase(); // "NORNBS"
+                    const chNum = parseInt(chapterId, 10);
+                    const txtUrl = `/audio/${contribId.replace("_", "/")}/${fid}_${bookId}_${chNum}.txt`;
+                    const resp = await fetch(txtUrl);
+                    if (resp.ok) {
+                        const text = await resp.text();
+                        const lines = text.split("\n").filter(l => l.trim());
+                        for (let i = 0; i < lines.length; i++) {
+                            verses.set(i + 1, lines[i].trim());
+                        }
+                    }
+                } else if (filesetId.startsWith("helloao:")) {
                     const tid = filesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
                     if (resp.ok) {
@@ -796,7 +811,13 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         async function fetchAudioUrlForBookChapter(audioFilesetId, bookId, chapterId) {
             if (!audioFilesetId) return "";
             try {
-                if (audioFilesetId.startsWith("helloao:")) {
+                if (audioFilesetId.startsWith("contrib:")) {
+                    // Local contributed audio: /audio/{path}/{BOOK}_{CHAPTER}.mp3
+                    // e.g. contrib:nor/NBS → /audio/nor/NBS/JHN_1.mp3
+                    const contribPath = audioFilesetId.slice(8);
+                    const chNum = parseInt(chapterId, 10);
+                    return `/audio/${contribPath}/${bookId}_${chNum}.mp3`;
+                } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
                     if (resp.ok) {
