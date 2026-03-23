@@ -308,7 +308,7 @@ function parseTextFilesetId(
   distinctId: string,
 ): string {
   if (!textValue) return "";
-  if (textValue.startsWith("helloao:")) return textValue;
+  if (textValue.startsWith("helloao:") || textValue.startsWith("contrib:")) return textValue;
   if (textValue.endsWith(".txt")) {
     const suffix = textValue.replace(".txt", "");
     return suffix.length >= 6 ? suffix : distinctId + suffix;
@@ -353,7 +353,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
       if (!fs.existsSync(dataFile)) continue;
       const d = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
       if (!bestAudio && d.a) {
-        if (d.a.startsWith("helloao:")) {
+        if (d.a.startsWith("helloao:") || d.a.startsWith("contrib:")) {
           bestAudio = d.a;
         } else {
           const audioSuffix = d.a.replace(".mp3", "");
