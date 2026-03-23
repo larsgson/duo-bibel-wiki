@@ -596,6 +596,8 @@ export function buildChapterData(params: {
   bookInfo: TemplateInfo;
   chapterNum: number;
   verseEntries: VerseEntry[];
+  learnCode?: string;
+  mtCode?: string;
   learnFileset: { audioFilesetId: string; textFilesetId: string } | null;
   mtFileset: { audioFilesetId: string; textFilesetId: string } | null;
   learnOtFileset?: { audioFilesetId: string; textFilesetId: string } | null;
@@ -615,6 +617,8 @@ export function buildChapterData(params: {
     bookImg: params.bookInfo.img,
     chapterNum: params.chapterNum,
     verseEntries: params.verseEntries,
+    learnCode: params.learnCode || "",
+    mtCode: params.mtCode || "",
     learnTextFilesetId: params.learnFileset?.textFilesetId || "",
     mtTextFilesetId: params.mtFileset?.textFilesetId || "",
     learnAudioFilesetId: params.learnFileset?.audioFilesetId || "",
