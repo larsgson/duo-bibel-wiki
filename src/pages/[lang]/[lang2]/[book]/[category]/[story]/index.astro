@@ -111,6 +111,8 @@ const chapterData = buildChapterData({
     bookInfo,
     chapterNum: storyNum,
     verseEntries,
+    learnCode,
+    mtCode,
     learnFileset: learnNtFileset,
     mtFileset: mtNtFileset,
     learnOtFileset,
@@ -743,12 +745,14 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (!filesetId) return verses;
             try {
                 if (filesetId.startsWith("contrib:")) {
-                    // Local contributed text: /audio/{path}/{FILESET}_{BOOK}_{CHAPTER}.txt
-                    // e.g. contrib:nor_NBS → /audio/nor/NBS/NORNBS_JHN_1.txt
-                    const contribId = filesetId.slice(8); // "nor_NBS"
-                    const fid = contribId.replace("/", "").replace("_", "").toUpperCase(); // "NORNBS"
+                    // Local contributed text: /audio/{lang}/{version}/{LANG+VER}_{BOOK}_{CHAPTER}.txt
+                    // e.g. contrib:NBS with lang=nor → /audio/nor/NBS/NORNBS_JHN_1.txt
+                    const version = filesetId.slice(8); // "NBS"
+                    // Determine lang code from context (learn or mt)
+                    const langForContrib = (filesetId === CHAPTER.learnTextFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
+                    const fid = (langForContrib + version).toUpperCase(); // "NORNBS"
                     const chNum = parseInt(chapterId, 10);
-                    const txtUrl = `/audio/${contribId.replace("_", "/")}/${fid}_${bookId}_${chNum}.txt`;
+                    const txtUrl = `/audio/${langForContrib}/${version}/${fid}_${bookId}_${chNum}.txt`;
                     const resp = await fetch(txtUrl);
                     if (resp.ok) {
                         const text = await resp.text();
@@ -812,11 +816,12 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (!audioFilesetId) return "";
             try {
                 if (audioFilesetId.startsWith("contrib:")) {
-                    // Local contributed audio: /audio/{path}/{BOOK}_{CHAPTER}.mp3
-                    // e.g. contrib:nor/NBS → /audio/nor/NBS/JHN_1.mp3
-                    const contribPath = audioFilesetId.slice(8);
+                    // Local contributed audio: /audio/{lang}/{version}/{BOOK}_{CHAPTER}.mp3
+                    // e.g. contrib:NBS with lang=nor → /audio/nor/NBS/JHN_1.mp3
+                    const version = audioFilesetId.slice(8);
+                    const langForContrib = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
-                    return `/audio/${contribPath}/${bookId}_${chNum}.mp3`;
+                    return `/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
                 } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);

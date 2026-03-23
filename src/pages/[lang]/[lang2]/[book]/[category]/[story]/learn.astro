@@ -118,6 +118,8 @@ const chapterData = buildChapterData({
     bookInfo,
     chapterNum: storyNum,
     verseEntries,
+    learnCode,
+    mtCode,
     learnFileset: learnNtFileset,
     mtFileset: mtNtFileset,
     learnOtFileset,
@@ -1460,10 +1462,11 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (!filesetId) return verses;
             try {
                 if (filesetId.startsWith("contrib:")) {
-                    const contribId = filesetId.slice(8);
-                    const fid = contribId.replace("/", "").replace("_", "").toUpperCase();
+                    const version = filesetId.slice(8);
+                    const langForContrib = (filesetId === CHAPTER.learnTextFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
+                    const fid = (langForContrib + version).toUpperCase();
                     const chNum = parseInt(chapterId, 10);
-                    const txtUrl = `/audio/${contribId.replace("_", "/")}/${fid}_${bookId}_${chNum}.txt`;
+                    const txtUrl = `/audio/${langForContrib}/${version}/${fid}_${bookId}_${chNum}.txt`;
                     const resp = await fetch(txtUrl);
                     if (resp.ok) {
                         const text = await resp.text();
@@ -1522,9 +1525,10 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (!audioFilesetId) return "";
             try {
                 if (audioFilesetId.startsWith("contrib:")) {
-                    const contribPath = audioFilesetId.slice(8);
+                    const version = audioFilesetId.slice(8);
+                    const langForContrib = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
-                    return `/audio/${contribPath}/${bookId}_${chNum}.mp3`;
+                    return `/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
                 } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
