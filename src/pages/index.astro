@@ -1,8 +1,10 @@
 ---
 import fs from "node:fs";
 import path from "node:path";
+import { parse } from "smol-toml";
 import langsData from "../data/ALL-langs-compact.json";
 import { useTranslations } from "../i18n";
+import { defaultTemplate, defaultTemplateSlug } from "../config";
 
 const base = "src/data/ALL-langs-data/nt";
 const dirs = ["with-timecode", "audio-with-timecode"];
@@ -24,7 +26,7 @@ const mtCodes = new Set<string>();
 const ntCanon = (langsData.canons as any).nt;
 if (ntCanon) {
     for (const cat of Object.keys(ntCanon)) {
-        if (cat === "failed") continue;
+        if (cat === "failed" || cat === "audio-only") continue;
         for (const code of Object.keys(ntCanon[cat])) {
             mtCodes.add(code);
         }
@@ -93,7 +95,7 @@ const mtLanguages: { code: string; name: string; vernacular: string }[] =
     [];
 const seenSec = new Set<string>();
 for (const cat of Object.keys(ntCanon)) {
-    if (cat === "failed") continue;
+    if (cat === "failed" || cat === "audio-only") continue;
     const catData = ntCanon[cat] as Record<string, { n?: string; v?: string }>;
     for (const [lc, info] of Object.entries(catData)) {
         if (!seenSec.has(lc)) {
@@ -111,7 +113,32 @@ mtLanguages.sort((a, b) => a.name.localeCompare(b.name));
 const langDataJSON = JSON.stringify({
     learn: languages,
     mt: mtLanguages,
+    defaultBook: defaultTemplateSlug,
 });
+
+// Read default template config and theme
+const tplToml = parse(fs.readFileSync(path.join(process.cwd(), `src/data/templates/${defaultTemplate}/index.toml`), "utf-8")) as any;
+const tplThemeFile = tplToml.layout_theme;
+const tplThemeCSS = tplThemeFile
+    ? fs.readFileSync(path.join(process.cwd(), `src/data/templates/${defaultTemplate}`, tplThemeFile), "utf-8")
+    : "";
+const tplImageBase = tplToml.images?.base_url || "";
+const tplImageFile = tplToml.image?.filename || "";
+const tplImageUrl = tplImageBase && tplImageFile ? `${tplImageBase}/${tplImageFile}` : "";
+
+// Read localized template info for all supported UI locales
+const tplLocales: Record<string, { title: string; description: string }> = {};
+for (const loc of heroLocales) {
+    const locFile = path.join(process.cwd(), `src/data/templates/${defaultTemplate}/locales`, `${loc}.toml`);
+    if (fs.existsSync(locFile)) {
+        const locData = parse(fs.readFileSync(locFile, "utf-8")) as any;
+        tplLocales[loc] = {
+            title: locData.title || "The Gospel of John",
+            description: locData.description || "",
+        };
+    }
+}
+const tplLocalesJSON = JSON.stringify(tplLocales);
 ---
 
 <html lang="en">
@@ -120,23 +147,8 @@ const langDataJSON = JSON.stringify({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark" />
         <title>Duo Bibel Wiki</title>
+        <style set:html={tplThemeCSS} />
         <style>
-            :root {
-                --bg: #ffffff;
-                --bg-surface: rgba(0, 0, 0, 0.04);
-                --bg-surface-hover: rgba(0, 0, 0, 0.08);
-                --text: #1a1a2e;
-                --text-secondary: #555;
-                --text-muted: #888;
-                --text-on-accent: #fff;
-                --accent: #5b9bd5;
-                --accent-hover: #4a8bc4;
-                --border: rgba(0, 0, 0, 0.1);
-                --border-strong: rgba(0, 0, 0, 0.2);
-                --shadow: rgba(0, 0, 0, 0.15);
-                --shadow-strong: rgba(0, 0, 0, 0.3);
-                --success-bright: #22cc00;
-            }
             * {
                 box-sizing: border-box;
                 margin: 0;
@@ -174,37 +186,16 @@ const langDataJSON = JSON.stringify({
                 font-size: 1.5rem;
                 font-weight: 600;
             }
-            .language-button {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 0.5rem 1rem;
-                background: var(--bg-surface);
-                border: 1px solid var(--border-strong);
-                border-radius: 6px;
-                color: white;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: all 0.2s;
-                min-height: 44px;
-            }
-            .language-button:hover {
-                background: var(--bg-surface-hover);
-            }
             .language-icon {
                 font-size: 1.1rem;
                 line-height: 1;
             }
-            .language-text {
-                font-weight: 500;
-            }
-            /* Lang pair buttons (JS-injected in continue-view) */
-            :global(.header-langs) {
+            .header-langs {
                 display: flex;
                 gap: 0.5rem;
                 align-items: center;
             }
-            :global(.language-button.compact) {
+            .language-button.compact {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -219,17 +210,17 @@ const langDataJSON = JSON.stringify({
                 transition: all 0.2s;
                 text-decoration: none;
             }
-            :global(.language-button.compact:hover) {
+            .language-button.compact:hover {
                 background: var(--bg-surface-hover);
             }
-            :global(.language-icon-wrapper) {
+            .language-icon-wrapper {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 gap: 0.15rem;
                 flex-shrink: 0;
             }
-            :global(.language-code-label) {
+            .language-code-label {
                 font-size: 0.55rem;
                 font-family: monospace;
                 font-weight: 600;
@@ -237,17 +228,17 @@ const langDataJSON = JSON.stringify({
                 line-height: 1;
                 opacity: 0.8;
             }
-            :global(.lang-pair-arrow) {
+            .lang-pair-arrow {
                 font-size: 1.1rem;
                 opacity: 0.7;
                 flex-shrink: 0;
             }
-            :global(.lang-pair-name) {
+            .lang-pair-name {
                 font-weight: 500;
                 white-space: nowrap;
             }
             @media (max-width: 768px) {
-                :global(.lang-pair-name) {
+                .lang-pair-name {
                     display: none;
                 }
             }
@@ -739,6 +730,25 @@ const langDataJSON = JSON.stringify({
             .continue-secondary-btn:hover {
                 color: var(--text-secondary);
             }
+            /* ── Start view (languages selected, no history) ── */
+            .start-view {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                padding: 1.5rem 1rem 2rem;
+            }
+            .start-view.visible {
+                display: flex;
+            }
+            .start-description {
+                max-width: 480px;
+                width: 100%;
+                text-align: center;
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin: 1rem 0 0;
+            }
             /* ── Recently studied row (JS-generated, needs :global) ── */
             .history-section {
                 width: 100%;
@@ -858,13 +868,10 @@ const langDataJSON = JSON.stringify({
                 .app-title {
                     font-size: 1.25rem;
                 }
-                .language-button {
-                    padding: 0.4rem 0.5rem;
-                    font-size: 0.875rem;
-                    gap: 0.5rem;
-                }
-                .language-text {
-                    display: none;
+                .language-button.compact {
+                    padding: 0.3rem 0.4rem;
+                    font-size: 0.8rem;
+                    gap: 0.3rem;
                 }
                 .hero {
                     padding: 3rem 1.25rem 2rem;
@@ -947,10 +954,19 @@ const langDataJSON = JSON.stringify({
         <header class="app-header">
             <div class="header-content">
                 <h1 class="app-title">Duo Bibel Wiki</h1>
-                <button class="language-button" id="open-lang-selector">
-                    <span class="language-icon">🌐</span>
-                    <span class="language-text">Select language</span>
-                </button>
+                <div class="header-langs" id="header-langs">
+                    <button class="language-button compact" id="btn-learn-lang">
+                        <div class="language-icon-wrapper"><span class="language-icon">🌐</span>
+                        <span class="language-code-label" id="btn-learn-code"></span></div>
+                        <span class="lang-pair-name" id="btn-learn-name">Learn</span>
+                    </button>
+                    <span class="lang-pair-arrow">←</span>
+                    <button class="language-button compact" id="btn-mt-lang">
+                        <div class="language-icon-wrapper"><span class="language-icon">🌐</span>
+                        <span class="language-code-label" id="btn-mt-code"></span></div>
+                        <span class="lang-pair-name" id="btn-mt-name">Mother tongue</span>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -975,7 +991,6 @@ const langDataJSON = JSON.stringify({
             </a>
             <div class="continue-secondary">
                 <button class="continue-secondary-btn" id="continue-reset">Start fresh</button>
-                <button class="continue-secondary-btn" id="continue-change">Change language</button>
             </div>
             <div class="history-section" id="history-section" style="display:none">
                 <div class="history-header">
@@ -985,6 +1000,25 @@ const langDataJSON = JSON.stringify({
                 <div class="history-row" id="history-row"></div>
             </div>
         </div>
+
+        <!-- Start view (shown when languages are selected but no history) -->
+        <div class="start-view" id="start-view">
+            <a class="hero-card" id="start-link">
+                <img class="hero-card-img" src={tplImageUrl} alt="" />
+                <div class="hero-card-overlay">
+                    <div class="hero-card-info">
+                        <div class="hero-card-ref" id="start-title"></div>
+                        <div class="hero-card-badge" id="start-langs"></div>
+                    </div>
+                </div>
+            </a>
+            <p class="start-description" id="start-description"></p>
+            <a class="continue-cta" id="start-cta">
+                Start learning &rarr;
+            </a>
+        </div>
+
+        <script id="tpl-locales" type="application/json" set:html={tplLocalesJSON} />
 
         <!-- Landing content -->
         <div class="landing-content" id="landing-content">
@@ -1174,68 +1208,102 @@ const langDataJSON = JSON.stringify({
                 }
             } catch (e) {}
 
-            // Build code → vernacular lookup from lang data
-            const _ld = JSON.parse(document.getElementById("lang-data")!.textContent!);
+            // ── Language data ──
+            const langData = JSON.parse(
+                document.getElementById("lang-data")!.textContent!,
+            );
+            const learnLangs = langData.learn;
+            const mtLangs = langData.mt;
+            const defaultBook = langData.defaultBook;
+
+            // Build code → vernacular lookup
             const vernMap: Record<string, string> = {};
-            for (const l of [..._ld.learn, ..._ld.mt]) {
+            for (const l of [...learnLangs, ...mtLangs]) {
                 if (!vernMap[l.code]) vernMap[l.code] = l.vernacular || l.name || l.code;
             }
             function getVern(code: string): string {
                 return vernMap[code] || code;
             }
 
-            // Check for saved state and show continue view
-            const lastState = localStorage.getItem("lastState");
-            if (lastState) {
+            // ── Saved language state ──
+            let savedLang = localStorage.getItem("selectedLang") || "";
+            let savedMT = localStorage.getItem("selectedMT") || "";
+
+            // ── Header buttons ──
+            const btnLearnCode = document.getElementById("btn-learn-code")!;
+            const btnLearnName = document.getElementById("btn-learn-name")!;
+            const btnMTCode = document.getElementById("btn-mt-code")!;
+            const btnMTName = document.getElementById("btn-mt-name")!;
+
+            function updateHeaderButtons() {
+                if (savedLang) {
+                    btnLearnCode.textContent = savedLang.toUpperCase();
+                    btnLearnName.textContent = getVern(savedLang);
+                } else {
+                    btnLearnCode.textContent = "";
+                    btnLearnName.textContent = "Learn";
+                }
+                if (savedMT) {
+                    btnMTCode.textContent = savedMT.toUpperCase();
+                    btnMTName.textContent = getVern(savedMT);
+                } else {
+                    btnMTCode.textContent = "";
+                    btnMTName.textContent = "Mother tongue";
+                }
+            }
+            updateHeaderButtons();
+
+            // ── View switching ──
+            const continueView = document.getElementById("continue-view")!;
+            const startView = document.getElementById("start-view")!;
+            const landingContent = document.getElementById("landing-content")!;
+
+            function showView(view: "continue" | "start" | "landing") {
+                continueView.classList.toggle("visible", view === "continue");
+                startView.classList.toggle("visible", view === "start");
+                landingContent.classList.toggle("hidden", view !== "landing");
+            }
+
+            // Determine which view to show
+            let activeView: "continue" | "start" | "landing" = "landing";
+            // Use lastState if available, otherwise fall back to first studyHistory entry
+            let lastStateRaw = localStorage.getItem("lastState");
+            if (!lastStateRaw) {
                 try {
-                    const state = JSON.parse(lastState);
-                    if (state.url && state.imageUrl) {
-                        const continueView =
-                            document.getElementById("continue-view")!;
-                        const landingContent =
-                            document.getElementById("landing-content")!;
-                        const continueLink = document.getElementById(
-                            "continue-link",
-                        ) as HTMLAnchorElement;
-                        const continueCta = document.getElementById(
-                            "continue-cta",
-                        ) as HTMLAnchorElement;
-                        const continueImage = document.getElementById(
-                            "continue-image",
-                        ) as HTMLImageElement;
-                        const continueLangs =
-                            document.getElementById("continue-langs")!;
-                        const continueRef =
-                            document.getElementById("continue-ref")!;
-                        const continueExercise =
-                            document.getElementById("continue-exercise")!;
-                        const continueProgress =
-                            document.getElementById("continue-progress")!;
-                        const continueReset =
-                            document.getElementById("continue-reset")!;
-                        const continueChange =
-                            document.getElementById("continue-change")!;
+                    const hist = JSON.parse(localStorage.getItem("studyHistory") || "[]");
+                    if (hist.length > 0 && hist[0].url) {
+                        lastStateRaw = JSON.stringify(hist[0]);
+                    }
+                } catch (e) {}
+            }
+
+            if (lastStateRaw) {
+                try {
+                    const state = JSON.parse(lastStateRaw);
+                    if (state.url) {
+                        activeView = "continue";
+
+                        const continueLink = document.getElementById("continue-link") as HTMLAnchorElement;
+                        const continueCta = document.getElementById("continue-cta") as HTMLAnchorElement;
+                        const continueImage = document.getElementById("continue-image") as HTMLImageElement;
 
                         continueLink.href = state.url;
                         continueCta.href = state.url;
-                        continueImage.src = state.imageUrl;
-                        continueLangs.textContent = `${state.lang} \u2190 ${state.lang2}`;
-                        continueRef.textContent = state.reference || "";
+                        if (state.imageUrl) continueImage.src = state.imageUrl;
+                        document.getElementById("continue-langs")!.textContent = `${getVern(state.lang)} \u2190 ${getVern(state.lang2)}`;
+                        document.getElementById("continue-ref")!.textContent = state.reference || "";
 
-                        // Exercise type label
                         if (state.exercise) {
                             const labels: Record<string, string> = {
-                                listen: "Listening",
-                                read: "Reading",
-                                speak: "Speaking",
-                                write: "Writing",
-                                quiz: "Quiz",
+                                "listen-reveal": "Listen & Reveal",
+                                "listen-fill": "Listen & Fill",
+                                "listen-order": "Listen & Order",
+                                "sentence-builder": "Sentence Builder",
                             };
-                            const exName = state.exercise.replace(/^exercise-/, "");
-                            continueExercise.textContent = labels[exName] || exName;
+                            document.getElementById("continue-exercise")!.textContent = labels[state.exercise] || "";
                         }
 
-                        // Achievement progress for active exercise in this chapter
+                        // Achievement progress
                         const EX_KEY_MAP: Record<string, string> = { "listen-fill": "f", "listen-order": "o", "sentence-builder": "s" };
                         const refMatch = (state.reference || "").match(/^(\w+)\s+(\d+)/);
                         if (refMatch) {
@@ -1249,53 +1317,37 @@ const langDataJSON = JSON.stringify({
                                 const total = ach.t || 0;
                                 if (total > 0) {
                                     const pct = Math.min(Math.round((done / total) * 100), 100);
-                                    continueProgress.style.width = pct + "%";
+                                    document.getElementById("continue-progress")!.style.width = pct + "%";
                                 }
                             } catch (e) {}
                         }
 
-                        continueView.classList.add("visible");
-                        landingContent.classList.add("hidden");
-
-                        // Inject lang pair buttons into header
-                        const existingBtn = document.getElementById("open-lang-selector");
-                        if (existingBtn) {
-                            const langPairDiv = document.createElement("div");
-                            langPairDiv.className = "header-langs";
-                            langPairDiv.innerHTML = `<a class="language-button compact" href="/">`
-                                + `<div class="language-icon-wrapper"><span class="language-icon">\uD83C\uDF10</span>`
-                                + `<span class="language-code-label">${state.lang}</span></div>`
-                                + `<span class="lang-pair-name">${getVern(state.lang)}</span></a>`
-                                + `<a class="language-button compact" href="/${state.lang}">`
-                                + `<span class="lang-pair-arrow">\u2190</span>`
-                                + `<div class="language-icon-wrapper"><span class="language-icon">\uD83C\uDF10</span>`
-                                + `<span class="language-code-label">${state.lang2}</span></div>`
-                                + `<span class="lang-pair-name">${getVern(state.lang2)}</span></a>`;
-                            existingBtn.replaceWith(langPairDiv);
+                        // Backfill selectedLang/selectedMT from lastState
+                        if (!savedLang && state.lang) {
+                            savedLang = state.lang;
+                            localStorage.setItem("selectedLang", savedLang);
                         }
+                        if (!savedMT && state.lang2) {
+                            savedMT = state.lang2;
+                            localStorage.setItem("selectedMT", savedMT);
+                        }
+                        updateHeaderButtons();
 
-                        continueReset.addEventListener("click", () => {
+                        document.getElementById("continue-reset")!.addEventListener("click", () => {
                             localStorage.removeItem("lastState");
                             localStorage.removeItem("activeExercise");
                             localStorage.removeItem("studyHistory");
-                            continueView.classList.remove("visible");
-                            landingContent.classList.remove("hidden");
-                        });
-
-                        continueChange.addEventListener("click", () => {
-                            // Open the language modal directly
-                            const modal = document.getElementById("modal-overlay");
-                            if (modal) {
-                                modal.classList.add("open");
-                                const searchInput = document.getElementById("search") as HTMLInputElement;
-                                if (searchInput) searchInput.focus();
+                            if (savedLang && savedMT) {
+                                showView("start");
+                                setupStartView();
+                            } else {
+                                showView("landing");
                             }
                         });
 
                         // Populate recently studied row
                         try {
                             const hist = JSON.parse(localStorage.getItem("studyHistory") || "[]");
-                            // Skip the first entry (it's the hero card)
                             const older = hist.slice(1).filter((h: any) => h.imageUrl);
                             if (older.length > 0) {
                                 const histSection = document.getElementById("history-section")!;
@@ -1315,7 +1367,6 @@ const langDataJSON = JSON.stringify({
                                 }
                                 histSection.style.display = "";
 
-                                // Per-card × close
                                 histRow.addEventListener("click", function(e) {
                                     var btn = (e.target as HTMLElement).closest(".history-card-close") as HTMLElement | null;
                                     if (!btn) return;
@@ -1332,7 +1383,6 @@ const langDataJSON = JSON.stringify({
                                     if (histRow.children.length === 0) histSection.style.display = "none";
                                 });
 
-                                // Clear all
                                 document.getElementById("history-clear")!.addEventListener("click", function() {
                                     try {
                                         var h2 = JSON.parse(localStorage.getItem("studyHistory") || "[]");
@@ -1345,20 +1395,31 @@ const langDataJSON = JSON.stringify({
                         } catch (e) {}
                     }
                 } catch (e) {
-                    localStorage.removeItem("lastState");
+                    console.warn("Failed to parse lastState:", e);
                 }
             }
 
-            // ── Language data ──
-            const langData = JSON.parse(
-                document.getElementById("lang-data")!.textContent!,
-            );
-            const learnLangs = langData.learn;
-            const mtLangs = langData.mt;
+            // Start view: languages selected but no continue state
+            const tplLocales = JSON.parse(document.getElementById("tpl-locales")!.textContent!);
+            function setupStartView() {
+                const studyUrl = `/${savedLang}/${savedMT}/${defaultBook}/`;
+                const tplLoc = tplLocales[loc] || tplLocales["eng"] || {};
+                document.getElementById("start-title")!.textContent = tplLoc.title || "The Gospel of John";
+                document.getElementById("start-langs")!.textContent = `${getVern(savedLang)} \u2190 ${getVern(savedMT)}`;
+                document.getElementById("start-description")!.textContent = tplLoc.description || "";
+                (document.getElementById("start-link") as HTMLAnchorElement).href = studyUrl;
+                (document.getElementById("start-cta") as HTMLAnchorElement).href = studyUrl;
+            }
+
+            if (activeView === "landing" && savedLang && savedMT) {
+                activeView = "start";
+                setupStartView();
+            }
+
+            showView(activeView);
 
             // ── DOM refs ──
             const overlay = document.getElementById("modal-overlay")!;
-            const openBtn = document.getElementById("open-lang-selector");
             const heroCta = document.getElementById("hero-cta");
             const closeBtn = document.getElementById("modal-close")!;
             const backBtn = document.getElementById("modal-back")!;
@@ -1373,13 +1434,25 @@ const langDataJSON = JSON.stringify({
             const noResults = document.getElementById("no-results")!;
             noResults.textContent = ui.noLanguagesFound || "No languages found";
 
-            // ── State ──
+            // ── Modal state ──
+            // modalMode controls what happens after picking:
+            //   "full"      = first-time flow: step1 → step2 → navigate
+            //   "learn-only" = changing learn lang: step1 → navigate immediately
+            //   "mt-only"   = changing MT: step2 → navigate immediately
             let step = 1;
+            let modalMode: "full" | "learn-only" | "mt-only" = "full";
             let selectedPrimary: {
                 code: string;
                 name: string;
                 vernacular: string;
             } | null = null;
+
+            // ── Navigation helper ──
+            function navigateToStudy(learnCode: string, mtCode: string) {
+                localStorage.setItem("selectedLang", learnCode);
+                localStorage.setItem("selectedMT", mtCode);
+                window.location.href = `/${learnCode}/${mtCode}/${defaultBook}/`;
+            }
 
             // ── Grid rendering ──
             function renderGrid(langs: typeof learnLangs) {
@@ -1404,11 +1477,17 @@ const langDataJSON = JSON.stringify({
                 search.placeholder =
                     ui.searchPlaceholder ||
                     "Search by language name, vernacular, or code...";
-                stepIndicator.textContent = (
-                    ui.stepIndicator || "Step {current} of {total}"
-                )
-                    .replace("{current}", String(s))
-                    .replace("{total}", "2");
+                if (modalMode === "learn-only") {
+                    stepIndicator.textContent = "";
+                } else if (modalMode === "mt-only") {
+                    stepIndicator.textContent = "";
+                } else {
+                    stepIndicator.textContent = (
+                        ui.stepIndicator || "Step {current} of {total}"
+                    )
+                        .replace("{current}", String(s))
+                        .replace("{total}", "2");
+                }
                 if (step === 1) {
                     modalTitle.textContent =
                         ui.selectLanguageToLearn || "Select language to learn";
@@ -1418,14 +1497,18 @@ const langDataJSON = JSON.stringify({
                 } else {
                     modalTitle.textContent =
                         ui.selectMotherTongue || "Select mother-tongue";
-                    backBtn.style.display = "";
-                    selectedBadge.style.display = "flex";
-                    const label = selectedPrimary!.vernacular
-                        ? `${selectedPrimary!.name} - ${selectedPrimary!.vernacular}`
-                        : selectedPrimary!.name;
-                    selectedBadge.textContent = (
-                        ui.learningLangBadge || "Learning: {label}"
-                    ).replace("{label}", label);
+                    backBtn.style.display = modalMode === "full" ? "" : "none";
+                    if (selectedPrimary) {
+                        selectedBadge.style.display = "flex";
+                        const label = selectedPrimary.vernacular
+                            ? `${selectedPrimary.name} - ${selectedPrimary.vernacular}`
+                            : selectedPrimary.name;
+                        selectedBadge.textContent = (
+                            ui.learningLangBadge || "Learning: {label}"
+                        ).replace("{label}", label);
+                    } else {
+                        selectedBadge.style.display = "none";
+                    }
                     renderGrid(mtLangs);
                 }
                 search.focus();
@@ -1443,18 +1526,28 @@ const langDataJSON = JSON.stringify({
 
                 if (step === 1) {
                     selectedPrimary = { code, name, vernacular };
-                    showStep(2);
+                    if (modalMode === "learn-only" && savedMT) {
+                        // Changing learn lang only → navigate immediately with existing MT
+                        navigateToStudy(code, savedMT);
+                    } else {
+                        // Full flow or no MT saved → advance to step 2
+                        modalMode = "full";
+                        showStep(2);
+                    }
                 } else {
-                    window.location.href = `/${selectedPrimary!.code}/${code}`;
+                    // Step 2: MT picked → navigate
+                    const learnCode = selectedPrimary ? selectedPrimary.code : savedLang;
+                    navigateToStudy(learnCode, code);
                 }
             });
 
             // ── Modal open/close ──
-            function openModal() {
-                if (!selectedPrimary) {
-                    showStep(1);
-                } else {
+            function openModal(mode: "full" | "learn-only" | "mt-only") {
+                modalMode = mode;
+                if (mode === "mt-only") {
                     showStep(2);
+                } else {
+                    showStep(1);
                 }
                 overlay.classList.add("open");
                 search.focus();
@@ -1463,8 +1556,25 @@ const langDataJSON = JSON.stringify({
                 overlay.classList.remove("open");
             }
 
-            openBtn?.addEventListener("click", openModal);
-            heroCta?.addEventListener("click", openModal);
+            // Header button: click learn lang → open modal for learn lang only
+            document.getElementById("btn-learn-lang")!.addEventListener("click", () => {
+                openModal(savedMT ? "learn-only" : "full");
+            });
+            // Header button: click MT → open modal for MT only
+            document.getElementById("btn-mt-lang")!.addEventListener("click", () => {
+                if (savedLang) {
+                    // Find learn lang info for the badge
+                    const info = learnLangs.find((l: any) => l.code === savedLang);
+                    if (info) selectedPrimary = info;
+                    openModal("mt-only");
+                } else {
+                    // No learn lang yet, start full flow
+                    openModal("full");
+                }
+            });
+            // Hero CTA: always full flow
+            heroCta?.addEventListener("click", () => openModal("full"));
+
             closeBtn.addEventListener("click", closeModal);
             backBtn.addEventListener("click", () => showStep(1));
             overlay.addEventListener("click", (e) => {
@@ -1547,9 +1657,6 @@ const langDataJSON = JSON.stringify({
                 noResults.style.display = visible === 0 ? "" : "none";
                 grid.style.display = visible === 0 ? "none" : "";
             });
-
-            // ── Initialize grid for direct page load (modal closed) ──
-            renderGrid(mtLangs);
 
             // ── Screenshot carousel (mobile) ──
             (() => {
