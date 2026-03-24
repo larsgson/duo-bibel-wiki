@@ -17,6 +17,7 @@ import {
     templateHasOT,
 } from "../../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../../i18n";
+import { defaultTemplateSlug } from "../../../../../../config";
 
 const { lang, lang2, book, category, story } = Astro.params;
 
@@ -512,6 +513,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             storyMeta,
             uiLabels,
             categoryId,
+            defaultTemplateSlug,
         }}
     >
         const CHAPTER = JSON.parse(chapterData);
@@ -1056,7 +1058,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             store.setAudioForChapter({
                 learnCode,
                 mtCode,
-                book: window.location.pathname.split("/")[3] || "john",
+                book: window.location.pathname.split("/")[3] || defaultTemplateSlug,
                 chapter: CHAPTER.chapterNum,
                 bookImg: CHAPTER.bookImg,
                 audioUrl: cachedLearnAudioUrl,
