@@ -4,8 +4,8 @@ layout_theme = "theme.css"
 [images]
 base_url = "https://bibel.wiki/img/john-pics"
 thumbs_resize = "netlify"
-# Full image: {base_url}/{filename}
-# Thumbnail:  Netlify image resizing: /.netlify/images?url={base_url}/{filename}&w={width}
+medium_pattern = "640px/{filename}"
+thumbs_pattern = "640px/{filename}"
 
 [image]
 filename = "VB-John1v5b.jpg"

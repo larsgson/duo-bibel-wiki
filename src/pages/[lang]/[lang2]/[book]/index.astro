@@ -95,6 +95,7 @@ const imageConfig = getTemplateImageConfig(bookInfo.img);
 const imageBaseUrl = imageConfig.baseUrl;
 const imagePathPattern = imageConfig.pathPattern;
 const imageThumbsResize = imageConfig.thumbsResize;
+const imageThumbsPattern = imageConfig.thumbsPattern;
 const bookImg = bookInfo.img;
 const backHref = `/${learnCode}/${mtCode}`;
 const themeCSS = getTemplateThemeCSS(bookInfo.img);
@@ -291,7 +292,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         <div id="accordion-container"></div>
     </div>
 
-    <script data-astro-rerun define:vars={{ categoriesJSON, bookTitle, book, chapterLabel, imageBaseUrl, imagePathPattern, imageThumbsResize, learnCode, mtCode, bookImg }}>
+    <script data-astro-rerun define:vars={{ categoriesJSON, bookTitle, book, chapterLabel, imageBaseUrl, imagePathPattern, imageThumbsResize, imageThumbsPattern, learnCode, mtCode, bookImg }}>
         const categories = JSON.parse(categoriesJSON);
         const IMG_BASE = imageBaseUrl ? imageBaseUrl + "/" : "";
         const bookKey = book.toLowerCase();
@@ -319,7 +320,16 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
 
         function imgProxy(url, w) {
             if (!url) return url;
+            // Prefer pre-sized thumbs when template provides a thumbs pattern
+            if (imageThumbsPattern && IMG_BASE) {
+                const filename = url.startsWith("http") ? url.split("/").pop() : url;
+                const thumb = imageThumbsPattern
+                    .replace("{filename}", filename)
+                    .replace("{book}", filename.substring(0, 2));
+                return `${IMG_BASE}${thumb}`;
+            }
             const full = resolveImageUrl(url);
+            // Fall back to Netlify Image CDN resize
             if (imageThumbsResize === "netlify") {
                 return `/.netlify/images?url=${encodeURIComponent(full)}&w=${w}`;
             }
