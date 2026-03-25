@@ -20,6 +20,26 @@ cp .env.example .env
 
 Add your [Digital Bible Platform](https://4.dbt.io/) API key to `.env`.
 
+## Fetch Data
+
+Most data files are fetched from the [bible-story-builder](https://github.com/larsgson/bible-story-builder) GitHub releases. After cloning, run:
+
+```bash
+pnpm fetch-data
+pnpm build-story-locales
+```
+
+This downloads:
+
+| Asset | Target | Contents |
+|---|---|---|
+| `ALL-langs-data.zip` | `src/data/ALL-langs-data/` | Bible text and timecode data |
+| `{Template}-content.zip` | `src/data/templates/{Template}/` | Template config, theme, locales |
+| `{Template}-ALL-timings.zip` | `src/data/templates-timings/{Template}/` | Audio timing data |
+| `ALL-langs*.json` | `src/data/` | Language metadata |
+
+All fetched data is gitignored. `pnpm build-story-locales` must be run after fetching to generate `src/generated/story-locales.json`.
+
 ## Development
 
 ```bash

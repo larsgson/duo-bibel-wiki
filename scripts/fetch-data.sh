@@ -3,12 +3,13 @@
 # Run before build: pnpm fetch-data
 #
 # Sources:
-#   - Release assets: ALL-langs-data.zip, {Template}-ALL-timings.zip
+#   - Release assets: ALL-langs-data.zip, {Template}-ALL-timings.zip, {Template}-content.zip
 #   - Repo export/: ALL-langs*.json
 #
 # Targets:
 #   - src/data/ALL-langs-data/
 #   - src/data/ALL-langs*.json
+#   - src/data/templates/{Template}/
 #   - src/data/templates-timings/{Template}/ALL-timings/
 
 set -euo pipefail
@@ -40,12 +41,26 @@ mkdir -p "$DATA_DIR/ALL-langs-data"
 unzip -q "$TMP_DIR/ALL-langs-data.zip" -d "$DATA_DIR/ALL-langs-data"
 echo "  ✓ ALL-langs-data/"
 
-# ── 3. Template timing data from latest release ──
-# Discover templates from src/data/templates/ and fetch matching timing zips
+# ── 3. Template content from latest release ──
+# Content zips are named {Template}-content.zip and extract to {Template}/ inside target
+mkdir -p "$DATA_DIR/templates"
+TEMPLATES="John"
+for tpl in $TEMPLATES; do
+    content_zip="${tpl}-content.zip"
+    echo "Fetching $content_zip..."
+    if curl -sfL "$RELEASE_URL/$content_zip" -o "$TMP_DIR/$content_zip" 2>/dev/null; then
+        unzip -qo "$TMP_DIR/$content_zip" -d "$DATA_DIR/templates"
+        echo "  ✓ $tpl content"
+    else
+        echo "  ⊘ No content zip for $tpl (no $content_zip in release)"
+    fi
+done
+
+# ── 4. Template timing data from latest release ──
+# Discover templates from extracted content and fetch matching timing zips
 for tpl_dir in "$DATA_DIR/templates"/*/; do
     tpl=$(basename "$tpl_dir")
     zip_name="${tpl}-ALL-timings.zip"
-
     echo "Fetching $zip_name..."
     if curl -sfL "$RELEASE_URL/$zip_name" -o "$TMP_DIR/$zip_name" 2>/dev/null; then
         rm -rf "$TIMINGS_DIR/$tpl/ALL-timings"

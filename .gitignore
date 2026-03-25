@@ -23,6 +23,7 @@ assets/john-pics/
 # Synced data (generated/downloaded from external sources, not hand-edited)
 src/data/ALL-langs-data/
 src/data/ALL-langs*.json
+src/data/templates/
 src/data/templates-timings/
 
 # generated at build time from src/data/templates/ (see scripts/)
