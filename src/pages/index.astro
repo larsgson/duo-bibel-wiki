@@ -1236,16 +1236,16 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 document.getElementById("hero-i18n")!.textContent!,
             );
             function resolveUILocale(): string {
-                // 1. Selected learn language
-                const sl = localStorage.getItem("selectedLang") || "";
-                if (sl && allI18n[sl]) return sl;
+                // 1. Selected mother tongue
+                const sm = localStorage.getItem("selectedMT") || "";
+                if (sm && allI18n[sm]) return sm;
                 // 2. Browser language
                 const browserLang = (navigator.language || "en").split("-")[0].toLowerCase();
                 const bl = LANG_MAP[browserLang];
                 if (bl && allI18n[bl]) return bl;
-                // 3. Selected mother tongue
-                const sm = localStorage.getItem("selectedMT") || "";
-                if (sm && allI18n[sm]) return sm;
+                // 3. Selected learn language
+                const sl = localStorage.getItem("selectedLang") || "";
+                if (sl && allI18n[sl]) return sl;
                 // 4. English fallback
                 return "eng";
             }

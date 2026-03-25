@@ -138,7 +138,7 @@ let storyMeta: {
 } = { headers: {} };
 const locales = templateData?.locales || {};
 {
-    const locale = locales[mtCode] || locales["eng"] || {};
+    const locale = locales[learnCode] || locales["eng"] || {};
     const storyLocaleData = locale[categoryId]?.[story!];
     if (storyLocaleData) {
         storyMeta.title = storyLocaleData.title || "";
