@@ -34,5 +34,6 @@
   "screenshotSelectStory": "Выберите историю",
   "screenshotSelectExercise": "Выберите упражнение",
   "screenshotContinue": "Продолжить",
-  "stepIndicator": "Шаг {current} из {total}"
+  "stepIndicator": "Шаг {current} из {total}",
+  "startLearning": "Начать обучение"
 }

@@ -34,5 +34,6 @@
   "screenshotSelectStory": "Wähle eine Geschichte",
   "screenshotSelectExercise": "Wähle eine Übung",
   "screenshotContinue": "Weiter",
-  "stepIndicator": "Schritt {current} von {total}"
+  "stepIndicator": "Schritt {current} von {total}",
+  "startLearning": "Lernen starten"
 }

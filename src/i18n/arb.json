@@ -34,5 +34,6 @@
   "screenshotSelectStory": "اختر قصة",
   "screenshotSelectExercise": "اختر تمرينًا",
   "screenshotContinue": "متابعة",
-  "stepIndicator": "الخطوة {current} من {total}"
+  "stepIndicator": "الخطوة {current} من {total}",
+  "startLearning": "ابدأ التعلم"
 }

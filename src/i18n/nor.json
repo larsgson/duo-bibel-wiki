@@ -34,5 +34,6 @@
   "screenshotSelectStory": "Velg en fortelling",
   "screenshotSelectExercise": "Velg en øvelse",
   "screenshotContinue": "Fortsett",
-  "stepIndicator": "Steg {current} av {total}"
+  "stepIndicator": "Steg {current} av {total}",
+  "startLearning": "Begynn å lære"
 }
