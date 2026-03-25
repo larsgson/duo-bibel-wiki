@@ -34,5 +34,6 @@
   "screenshotSelectStory": "एक कहानी चुनें",
   "screenshotSelectExercise": "एक अभ्यास चुनें",
   "screenshotContinue": "आगे बढ़ें",
-  "stepIndicator": "चरण {current} / {total}"
+  "stepIndicator": "चरण {current} / {total}",
+  "startLearning": "सीखना शुरू करें"
 }

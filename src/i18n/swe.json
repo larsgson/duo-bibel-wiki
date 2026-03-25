@@ -34,5 +34,6 @@
   "screenshotSelectStory": "Välj en berättelse",
   "screenshotSelectExercise": "Välj en övning",
   "screenshotContinue": "Fortsätt",
-  "stepIndicator": "Steg {current} av {total}"
+  "stepIndicator": "Steg {current} av {total}",
+  "startLearning": "Börja nu"
 }

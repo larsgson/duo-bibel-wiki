@@ -34,5 +34,6 @@
   "screenshotSelectStory": "Selectează o poveste",
   "screenshotSelectExercise": "Selectează un exercițiu",
   "screenshotContinue": "Continuă",
-  "stepIndicator": "Pasul {current} din {total}"
+  "stepIndicator": "Pasul {current} din {total}",
+  "startLearning": "Începe să înveți"
 }

@@ -85,6 +85,7 @@ for (const loc of heroLocales) {
         screenshotSelectStory: t("screenshotSelectStory"),
         screenshotSelectExercise: t("screenshotSelectExercise"),
         screenshotContinue: t("screenshotContinue"),
+        startLearning: t("startLearning"),
     };
 }
 const heroJSON = JSON.stringify(heroTranslations);
@@ -1487,7 +1488,9 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 document.getElementById("start-langs")!.textContent = `${getVern(savedLang)} \u2190 ${getVern(savedMT)}`;
                 document.getElementById("start-description")!.textContent = tplLoc.description || "";
                 (document.getElementById("start-link") as HTMLAnchorElement).href = studyUrl;
-                (document.getElementById("start-cta") as HTMLAnchorElement).href = studyUrl;
+                const startCta = document.getElementById("start-cta") as HTMLAnchorElement;
+                startCta.href = studyUrl;
+                startCta.textContent = (ui.startLearning || "Start learning") + " →";
             }
 
             if (activeView === "landing" && savedLang && savedMT) {
