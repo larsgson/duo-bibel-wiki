@@ -61,6 +61,7 @@ const heroLocales = [
     "arb",
     "ron",
     "swe",
+    "nor",
 ];
 const heroTranslations: Record<string, Record<string, string>> = {};
 for (const loc of heroLocales) {
@@ -129,12 +130,14 @@ const tplImageUrl = tplImageBase && tplImageFile && tplMediumPattern
     ? `${tplImageBase}/${tplMediumPattern.replace("{filename}", tplImageFile)}`
     : tplImageRaw ? `/.netlify/images?url=${encodeURIComponent(tplImageRaw)}&w=600` : "";
 
-// Read localized template info for all supported UI locales
+// Read all available template locale files (independent of UI locales)
 const tplLocales: Record<string, { title: string; description: string }> = {};
-for (const loc of heroLocales) {
-    const locFile = path.join(process.cwd(), `src/data/templates/${defaultTemplate}/locales`, `${loc}.toml`);
-    if (fs.existsSync(locFile)) {
-        const locData = parse(fs.readFileSync(locFile, "utf-8")) as any;
+const tplLocalesDir = path.join(process.cwd(), `src/data/templates/${defaultTemplate}/locales`);
+if (fs.existsSync(tplLocalesDir)) {
+    for (const file of fs.readdirSync(tplLocalesDir)) {
+        if (!file.endsWith(".toml")) continue;
+        const loc = file.replace(".toml", "");
+        const locData = parse(fs.readFileSync(path.join(tplLocalesDir, file), "utf-8")) as any;
         tplLocales[loc] = {
             title: locData.title || "The Gospel of John",
             description: locData.description || "",
@@ -1236,6 +1239,9 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 ar: "arb",
                 ro: "ron",
                 sv: "swe",
+                no: "nor",
+                nb: "nor",
+                nn: "nor",
             };
             const allI18n = JSON.parse(
                 document.getElementById("hero-i18n")!.textContent!,
@@ -1462,9 +1468,21 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
 
             // Start view: languages selected but no continue state
             const tplLocales = JSON.parse(document.getElementById("tpl-locales")!.textContent!);
+            function resolveTplLocale(): Record<string, string> {
+                // 1. Learn language
+                if (savedLang && tplLocales[savedLang]) return tplLocales[savedLang];
+                // 2. Browser language
+                const browserLang = (navigator.language || "en").split("-")[0].toLowerCase();
+                const bl = LANG_MAP[browserLang];
+                if (bl && tplLocales[bl]) return tplLocales[bl];
+                // 3. Mother tongue
+                if (savedMT && tplLocales[savedMT]) return tplLocales[savedMT];
+                // 4. English fallback
+                return tplLocales["eng"] || {};
+            }
             function setupStartView() {
                 const studyUrl = `/${savedLang}/${savedMT}/${defaultBook}/`;
-                const tplLoc = tplLocales[loc] || tplLocales["eng"] || {};
+                const tplLoc = resolveTplLocale();
                 document.getElementById("start-title")!.textContent = tplLoc.title || "The Gospel of John";
                 document.getElementById("start-langs")!.textContent = `${getVern(savedLang)} \u2190 ${getVern(savedMT)}`;
                 document.getElementById("start-description")!.textContent = tplLoc.description || "";
