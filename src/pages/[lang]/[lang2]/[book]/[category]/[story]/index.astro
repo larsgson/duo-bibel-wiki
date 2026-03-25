@@ -687,11 +687,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
 
         function imgProxy(url, w) {
             if (!url) return url;
-            // Use Netlify Image CDN when configured (thumbs_resize = "netlify")
-            if (CHAPTER.thumbsResize === "netlify") {
-                return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
-            }
-            // Use pre-sized medium images when template provides a medium pattern
+            // Prefer pre-sized images when template provides a medium pattern
             if (imageMediumPattern && url.startsWith(IMG_BASE) && IMG_BASE) {
                 const filename = url.substring(IMG_BASE.length).split("/").pop();
                 const medium = imageMediumPattern
@@ -699,7 +695,10 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                     .replace("{book}", filename.substring(0, 2));
                 return `${IMG_BASE}${medium}`;
             }
-            // Fallback: return original URL
+            // Fall back to Netlify Image CDN resize
+            if (CHAPTER.thumbsResize === "netlify") {
+                return `/.netlify/images?url=${encodeURIComponent(url)}&w=${w}`;
+            }
             return url;
         }
 

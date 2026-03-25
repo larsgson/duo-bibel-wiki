@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse } from "smol-toml";
 import langsData from "../data/ALL-langs-compact.json";
+import siteConfig from "../../site.config.json";
 import { useTranslations } from "../i18n";
 import { defaultTemplate, defaultTemplateSlug } from "../config";
 
@@ -119,10 +120,14 @@ const tplThemeFile = tplToml.layout_theme;
 const tplThemeCSS = tplThemeFile
     ? fs.readFileSync(path.join(process.cwd(), `src/data/templates/${defaultTemplate}`, tplThemeFile), "utf-8")
     : "";
-const tplImageBase = tplToml.images?.base_url || "";
+const tplImageBase = (siteConfig as any).imageOverrides?.[defaultTemplate]?.base_url || tplToml.images?.base_url || "";
+const tplMediumPattern = tplToml.images?.medium_pattern || "";
 const tplImageFile = tplToml.image?.filename || "";
 const tplImageRaw = tplImageBase && tplImageFile ? `${tplImageBase}/${tplImageFile}` : "";
-const tplImageUrl = tplImageRaw ? `/.netlify/images?url=${encodeURIComponent(tplImageRaw)}&w=600` : "";
+// Prefer pre-sized image, fall back to Netlify CDN resize
+const tplImageUrl = tplImageBase && tplImageFile && tplMediumPattern
+    ? `${tplImageBase}/${tplMediumPattern.replace("{filename}", tplImageFile)}`
+    : tplImageRaw ? `/.netlify/images?url=${encodeURIComponent(tplImageRaw)}&w=600` : "";
 
 // Read localized template info for all supported UI locales
 const tplLocales: Record<string, { title: string; description: string }> = {};

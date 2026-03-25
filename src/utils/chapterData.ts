@@ -1,6 +1,7 @@
 import langsData from "../data/ALL-langs-compact.json";
 import imageIndex from "../generated/image-index.json";
 import languageStyles from "../data/language-styles.json";
+import siteConfig from "../../site.config.json";
 import fs from "node:fs";
 import path from "node:path";
 import { parse as parseToml } from "smol-toml";
@@ -528,8 +529,9 @@ export function getTemplateImageConfig(templateName: string): TemplateImageConfi
   const defaultConfig: TemplateImageConfig = { baseUrl: "", pathPattern: "{filename}", mediumPattern: "", thumbsPattern: "", thumbsResize: "", cropPercent: 0 };
   if (fs.existsSync(tomlPath)) {
     const data = parseToml(fs.readFileSync(tomlPath, "utf-8")) as any;
+    const overrides = (siteConfig as any).imageOverrides?.[templateName];
     const config: TemplateImageConfig = {
-      baseUrl: data.images?.base_url || "",
+      baseUrl: overrides?.base_url || data.images?.base_url || "",
       pathPattern: data.images?.path_pattern || "{filename}",
       mediumPattern: data.images?.medium_pattern || "",
       thumbsPattern: data.images?.thumbs_pattern || "",
