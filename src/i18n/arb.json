@@ -21,7 +21,7 @@
   "textNotAvailable": "النص غير متوفر",
   "heroTagline": "تعلّم اللغات بسهولة",
   "heroHeadline": "تجربة التعلّم متعدد اللغات الفريدة",
-  "heroSub": "استمع بـ {primary} لغة - مع تمارين بـ {secondary} لغة أم",
+  "heroSub": "استمع بـ {learnCount} لغة - مع تمارين بـ {mtCount} لغة أم",
   "selectMotherTongue": "اختيار اللغة الأم",
   "selectLanguageToLearn": "اختيار لغة للتعلّم",
   "searchPlaceholder": "...ابحث بالاسم أو الاسم المحلي أو الرمز",

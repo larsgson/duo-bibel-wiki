@@ -21,7 +21,7 @@
   "textNotAvailable": "Text indisponibil",
   "heroTagline": "Învățarea ușoară a limbilor",
   "heroHeadline": "Experiența de învățare multilingvă de neegalat",
-  "heroSub": "Ascultă în {primary} limbi - cu exerciții în {secondary} limbi materne",
+  "heroSub": "Ascultă în {learnCount} limbi - cu exerciții în {mtCount} limbi materne",
   "selectMotherTongue": "Alege limba maternă",
   "selectLanguageToLearn": "Alege limba de învățat",
   "searchPlaceholder": "Caută după nume, nume vernacular sau cod...",

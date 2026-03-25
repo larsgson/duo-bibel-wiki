@@ -7,7 +7,7 @@ import { useTranslations } from "../i18n";
 import { defaultTemplate, defaultTemplateSlug } from "../config";
 
 const base = "src/data/ALL-langs-data/nt";
-const dirs = ["with-timecode", "audio-with-timecode"];
+const dirs = ["with-timecode"];
 const learnCodes = new Set<string>();
 
 for (const dir of dirs) {
@@ -42,13 +42,9 @@ const wt = langsData.canons.nt["with-timecode"] as Record<
     string,
     { n?: string; v?: string }
 >;
-const awt = langsData.canons.nt["audio-with-timecode"] as Record<
-    string,
-    { n?: string; v?: string }
->;
 
 const languages = [...learnCodes].sort().map((code) => {
-    const info = wt[code] || awt[code] || {};
+    const info = wt[code] || {};
     return { code, name: info.n || code, vernacular: info.v || "" };
 });
 
@@ -63,6 +59,7 @@ const heroLocales = [
     "hin",
     "arb",
     "ron",
+    "swe",
 ];
 const heroTranslations: Record<string, Record<string, string>> = {};
 for (const loc of heroLocales) {
@@ -71,8 +68,8 @@ for (const loc of heroLocales) {
         heroTagline: t("heroTagline"),
         heroHeadline: t("heroHeadline"),
         heroSub: t("heroSub")
-            .replace("{primary}", String(learnCount))
-            .replace("{secondary}", mtCount.toLocaleString("en-US")),
+            .replace("{learnCount}", String(learnCount))
+            .replace("{mtCount}", mtCount.toLocaleString("en-US")),
         selectMotherTongue: t("selectMotherTongue"),
         selectLanguageToLearn: t("selectLanguageToLearn"),
         searchPlaceholder: t("searchPlaceholder"),
@@ -124,7 +121,8 @@ const tplThemeCSS = tplThemeFile
     : "";
 const tplImageBase = tplToml.images?.base_url || "";
 const tplImageFile = tplToml.image?.filename || "";
-const tplImageUrl = tplImageBase && tplImageFile ? `${tplImageBase}/${tplImageFile}` : "";
+const tplImageRaw = tplImageBase && tplImageFile ? `${tplImageBase}/${tplImageFile}` : "";
+const tplImageUrl = tplImageRaw ? `/.netlify/images?url=${encodeURIComponent(tplImageRaw)}&w=600` : "";
 
 // Read localized template info for all supported UI locales
 const tplLocales: Record<string, { title: string; description: string }> = {};
@@ -589,6 +587,49 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 background: rgba(110, 168, 254, 0.25);
                 color: #6ea8fe;
                 border-radius: 2px;
+            }
+
+            /* ── Quick-pick chips ── */
+            .chips-section {
+                padding: 0.25rem 0;
+            }
+            :global(.chips-row) {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            :global(.lang-chip) {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.5rem 0.85rem;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 20px;
+                color: var(--text);
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            :global(.lang-chip:hover) {
+                background: rgba(255, 255, 255, 0.18);
+                border-color: rgba(110, 168, 254, 0.5);
+            }
+            :global(.lang-chip.selected) {
+                background: #5b9bd5;
+                border-color: #5b9bd5;
+                color: #fff;
+            }
+            :global(.chip-code) {
+                font-size: 0.7rem;
+                font-family: monospace;
+                color: var(--text-muted);
+            }
+            .type-more-hint {
+                text-align: center;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                padding: 2rem 1rem;
             }
 
             /* ── Continue view (hero card) ── */
@@ -1151,7 +1192,11 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                     <p class="count" id="count"></p>
                 </div>
                 <div class="modal-body">
-                    <div class="grid" id="grid"></div>
+                    <div class="chips-section" id="chips-section">
+                        <div class="chips-row" id="chips-row"></div>
+                        <p class="type-more-hint" id="type-more-hint"></p>
+                    </div>
+                    <div class="grid" id="grid" style="display:none"></div>
                     <p class="no-results" id="no-results" style="display:none">
                     </p>
                 </div>
@@ -1165,7 +1210,16 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
             set:html={langDataJSON}
         />
         <script>
-            // Localise UI based on browser language
+            // ── Language data ──
+            const langData = JSON.parse(
+                document.getElementById("lang-data")!.textContent!,
+            );
+            const learnLangs = langData.learn;
+            const mtLangs = langData.mt;
+            const defaultBook = langData.defaultBook;
+
+            // ── UI locale resolution ──
+            // Priority: learn language → browser language → mother tongue → English
             const LANG_MAP: Record<string, string> = {
                 en: "eng",
                 fr: "fra",
@@ -1176,45 +1230,47 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 hi: "hin",
                 ar: "arb",
                 ro: "ron",
+                sv: "swe",
             };
             const allI18n = JSON.parse(
                 document.getElementById("hero-i18n")!.textContent!,
             );
-            const browserLang = (navigator.language || "en")
-                .split("-")[0]
-                .toLowerCase();
-            const loc = LANG_MAP[browserLang];
-            const ui = (loc && allI18n[loc]) || allI18n["eng"] || {};
+            function resolveUILocale(): string {
+                // 1. Selected learn language
+                const sl = localStorage.getItem("selectedLang") || "";
+                if (sl && allI18n[sl]) return sl;
+                // 2. Browser language
+                const browserLang = (navigator.language || "en").split("-")[0].toLowerCase();
+                const bl = LANG_MAP[browserLang];
+                if (bl && allI18n[bl]) return bl;
+                // 3. Selected mother tongue
+                const sm = localStorage.getItem("selectedMT") || "";
+                if (sm && allI18n[sm]) return sm;
+                // 4. English fallback
+                return "eng";
+            }
+            const loc = resolveUILocale();
+            const ui = allI18n[loc] || allI18n["eng"] || {};
 
             try {
-                if (loc && allI18n[loc]) {
-                    document.getElementById("hero-tagline")!.textContent =
-                        ui.heroTagline;
-                    document.getElementById("hero-headline")!.textContent =
-                        ui.heroHeadline;
-                    document.getElementById("hero-sub")!.textContent =
-                        ui.heroSub;
-                    document.getElementById("hero-cta-text")!.textContent =
-                        ui.selectLanguageToLearn;
-                    document.getElementById(
-                        "screenshots-heading",
-                    )!.textContent = ui.screenshotHeading;
-                    document.getElementById("caption-1")!.textContent =
-                        ui.screenshotSelectStory;
-                    document.getElementById("caption-2")!.textContent =
-                        ui.screenshotSelectExercise;
-                    document.getElementById("caption-3")!.textContent =
-                        ui.screenshotContinue;
-                }
+                document.getElementById("hero-tagline")!.textContent =
+                    ui.heroTagline;
+                document.getElementById("hero-headline")!.textContent =
+                    ui.heroHeadline;
+                document.getElementById("hero-sub")!.textContent =
+                    ui.heroSub;
+                document.getElementById("hero-cta-text")!.textContent =
+                    ui.selectLanguageToLearn;
+                document.getElementById(
+                    "screenshots-heading",
+                )!.textContent = ui.screenshotHeading;
+                document.getElementById("caption-1")!.textContent =
+                    ui.screenshotSelectStory;
+                document.getElementById("caption-2")!.textContent =
+                    ui.screenshotSelectExercise;
+                document.getElementById("caption-3")!.textContent =
+                    ui.screenshotContinue;
             } catch (e) {}
-
-            // ── Language data ──
-            const langData = JSON.parse(
-                document.getElementById("lang-data")!.textContent!,
-            );
-            const learnLangs = langData.learn;
-            const mtLangs = langData.mt;
-            const defaultBook = langData.defaultBook;
 
             // Build code → vernacular lookup
             const vernMap: Record<string, string> = {};
@@ -1426,26 +1482,40 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
             const modalTitle = document.getElementById("modal-title")!;
             const selectedBadge = document.getElementById("selected-badge")!;
             const stepIndicator = document.getElementById("step-indicator")!;
-            const search = document.getElementById(
-                "search",
-            ) as HTMLInputElement;
+            const search = document.getElementById("search") as HTMLInputElement;
             const grid = document.getElementById("grid")!;
             const countEl = document.getElementById("count")!;
             const noResults = document.getElementById("no-results")!;
+            const chipsSection = document.getElementById("chips-section")!;
+            const chipsRow = document.getElementById("chips-row")!;
+            const typeMoreHint = document.getElementById("type-more-hint")!;
             noResults.textContent = ui.noLanguagesFound || "No languages found";
 
+            // ── Popular language codes (most-spoken) ──
+            const POPULAR_CODES = ["eng", "cmn", "hin", "spa", "fra", "arb", "por"];
+
+            // ── Recent selections from localStorage ──
+            function getRecent(key: string): Array<{code: string; name: string; vernacular: string}> {
+                try {
+                    return JSON.parse(localStorage.getItem(key) || "[]");
+                } catch { return []; }
+            }
+            function saveRecent(key: string, entry: {code: string; name: string; vernacular: string}) {
+                const recent = getRecent(key).filter(r => r.code !== entry.code);
+                recent.unshift(entry);
+                if (recent.length > 7) recent.length = 7;
+                localStorage.setItem(key, JSON.stringify(recent));
+            }
+
             // ── Modal state ──
-            // modalMode controls what happens after picking:
-            //   "full"      = first-time flow: step1 → step2 → navigate
-            //   "learn-only" = changing learn lang: step1 → navigate immediately
-            //   "mt-only"   = changing MT: step2 → navigate immediately
             let step = 1;
             let modalMode: "full" | "learn-only" | "mt-only" = "full";
-            let selectedPrimary: {
+            let selectedLearnLang: {
                 code: string;
                 name: string;
                 vernacular: string;
             } | null = null;
+            let currentLangs: typeof learnLangs = [];
 
             // ── Navigation helper ──
             function navigateToStudy(learnCode: string, mtCode: string) {
@@ -1454,7 +1524,36 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 window.location.href = `/${learnCode}/${mtCode}/${defaultBook}/`;
             }
 
-            // ── Grid rendering ──
+            // ── Chip rendering ──
+            function makeChip(lang: {code: string; name: string; vernacular: string}, selectedCode: string): string {
+                const isSel = lang.code === selectedCode;
+                const cls = isSel ? "lang-chip selected" : "lang-chip";
+                const check = isSel ? " ✓" : "";
+                return `<button class="${cls}" data-code="${lang.code}" data-name="${lang.name}" data-vernacular="${lang.vernacular || ""}"><span class="chip-code">${lang.code}</span> ${lang.vernacular || lang.name}${check}</button>`;
+            }
+
+            function renderChips(langs: typeof learnLangs, recentKey: string) {
+                const selCode = step === 1 ? savedLang : savedMT;
+                const langSet = new Set(langs.map((l: any) => l.code));
+                // Recent first, then popular (deduped)
+                const recent = getRecent(recentKey).filter(r => langSet.has(r.code));
+                const seen = new Set(recent.map(r => r.code));
+                const popular = POPULAR_CODES
+                    .filter(c => langSet.has(c) && !seen.has(c))
+                    .map(c => langs.find((l: any) => l.code === c)!)
+                    .filter(Boolean);
+                popular.forEach(p => seen.add(p.code));
+                // Always include currently selected language as a chip
+                const all = [...recent, ...popular];
+                if (selCode && langSet.has(selCode) && !seen.has(selCode)) {
+                    const selLang = langs.find((l: any) => l.code === selCode);
+                    if (selLang) all.unshift(selLang);
+                }
+                chipsRow.innerHTML = all.map(l => makeChip(l, selCode)).join("");
+                typeMoreHint.textContent = "Type 2+ characters to search all " + langs.length + " languages";
+            }
+
+            // ── Grid rendering (hidden by default) ──
             function renderGrid(langs: typeof learnLangs) {
                 let html = "";
                 for (const lang of langs) {
@@ -1464,11 +1563,13 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                     html += `<div class="lang-item" data-code="${lang.code}" data-name="${lang.name}" data-vernacular="${lang.vernacular || ""}"><span class="lang-code">${lang.code}</span><span class="lang-name">${lang.name}</span>${vern}</div>`;
                 }
                 grid.innerHTML = html;
-                countEl.textContent = (
-                    ui.languageCount || "{count} languages"
-                ).replace("{count}", String(langs.length));
+            }
+
+            function showChipsView() {
+                chipsSection.style.display = "";
+                grid.style.display = "none";
                 noResults.style.display = "none";
-                grid.style.display = "";
+                countEl.textContent = (ui.languageCount || "{count} languages").replace("{count}", String(currentLangs.length));
             }
 
             function showStep(s: number) {
@@ -1493,52 +1594,62 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                         ui.selectLanguageToLearn || "Select language to learn";
                     backBtn.style.display = "none";
                     selectedBadge.style.display = "none";
+                    currentLangs = learnLangs;
                     renderGrid(learnLangs);
+                    renderChips(learnLangs, "recentLearnLangs");
                 } else {
                     modalTitle.textContent =
                         ui.selectMotherTongue || "Select mother-tongue";
                     backBtn.style.display = modalMode === "full" ? "" : "none";
-                    if (selectedPrimary) {
+                    if (selectedLearnLang) {
                         selectedBadge.style.display = "flex";
-                        const label = selectedPrimary.vernacular
-                            ? `${selectedPrimary.name} - ${selectedPrimary.vernacular}`
-                            : selectedPrimary.name;
+                        const label = selectedLearnLang.vernacular
+                            ? `${selectedLearnLang.name} - ${selectedLearnLang.vernacular}`
+                            : selectedLearnLang.name;
                         selectedBadge.textContent = (
                             ui.learningLangBadge || "Learning: {label}"
                         ).replace("{label}", label);
                     } else {
                         selectedBadge.style.display = "none";
                     }
+                    currentLangs = mtLangs;
                     renderGrid(mtLangs);
+                    renderChips(mtLangs, "recentMTLangs");
                 }
+                showChipsView();
                 search.focus();
             }
 
-            // ── Grid click handler ──
-            grid.addEventListener("click", (e) => {
-                const item = (e.target as HTMLElement).closest(
-                    ".lang-item",
-                ) as HTMLElement | null;
-                if (!item) return;
-                const code = item.dataset.code!;
-                const name = item.dataset.name!;
-                const vernacular = item.dataset.vernacular || "";
-
+            // ── Selection handler (shared by grid items and chips) ──
+            function handleLangSelection(code: string, name: string, vernacular: string) {
                 if (step === 1) {
-                    selectedPrimary = { code, name, vernacular };
+                    selectedLearnLang = { code, name, vernacular };
+                    saveRecent("recentLearnLangs", { code, name, vernacular });
                     if (modalMode === "learn-only" && savedMT) {
-                        // Changing learn lang only → navigate immediately with existing MT
                         navigateToStudy(code, savedMT);
                     } else {
-                        // Full flow or no MT saved → advance to step 2
                         modalMode = "full";
                         showStep(2);
                     }
                 } else {
-                    // Step 2: MT picked → navigate
-                    const learnCode = selectedPrimary ? selectedPrimary.code : savedLang;
+                    saveRecent("recentMTLangs", { code, name, vernacular });
+                    const learnCode = selectedLearnLang ? selectedLearnLang.code : savedLang;
                     navigateToStudy(learnCode, code);
                 }
+            }
+
+            // ── Grid click handler ──
+            grid.addEventListener("click", (e) => {
+                const item = (e.target as HTMLElement).closest(".lang-item") as HTMLElement | null;
+                if (!item) return;
+                handleLangSelection(item.dataset.code!, item.dataset.name!, item.dataset.vernacular || "");
+            });
+
+            // ── Chips click handler ──
+            chipsSection.addEventListener("click", (e) => {
+                const chip = (e.target as HTMLElement).closest(".lang-chip") as HTMLElement | null;
+                if (!chip) return;
+                handleLangSelection(chip.dataset.code!, chip.dataset.name!, chip.dataset.vernacular || "");
             });
 
             // ── Modal open/close ──
@@ -1563,12 +1674,10 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
             // Header button: click MT → open modal for MT only
             document.getElementById("btn-mt-lang")!.addEventListener("click", () => {
                 if (savedLang) {
-                    // Find learn lang info for the badge
                     const info = learnLangs.find((l: any) => l.code === savedLang);
-                    if (info) selectedPrimary = info;
+                    if (info) selectedLearnLang = info;
                     openModal("mt-only");
                 } else {
-                    // No learn lang yet, start full flow
                     openModal("full");
                 }
             });
@@ -1584,6 +1693,22 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
                 if (e.key === "Escape") closeModal();
             });
 
+            // Auto-open modal from ?select=learn or ?select=mt query param
+            const urlSelect = new URLSearchParams(window.location.search).get("select");
+            if (urlSelect === "learn") {
+                openModal(savedMT ? "learn-only" : "full");
+                history.replaceState(null, "", "/");
+            } else if (urlSelect === "mt") {
+                if (savedLang) {
+                    const info = learnLangs.find((l: any) => l.code === savedLang);
+                    if (info) selectedLearnLang = info;
+                    openModal("mt-only");
+                } else {
+                    openModal("full");
+                }
+                history.replaceState(null, "", "/");
+            }
+
             // ── Search filtering ──
             function escapeRegex(s: string) {
                 return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1597,31 +1722,20 @@ const tplLocalesJSON = JSON.stringify(tplLocales);
             }
 
             search.addEventListener("input", () => {
-                const items = [
-                    ...grid.querySelectorAll<HTMLElement>(".lang-item"),
-                ];
-                const total = items.length;
                 const term = search.value.trim().toLowerCase();
 
-                if (!term) {
-                    items.forEach((el) => {
-                        el.style.display = "";
-                        el.querySelector(".lang-code")!.textContent =
-                            el.dataset.code!;
-                        el.querySelector(".lang-name")!.textContent =
-                            el.dataset.name!;
-                        const vEl = el.querySelector(".lang-vernacular");
-                        if (vEl)
-                            vEl.textContent = ` - ${el.dataset.vernacular!}`;
-                    });
-                    countEl.textContent = (
-                        ui.languageCount || "{count} languages"
-                    ).replace("{count}", String(total));
-                    noResults.style.display = "none";
-                    grid.style.display = "";
+                if (term.length < 2) {
+                    // Show chips, hide grid
+                    showChipsView();
                     return;
                 }
 
+                // Hide chips, show filtered grid
+                chipsSection.style.display = "none";
+                grid.style.display = "";
+
+                const items = [...grid.querySelectorAll<HTMLElement>(".lang-item")];
+                const total = items.length;
                 const regex = new RegExp(`(${escapeRegex(term)})`, "gi");
                 let visible = 0;
 

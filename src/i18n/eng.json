@@ -21,7 +21,7 @@
   "textNotAvailable": "Text not available",
   "heroTagline": "Easy language learning",
   "heroHeadline": "The unmatched multilingual learning experience",
-  "heroSub": "Listen to any of {primary} languages - with exercises in {secondary} mother-tongues",
+  "heroSub": "Listen to any of {learnCount} languages - with exercises in {mtCount} mother-tongues",
   "selectMotherTongue": "Select mother-tongue",
   "selectLanguageToLearn": "Select language to learn",
   "searchPlaceholder": "Search by language name, vernacular, or code...",
