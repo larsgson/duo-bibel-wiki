@@ -32,7 +32,7 @@ const { lang } = Astro.params;
 <body>
 <script is:inline define:vars={{ lang }}>
     localStorage.setItem("selectedLang", lang);
-    window.location.replace("/");
+    window.location.replace("/?select=mt");
 </script>
 </body>
 </html>
