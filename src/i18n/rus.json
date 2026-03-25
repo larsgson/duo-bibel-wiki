@@ -21,7 +21,7 @@
   "textNotAvailable": "Текст недоступен",
   "heroTagline": "Простое изучение языков",
   "heroHeadline": "Непревзойдённый многоязычный опыт обучения",
-  "heroSub": "Слушайте на {primary} языках - с упражнениями на {secondary} родных языках",
+  "heroSub": "Слушайте на {learnCount} языках - с упражнениями на {mtCount} родных языках",
   "selectMotherTongue": "Выбрать родной язык",
   "selectLanguageToLearn": "Выбрать язык для изучения",
   "searchPlaceholder": "Поиск по названию, местному названию или коду...",

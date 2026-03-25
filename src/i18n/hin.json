@@ -21,7 +21,7 @@
   "textNotAvailable": "पाठ उपलब्ध नहीं है",
   "heroTagline": "आसान भाषा सीखना",
   "heroHeadline": "अद्वितीय बहुभाषी सीखने का अनुभव",
-  "heroSub": "{primary} भाषाओं में सुनें - {secondary} मातृभाषाओं में अभ्यास के साथ",
+  "heroSub": "{learnCount} भाषाओं में सुनें - {mtCount} मातृभाषाओं में अभ्यास के साथ",
   "selectMotherTongue": "मातृभाषा चुनें",
   "selectLanguageToLearn": "सीखने की भाषा चुनें",
   "searchPlaceholder": "नाम, स्थानीय नाम या कोड से खोजें...",

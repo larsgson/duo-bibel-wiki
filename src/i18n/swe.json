@@ -21,7 +21,7 @@
   "textNotAvailable": "Text ej tillgänglig",
   "heroTagline": "Enkelt språklärande",
   "heroHeadline": "Den oöverträffade flerspråkiga lärandeupplevelsen",
-  "heroSub": "Lyssna på något av {primary} språk - med övningar på {secondary} modersmål",
+  "heroSub": "Lyssna på något av {learnCount} språk - med övningar på {mtCount} modersmål",
   "selectMotherTongue": "Välj modersmål",
   "selectLanguageToLearn": "Välj språk att lära dig",
   "searchPlaceholder": "Sök efter språknamn, egennamn eller kod...",

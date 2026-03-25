@@ -21,7 +21,7 @@
   "textNotAvailable": "Text nicht verfügbar",
   "heroTagline": "Einfaches Sprachenlernen",
   "heroHeadline": "Das unvergleichliche mehrsprachige Lernerlebnis",
-  "heroSub": "Höre in {primary} Sprachen - mit Übungen in {secondary} Muttersprachen",
+  "heroSub": "Höre in {learnCount} Sprachen - mit Übungen in {mtCount} Muttersprachen",
   "selectMotherTongue": "Muttersprache wählen",
   "selectLanguageToLearn": "Lernsprache wählen",
   "searchPlaceholder": "Suche nach Sprachname, Eigenname oder Code...",
