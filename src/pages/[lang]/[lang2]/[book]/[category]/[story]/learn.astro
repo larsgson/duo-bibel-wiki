@@ -1155,7 +1155,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                         <button
                             class="verse-info-btn peek-btn"
                             id="peek-btn"
-                            aria-label="Peek at learn text"
+                            aria-label="Toggle peek at learn text"
                         >
                             <svg
                                 viewBox="0 0 24 24"
@@ -1169,6 +1169,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                                     d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
                                 ></path>
                                 <circle cx="12" cy="12" r="3"></circle>
+                                <line id="peek-slash" x1="2" y1="2" x2="22" y2="22" style="display:none"></line>
                             </svg>
                         </button>
                         <button class="verse-info-btn learn-play-btn" id="slow-btn" title="Play slowly (half speed)">🐢</button>
@@ -1681,6 +1682,12 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         // ══════════════════════════════════════════
         let isPlaying = false;
         let peekTimer = null;
+        let peekEnabled = localStorage.getItem("peekEnabled") !== "false"; // ON by default
+        const peekSlash = document.getElementById("peek-slash");
+        function updatePeekIcon() {
+            if (peekSlash) peekSlash.style.display = peekEnabled ? "none" : "";
+        }
+        updatePeekIcon();
         const VALID_EXERCISES = new Set(EXERCISES.map((e) => e.id));
         const hashExercise = location.hash.slice(1);
         const savedExercise = localStorage.getItem("activeExercise");
@@ -2766,6 +2773,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
 
         let audioPeekActive = false;
         function showAudioPeek() {
+            if (!peekEnabled) return;
             if (peekTimer) { clearTimeout(peekTimer); peekTimer = null; }
             audioPeekActive = true;
             peekOverlay.classList.add("visible");
@@ -2890,14 +2898,27 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             }
         });
 
-        // Peek
+        // Peek toggle
         peekBtn.addEventListener("click", () => {
-            if (peekTimer) clearTimeout(peekTimer);
-            peekOverlay.classList.add("visible");
-            peekTimer = setTimeout(() => {
+            const wasEnabled = peekEnabled;
+            peekEnabled = !peekEnabled;
+            localStorage.setItem("peekEnabled", String(peekEnabled));
+            updatePeekIcon();
+
+            if (!wasEnabled && peekEnabled) {
+                // Turning ON: show peek briefly as confirmation (the "side effect" peek)
+                if (peekTimer) clearTimeout(peekTimer);
+                peekOverlay.classList.add("visible");
+                peekTimer = setTimeout(() => {
+                    if (!audioPeekActive) peekOverlay.classList.remove("visible");
+                    peekTimer = null;
+                }, 3000);
+            } else if (wasEnabled && !peekEnabled) {
+                // Turning OFF: hide any visible peek immediately
+                if (peekTimer) { clearTimeout(peekTimer); peekTimer = null; }
+                audioPeekActive = false;
                 peekOverlay.classList.remove("visible");
-                peekTimer = null;
-            }, 3000);
+            }
         });
 
         // Keyboard
