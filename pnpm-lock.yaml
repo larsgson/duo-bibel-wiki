@@ -14,6 +14,9 @@ importers:
       astro:
         specifier: ^5.18.0
         version: 5.18.0(@netlify/blobs@10.6.0)(@types/node@25.2.3)(jiti@2.6.1)(rollup@4.57.1)(typescript@5.9.3)(yaml@2.8.2)
+      soundtouchjs:
+        specifier: ^0.3.0
+        version: 0.3.0
     devDependencies:
       smol-toml:
         specifier: ^1.6.0
@@ -2964,6 +2967,9 @@ packages:
   smol-toml@1.6.0:
     resolution: {integrity: sha512-4zemZi0HvTnYwLfrpk/CF9LOd9Lt87kAt50GnqhMpyF9U3poDAP2+iukq2bZsO/ufegbYehBkqINbsWxj4l4cw==}
     engines: {node: '>= 18'}
+
+  soundtouchjs@0.3.0:
+    resolution: {integrity: sha512-P/+SwnIE4BLrMbYK8aB8+GfXRfLv3+BV8HFMrEqOuF0F9BsI3sKEN1T+kY/JqiVURcCQgr50BC8D/uVzE/GozQ==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -6856,6 +6862,8 @@ snapshots:
   slashes@3.0.12: {}
 
   smol-toml@1.6.0: {}
+
+  soundtouchjs@0.3.0: {}
 
   source-map-js@1.2.1: {}
 

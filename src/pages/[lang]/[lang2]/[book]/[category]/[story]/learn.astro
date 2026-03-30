@@ -239,7 +239,8 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: var(--overlay);
+            background: rgba(60, 60, 60, 0.75);
+            border: 1px solid rgba(0, 0, 0, 0.6);
             color: white;
             font-size: 0.85rem;
             display: flex;
@@ -249,10 +250,23 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             transition: background 0.2s;
         }
         .learn-verse-image-container:hover .learn-verse-image-play-icon {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(80, 80, 80, 0.85);
         }
         .learn-verse-image-container.playing .learn-verse-image-play-icon {
             background: rgba(76, 175, 80, 0.7);
+        }
+        .learn-play-btn {
+            font-size: 0.85rem;
+            line-height: 1;
+            color: var(--text-muted);
+        }
+        .learn-play-btn:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+        .learn-play-btn.playing {
+            color: var(--success);
+            border-color: var(--success);
         }
 
         /* ── Back link (inline, left of reference) ── */
@@ -1157,6 +1171,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
+                        <button class="verse-info-btn learn-play-btn" id="slow-btn" title="Play slowly (half speed)">🐢</button>
                         <span class="verse-info-spacer"></span>
                         <span class="verse-info-counter" id="verse-counter"
                         ></span>
@@ -1727,6 +1742,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         const imageContainer = document.getElementById("image-container");
         const verseImage = document.getElementById("verse-image");
         const playIcon = document.getElementById("play-icon");
+        const slowBtn = document.getElementById("slow-btn");
         const navPrev = document.getElementById("nav-prev");
         const navNext = document.getElementById("nav-next");
         const verseReference = document.getElementById("verse-reference");
@@ -2748,10 +2764,24 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (secPlayBtn) secPlayBtn.classList.remove("playing");
         }
 
+        let audioPeekActive = false;
+        function showAudioPeek() {
+            if (peekTimer) { clearTimeout(peekTimer); peekTimer = null; }
+            audioPeekActive = true;
+            peekOverlay.classList.add("visible");
+        }
+        function hideAudioPeek() {
+            if (audioPeekActive) {
+                audioPeekActive = false;
+                peekOverlay.classList.remove("visible");
+            }
+        }
+
         function onVerseEnded() {
             isPlaying = false;
             imageContainer.classList.remove("playing");
             playIcon.innerHTML = "&#9654;";
+            hideAudioPeek();
         }
 
         function playVerse() {
@@ -2763,6 +2793,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             isPlaying = true;
             imageContainer.classList.add("playing");
             playIcon.innerHTML = "&#9208;";
+            showAudioPeek();
             store.playExerciseVerse(VERSE.learnAudioUrl, VERSE.startTime, VERSE.endTime, onVerseEnded);
         }
 
@@ -2803,11 +2834,42 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         imageContainer.addEventListener("click", (e) => {
             if (
                 e.target.closest(".learn-nav-edge") ||
-                e.target.closest(".learn-back-btn")
+                e.target.closest(".learn-back-btn") ||
+                e.target.closest(".learn-play-btn")
             )
                 return;
             togglePlay();
         });
+
+        // Slow play button (SoundTouch time-stretch, pitch preserved)
+        let slowPlaying = false;
+        function onSlowEnded() {
+            slowPlaying = false;
+            if (slowBtn) slowBtn.classList.remove("playing");
+            hideAudioPeek();
+        }
+        if (slowBtn) {
+            slowBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const store = getStore();
+                if (!store) return;
+                if (slowPlaying) {
+                    store.stopExerciseAudio();
+                    onSlowEnded();
+                    return;
+                }
+                // Stop any other playback
+                if (isPlaying) { store.stopExerciseAudio(); onVerseEnded(); }
+                if (mtPlaying) stopSecondary();
+                stopWordAudio();
+                if (!VERSE.learnAudioUrl) return;
+                slowPlaying = true;
+                slowBtn.classList.add("playing");
+                showAudioPeek();
+                store.playExerciseVerse(VERSE.learnAudioUrl, VERSE.startTime, VERSE.endTime, onSlowEnded, true);
+            });
+        }
+
 
         // Swipe on image for navigation
         let touchStartX = null;

@@ -538,6 +538,80 @@ export async function playWordAudio(
   return true;
 }
 
+// ── Slow-mode (half-speed with pitch preservation via SoundTouch) ──
+
+import { SoundTouch, SimpleFilter, WebAudioBufferSource } from "soundtouchjs";
+
+let stretchedCache: { url: string; start: number; end: number; buf: AudioBuffer } | null = null;
+
+/**
+ * Time-stretch a segment using SoundTouch's WSOLA algorithm.
+ * Extracts the segment, runs it through SoundTouch at tempo=0.5,
+ * and returns a new AudioBuffer at the original pitch.
+ */
+function timeStretchBuffer(
+  audioCtx: AudioContext,
+  srcBuf: AudioBuffer,
+  startTime: number,
+  endTime: number,
+  stretchFactor: number,
+): AudioBuffer {
+  const sampleRate = srcBuf.sampleRate;
+  const channels = srcBuf.numberOfChannels;
+  const startSample = Math.floor(startTime * sampleRate);
+  const endSample = Math.min(Math.ceil(endTime * sampleRate), srcBuf.length);
+  const inputLen = endSample - startSample;
+
+  // Create a temporary AudioBuffer containing just the segment
+  const segBuf = audioCtx.createBuffer(channels, inputLen, sampleRate);
+  for (let ch = 0; ch < channels; ch++) {
+    const src = srcBuf.getChannelData(ch);
+    const dst = segBuf.getChannelData(ch);
+    for (let i = 0; i < inputLen; i++) {
+      dst[i] = src[startSample + i];
+    }
+  }
+
+  // Set up SoundTouch pipeline
+  const st = new SoundTouch();
+  st.tempo = 1.0 / stretchFactor; // 0.5 for 2x stretch
+  const source = new WebAudioBufferSource(segBuf);
+  const filter = new SimpleFilter(source, st);
+
+  // Extract all processed samples (interleaved stereo)
+  const outputLen = Math.ceil(inputLen * stretchFactor);
+  const BATCH = 4096;
+  const batches: Float32Array[] = [];
+  let totalFrames = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const batch = new Float32Array(BATCH * 2);
+    const extracted = filter.extract(batch, BATCH);
+    if (extracted === 0) break;
+    batches.push(batch);
+    totalFrames += extracted;
+    // Safety limit to prevent infinite loops
+    if (totalFrames > outputLen * 2) break;
+  }
+
+  // De-interleave into an AudioBuffer
+  const outBuf = audioCtx.createBuffer(channels, totalFrames, sampleRate);
+  const left = outBuf.getChannelData(0);
+  const right = channels > 1 ? outBuf.getChannelData(1) : null;
+  let writePos = 0;
+  for (const batch of batches) {
+    const framesInBatch = Math.min(BATCH, totalFrames - writePos);
+    for (let i = 0; i < framesInBatch; i++) {
+      left[writePos + i] = batch[i * 2];
+      if (right) right[writePos + i] = batch[i * 2 + 1];
+    }
+    writePos += framesInBatch;
+  }
+
+  return outBuf;
+}
+
 // ── Exercise playback (Web Audio API for sample accuracy) ──
 
 let exerciseSource: AudioBufferSourceNode | null = null;
@@ -570,6 +644,7 @@ export async function playExerciseVerse(
   startTime: number,
   endTime: number,
   onEnded?: () => void,
+  slow?: boolean,
 ): Promise<boolean> {
   stopExerciseAudio();
   stopWordAudio();
@@ -585,14 +660,39 @@ export async function playExerciseVerse(
   const audioCtx = getCtx();
   if (audioCtx.state === "suspended") await audioCtx.resume();
 
+  let playBuffer: AudioBuffer;
+  let playStart: number;
+  let duration: number;
+
+  if (slow) {
+    // Use cached stretched buffer if same segment
+    if (
+      stretchedCache &&
+      stretchedCache.url === audioUrl &&
+      stretchedCache.start === startTime &&
+      stretchedCache.end === endTime
+    ) {
+      playBuffer = stretchedCache.buf;
+    } else {
+      playBuffer = timeStretchBuffer(audioCtx, buffer, startTime, endTime, 2);
+      stretchedCache = { url: audioUrl, start: startTime, end: endTime, buf: playBuffer };
+    }
+    // Stretched buffer contains only the segment, play from start
+    playStart = 0;
+    duration = playBuffer.duration;
+  } else {
+    playBuffer = buffer;
+    playStart = startTime;
+    duration = Math.max(endTime - startTime, 0.01);
+  }
+
   const source = audioCtx.createBufferSource();
-  source.buffer = buffer;
+  source.buffer = playBuffer;
   source.connect(audioCtx.destination);
   exerciseSource = source;
   exercisePlaying = true;
 
-  const duration = Math.max(endTime - startTime, 0.01);
-  source.start(0, startTime, duration);
+  source.start(0, playStart, duration);
 
   let ended = false;
   const handleEnd = () => {
