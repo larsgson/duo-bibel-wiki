@@ -203,10 +203,10 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         /* ── Mode FAB ── */
         .mode-fab {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
+            top: 16px;
+            left: 16px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: none;
             background: #555;
@@ -224,8 +224,8 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         .mode-fab:active { transform: scale(0.93); }
         .fab-ring {
             position: absolute;
-            width: 56px;
-            height: 56px;
+            width: 44px;
+            height: 44px;
             transform: rotate(-90deg);
         }
         .fab-ring-bg {
@@ -249,14 +249,14 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             align-items: center;
             justify-content: center;
         }
-        .fab-icon svg { width: 24px; height: 24px; }
+        .fab-icon svg { width: 20px; height: 20px; }
         /* ── Verse completion check ── */
         .verse-done-check {
             position: absolute;
-            top: -8px;
-            right: 6px;
-            width: 20px;
-            height: 20px;
+            top: -6px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: var(--success-bright);
             display: flex;
@@ -269,10 +269,82 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             width: 12px;
             height: 12px;
         }
+        /* ── FAB menu popover ── */
+        .fab-menu-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+        }
+        .fab-menu-backdrop.visible { display: block; }
+        .fab-menu {
+            position: fixed;
+            top: 66px;
+            left: 16px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 0.5rem;
+            z-index: 1001;
+            box-shadow: 0 8px 24px var(--shadow-strong);
+            display: none;
+            min-width: 200px;
+        }
+        .fab-menu.visible { display: block; }
+        .fab-menu-back {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.6rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+        .fab-menu-back:hover { background: var(--bg-surface-hover); }
+        .fab-menu-back svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .fab-menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.4rem 0;
+        }
+        .fab-menu-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0.25rem 0.6rem;
+        }
+        .mode-toggle-pill {
+            display: flex;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-strong);
+            margin: 0.25rem 0.4rem;
+        }
+        .mode-toggle-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.75rem;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .mode-toggle-option.active {
+            background: var(--accent);
+            color: var(--text-on-accent);
+        }
+        .mode-toggle-option svg { width: 16px; height: 16px; }
         .mode-fab-toast {
             position: fixed;
-            bottom: 90px;
-            right: 16px;
+            top: 66px;
+            left: 16px;
             background: var(--bg-panel);
             color: var(--text);
             padding: 6px 14px;
@@ -333,32 +405,6 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         }
 
         /* ── Back button ── */
-        .listen-back-btn {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: none;
-            background: var(--shadow-strong);
-            color: rgba(255, 255, 255, 0.8);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 3;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        .listen-back-btn:hover {
-            background: rgba(0, 0, 0, 0.6);
-        }
-        .listen-back-btn svg {
-            width: 16px;
-            height: 16px;
-            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-        }
 
         .listen-section-header {
             color: #7ab8e0;
@@ -479,9 +525,6 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
     <div class="chapter-content">
         <div class="exercise-desktop-layout">
             <div class="listen-scroll-area" id="listen-scroll">
-                <a class="listen-back-btn" href={backHref} aria-label="Back">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </a>
                 <div class="listen-verse-list" id="verse-list">
                     <div class="listen-loading" id="listen-loading">
                         Loading...
@@ -491,13 +534,32 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         </div>
     </div>
 
-    <button class="mode-fab" id="mode-fab" aria-label="Toggle mode">
+    <button class="mode-fab" id="mode-fab" aria-label="Menu">
         <svg class="fab-ring" viewBox="0 0 60 60">
             <circle class="fab-ring-bg" cx="30" cy="30" r="27" />
             <circle class="fab-ring-fg" id="fab-ring-fg" cx="30" cy="30" r="27" />
         </svg>
         <span class="fab-icon" id="fab-icon"></span>
     </button>
+    <div class="fab-menu-backdrop" id="fab-menu-backdrop"></div>
+    <div class="fab-menu" id="fab-menu">
+        <a class="fab-menu-back" href={backHref}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to chapters
+        </a>
+        <div class="fab-menu-divider"></div>
+        <div class="fab-menu-label">Mode</div>
+        <div class="mode-toggle-pill" id="mode-toggle-pill">
+            <button class="mode-toggle-option" id="mode-opt-listen" data-mode="listen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Listen
+            </button>
+            <button class="mode-toggle-option" id="mode-opt-exercise" data-mode="exercise">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Exercise
+            </button>
+        </div>
+    </div>
     <div class="mode-fab-toast" id="mode-fab-toast"></div>
 
     <script
@@ -546,8 +608,13 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         const fabEl = document.getElementById("mode-fab");
         const fabIconEl = document.getElementById("fab-icon");
         const fabRingFg = document.getElementById("fab-ring-fg");
+        const fabMenu = document.getElementById("fab-menu");
+        const fabMenuBackdrop = document.getElementById("fab-menu-backdrop");
+        const modeOptListen = document.getElementById("mode-opt-listen");
+        const modeOptExercise = document.getElementById("mode-opt-exercise");
         const fabToast = document.getElementById("mode-fab-toast");
         let pageMode = sessionStorage.getItem("listenPageMode") || "exercise";
+        let menuOpen = false;
         let toastTimer = null;
 
         function getActiveExKey() {
@@ -587,6 +654,21 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         function updateFab() {
             fabIconEl.innerHTML = pageMode === "listen" ? PLAY_SVG : BOLT_SVG;
             updateFabRing();
+            updateModePill();
+        }
+        function updateModePill() {
+            modeOptListen.classList.toggle("active", pageMode === "listen");
+            modeOptExercise.classList.toggle("active", pageMode === "exercise");
+        }
+        function openMenu() {
+            menuOpen = true;
+            fabMenu.classList.add("visible");
+            fabMenuBackdrop.classList.add("visible");
+        }
+        function closeMenu() {
+            menuOpen = false;
+            fabMenu.classList.remove("visible");
+            fabMenuBackdrop.classList.remove("visible");
         }
         function showToast(msg) {
             fabToast.textContent = msg;
@@ -594,15 +676,23 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => fabToast.classList.remove("visible"), 1500);
         }
-        updateFab();
-
-        fabEl.addEventListener("click", () => {
-            pageMode = pageMode === "listen" ? "exercise" : "listen";
+        function setMode(mode) {
+            pageMode = mode;
             sessionStorage.setItem("listenPageMode", pageMode);
             updateFab();
             updateVerseCheckmarks();
+            closeMenu();
             showToast(pageMode === "listen" ? "Listen mode" : "Exercise mode");
+        }
+        updateFab();
+
+        fabEl.addEventListener("click", () => {
+            if (menuOpen) closeMenu();
+            else openMenu();
         });
+        fabMenuBackdrop.addEventListener("click", closeMenu);
+        modeOptListen.addEventListener("click", () => setMode("listen"));
+        modeOptExercise.addEventListener("click", () => setMode("exercise"));
 
         function updateVerseCheckmarks() {
             var cards = document.querySelectorAll(".listen-verse-card");
