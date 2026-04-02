@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "اختر تمرينًا",
   "screenshotContinue": "متابعة",
   "stepIndicator": "الخطوة {current} من {total}",
-  "startLearning": "ابدأ التعلم"
+  "startLearning": "ابدأ التعلم",
+  "backToChapters": "العودة إلى الفصول",
+  "mode": "الوضع",
+  "listenMode": "استماع",
+  "exerciseMode": "تمرين",
+  "listenModeToast": "وضع الاستماع",
+  "exerciseModeToast": "وضع التمرين"
 }

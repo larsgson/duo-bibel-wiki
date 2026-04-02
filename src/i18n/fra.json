@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "Choisissez un exercice",
   "screenshotContinue": "Continuez",
   "stepIndicator": "Étape {current} sur {total}",
-  "startLearning": "Commencer à apprendre"
+  "startLearning": "Commencer à apprendre",
+  "backToChapters": "Retour aux chapitres",
+  "mode": "Mode",
+  "listenMode": "Écouter",
+  "exerciseMode": "Exercice",
+  "listenModeToast": "Mode écoute",
+  "exerciseModeToast": "Mode exercice"
 }

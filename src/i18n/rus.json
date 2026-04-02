@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "Выберите упражнение",
   "screenshotContinue": "Продолжить",
   "stepIndicator": "Шаг {current} из {total}",
-  "startLearning": "Начать обучение"
+  "startLearning": "Начать обучение",
+  "backToChapters": "Назад к главам",
+  "mode": "Режим",
+  "listenMode": "Слушать",
+  "exerciseMode": "Упражнение",
+  "listenModeToast": "Режим прослушивания",
+  "exerciseModeToast": "Режим упражнений"
 }

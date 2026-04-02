@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "Välj en övning",
   "screenshotContinue": "Fortsätt",
   "stepIndicator": "Steg {current} av {total}",
-  "startLearning": "Börja nu"
+  "startLearning": "Börja nu",
+  "backToChapters": "Tillbaka till kapitlen",
+  "mode": "Läge",
+  "listenMode": "Lyssna",
+  "exerciseMode": "Övning",
+  "listenModeToast": "Lyssningsläge",
+  "exerciseModeToast": "Övningsläge"
 }
