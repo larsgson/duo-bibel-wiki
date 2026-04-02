@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "Selectează un exercițiu",
   "screenshotContinue": "Continuă",
   "stepIndicator": "Pasul {current} din {total}",
-  "startLearning": "Începe să înveți"
+  "startLearning": "Începe să înveți",
+  "backToChapters": "Înapoi la capitole",
+  "mode": "Mod",
+  "listenMode": "Ascultă",
+  "exerciseMode": "Exercițiu",
+  "listenModeToast": "Mod ascultare",
+  "exerciseModeToast": "Mod exercițiu"
 }

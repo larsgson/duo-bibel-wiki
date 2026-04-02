@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "एक अभ्यास चुनें",
   "screenshotContinue": "आगे बढ़ें",
   "stepIndicator": "चरण {current} / {total}",
-  "startLearning": "सीखना शुरू करें"
+  "startLearning": "सीखना शुरू करें",
+  "backToChapters": "अध्यायों पर वापस जाएँ",
+  "mode": "मोड",
+  "listenMode": "सुनें",
+  "exerciseMode": "अभ्यास",
+  "listenModeToast": "सुनने का मोड",
+  "exerciseModeToast": "अभ्यास मोड"
 }

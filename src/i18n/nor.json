@@ -35,5 +35,11 @@
   "screenshotSelectExercise": "Velg en øvelse",
   "screenshotContinue": "Fortsett",
   "stepIndicator": "Steg {current} av {total}",
-  "startLearning": "Begynn å lære"
+  "startLearning": "Begynn å lære",
+  "backToChapters": "Tilbake til kapitlene",
+  "mode": "Modus",
+  "listenMode": "Lytt",
+  "exerciseMode": "Øvelse",
+  "listenModeToast": "Lyttemodus",
+  "exerciseModeToast": "Øvelsesmodus"
 }

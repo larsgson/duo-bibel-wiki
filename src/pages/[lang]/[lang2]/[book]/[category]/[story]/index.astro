@@ -170,6 +170,12 @@ const uiLabels = JSON.stringify({
     more: t("more"),
     loading: t("loading"),
     audioOnly: t("audioOnly"),
+    backToChapters: t("backToChapters"),
+    mode: t("mode"),
+    listenMode: t("listenMode"),
+    exerciseMode: t("exerciseMode"),
+    listenModeToast: t("listenModeToast"),
+    exerciseModeToast: t("exerciseModeToast"),
 });
 const themeCSS = getTemplateThemeCSS(bookInfo.img);
 ---
@@ -203,7 +209,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         /* ── Mode FAB ── */
         .mode-fab {
             position: fixed;
-            top: 16px;
+            top: 24px;
             left: 16px;
             width: 44px;
             height: 44px;
@@ -279,7 +285,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         .fab-menu-backdrop.visible { display: block; }
         .fab-menu {
             position: fixed;
-            top: 66px;
+            top: 74px;
             left: 16px;
             background: var(--bg-panel);
             border: 1px solid var(--border-strong);
@@ -343,7 +349,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         .mode-toggle-option svg { width: 16px; height: 16px; }
         .mode-fab-toast {
             position: fixed;
-            top: 66px;
+            top: 74px;
             left: 16px;
             background: var(--bg-panel);
             color: var(--text);
@@ -527,7 +533,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             <div class="listen-scroll-area" id="listen-scroll">
                 <div class="listen-verse-list" id="verse-list">
                     <div class="listen-loading" id="listen-loading">
-                        Loading...
+                        {t("loading")}
                     </div>
                 </div>
             </div>
@@ -545,18 +551,18 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
     <div class="fab-menu" id="fab-menu">
         <a class="fab-menu-back" href={backHref}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Back to chapters
+            {t("backToChapters")}
         </a>
         <div class="fab-menu-divider"></div>
-        <div class="fab-menu-label">Mode</div>
+        <div class="fab-menu-label">{t("mode")}</div>
         <div class="mode-toggle-pill" id="mode-toggle-pill">
             <button class="mode-toggle-option" id="mode-opt-listen" data-mode="listen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                Listen
+                {t("listenMode")}
             </button>
             <button class="mode-toggle-option" id="mode-opt-exercise" data-mode="exercise">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                Exercise
+                {t("exerciseMode")}
             </button>
         </div>
     </div>
@@ -682,7 +688,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             updateFab();
             updateVerseCheckmarks();
             closeMenu();
-            showToast(pageMode === "listen" ? "Listen mode" : "Exercise mode");
+            showToast(pageMode === "listen" ? UI.listenModeToast : UI.exerciseModeToast);
         }
         updateFab();
 
