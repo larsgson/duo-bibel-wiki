@@ -1480,11 +1480,10 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             if (!filesetId) return verses;
             try {
                 if (filesetId.startsWith("contrib:")) {
-                    const version = filesetId.slice(8);
+                    // Local contributed text: /text/{LANG_UPPER}/{BOOK}_{CHAPTER}.txt — one verse per line
                     const langForContrib = (filesetId === CHAPTER.learnTextFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
-                    const fid = (langForContrib + version).toUpperCase();
                     const chNum = parseInt(chapterId, 10);
-                    const txtUrl = `/audio/${langForContrib}/${version}/${fid}_${bookId}_${chNum}.txt`;
+                    const txtUrl = `/text/${langForContrib.toUpperCase()}/${bookId}_${chNum}.txt`;
                     const resp = await fetch(txtUrl);
                     if (resp.ok) {
                         const text = await resp.text();
@@ -1539,6 +1538,23 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             return allVerses;
         }
 
+        // Build an audio URL from an external audio.json config.
+        // Currently supports type: "sermon-online" (German DEUSOL etc.).
+        function buildExternalAudioUrl(cfg, bookId, chapterId) {
+            if (!cfg) return "";
+            const meta = cfg.books?.[bookId];
+            if (!meta) return "";
+            const ch = parseInt(chapterId, 10);
+            if (cfg.type === "sermon-online") {
+                const code = String(meta.code);
+                const chapterPad = Math.max(2, 5 - code.length);
+                const prefix = code + String(ch).padStart(chapterPad, "0");
+                const ch3 = String(ch).padStart(3, "0");
+                return `${cfg.baseUrl}${prefix}-${meta.title}_Kapitel-${ch3}.mp3`;
+            }
+            return "";
+        }
+
         async function fetchAudioUrlForBookChapter(audioFilesetId, bookId, chapterId) {
             if (!audioFilesetId) return "";
             try {
@@ -1547,6 +1563,9 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                     const langForContrib = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
                     return `/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
+                } else if (audioFilesetId.startsWith("external:")) {
+                    const cfg = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnAudioConfig : CHAPTER.mtAudioConfig;
+                    return buildExternalAudioUrl(cfg, bookId, chapterId);
                 } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);

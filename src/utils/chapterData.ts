@@ -317,16 +317,27 @@ function parseTextFilesetId(
   return textValue;
 }
 
+export interface ExternalAudioConfig {
+  type: string;
+  baseUrl: string;
+  books: Record<string, { code: string; title: string }>;
+  testaments?: string[];
+}
+
 /**
  * Get audio and text fileset IDs for a language.
  * Also returns the distinctId/category of the audio source,
  * so timing data can be loaded from the matching version.
+ *
+ * For `external:*` audio sources, the sibling `audio.json` is read and
+ * returned as `audioConfig` so the client can construct the audio URL.
  */
 export function getFilesetInfo(langCode: string, templateName: string, canon: string = "nt"): {
   audioFilesetId: string;
   textFilesetId: string;
   audioDistinctId: string;
   audioCategory: string;
+  audioConfig: ExternalAudioConfig | null;
 } | null {
   const allCategories = [
     "with-timecode",
@@ -354,7 +365,11 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
       if (!fs.existsSync(dataFile)) continue;
       const d = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
       if (!bestAudio && d.a) {
-        if (d.a.startsWith("helloao:") || d.a.startsWith("contrib:")) {
+        if (
+          d.a.startsWith("helloao:") ||
+          d.a.startsWith("contrib:") ||
+          d.a.startsWith("external:")
+        ) {
           bestAudio = d.a;
         } else {
           const audioSuffix = d.a.replace(".mp3", "");
@@ -405,7 +420,26 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
     if (bestAudio && bestText) break;
   }
   if (!bestAudio && !bestText) return null;
-  return { audioFilesetId: bestAudio, textFilesetId: bestText, audioDistinctId, audioCategory };
+
+  let audioConfig: ExternalAudioConfig | null = null;
+  if (bestAudio.startsWith("external:") && audioCategory && audioDistinctId) {
+    const audioJsonPath = path.join(
+      process.cwd(),
+      "src/data/ALL-langs-data",
+      canon,
+      audioCategory,
+      langCode,
+      audioDistinctId,
+      "audio.json",
+    );
+    if (fs.existsSync(audioJsonPath)) {
+      try {
+        audioConfig = JSON.parse(fs.readFileSync(audioJsonPath, "utf-8")) as ExternalAudioConfig;
+      } catch { /* leave null */ }
+    }
+  }
+
+  return { audioFilesetId: bestAudio, textFilesetId: bestText, audioDistinctId, audioCategory, audioConfig };
 }
 
 /**
@@ -594,16 +628,22 @@ export function templateHasOT(templateName: string): boolean {
 /**
  * Build the full chapterData JSON object for client-side use.
  */
+type FilesetParam = {
+  audioFilesetId: string;
+  textFilesetId: string;
+  audioConfig?: ExternalAudioConfig | null;
+} | null;
+
 export function buildChapterData(params: {
   bookInfo: TemplateInfo;
   chapterNum: number;
   verseEntries: VerseEntry[];
   learnCode?: string;
   mtCode?: string;
-  learnFileset: { audioFilesetId: string; textFilesetId: string } | null;
-  mtFileset: { audioFilesetId: string; textFilesetId: string } | null;
-  learnOtFileset?: { audioFilesetId: string; textFilesetId: string } | null;
-  mtOtFileset?: { audioFilesetId: string; textFilesetId: string } | null;
+  learnFileset: FilesetParam;
+  mtFileset: FilesetParam;
+  learnOtFileset?: FilesetParam;
+  mtOtFileset?: FilesetParam;
   chapterImageData: Record<string, string[]>;
   mtChapterTiming: Record<string, number[]>;
   learnWordTiming: Record<string, (number | null)[]> | null;
@@ -625,10 +665,14 @@ export function buildChapterData(params: {
     mtTextFilesetId: params.mtFileset?.textFilesetId || "",
     learnAudioFilesetId: params.learnFileset?.audioFilesetId || "",
     mtAudioFilesetId: params.mtFileset?.audioFilesetId || "",
+    learnAudioConfig: params.learnFileset?.audioConfig || null,
+    mtAudioConfig: params.mtFileset?.audioConfig || null,
     learnOtTextFilesetId: params.learnOtFileset?.textFilesetId || "",
     mtOtTextFilesetId: params.mtOtFileset?.textFilesetId || "",
     learnOtAudioFilesetId: params.learnOtFileset?.audioFilesetId || "",
     mtOtAudioFilesetId: params.mtOtFileset?.audioFilesetId || "",
+    learnOtAudioConfig: params.learnOtFileset?.audioConfig || null,
+    mtOtAudioConfig: params.mtOtFileset?.audioConfig || null,
     chapterImageData: params.chapterImageData,
     mtChapterTiming: params.mtChapterTiming,
     learnWordTiming: params.learnWordTiming,
