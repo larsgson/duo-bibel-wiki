@@ -421,8 +421,11 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
   }
   if (!bestAudio && !bestText) return null;
 
+  // If a sibling `audio.json` is present, the audio is sourced externally
+  // regardless of how `data.json` labels `"a"` (e.g. "contrib:..." or "external:...").
+  // The presence of audio.json is the source-of-truth signal.
   let audioConfig: ExternalAudioConfig | null = null;
-  if (bestAudio.startsWith("external:") && audioCategory && audioDistinctId) {
+  if (audioCategory && audioDistinctId) {
     const audioJsonPath = path.join(
       process.cwd(),
       "src/data/ALL-langs-data",

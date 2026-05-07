@@ -1558,14 +1558,15 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
         async function fetchAudioUrlForBookChapter(audioFilesetId, bookId, chapterId) {
             if (!audioFilesetId) return "";
             try {
+                // If an audio config was provided alongside data.json, the audio is sourced
+                // externally — use that regardless of the audioFilesetId label.
+                const cfg = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnAudioConfig : CHAPTER.mtAudioConfig;
+                if (cfg) return buildExternalAudioUrl(cfg, bookId, chapterId);
                 if (audioFilesetId.startsWith("contrib:")) {
                     const version = audioFilesetId.slice(8);
                     const langForContrib = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
                     return `/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
-                } else if (audioFilesetId.startsWith("external:")) {
-                    const cfg = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnAudioConfig : CHAPTER.mtAudioConfig;
-                    return buildExternalAudioUrl(cfg, bookId, chapterId);
                 } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);
