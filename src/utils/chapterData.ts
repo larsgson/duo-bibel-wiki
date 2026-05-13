@@ -25,6 +25,39 @@ if (fs.existsSync(_templatesDir)) {
 const RTL_REGEX =
   /[\u0590-\u05FF\u0600-\u06FF\u0700-\u074F\u0750-\u077F\u0780-\u07BF\u07C0-\u07FF\u08A0-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 
+
+// ── Per-version direction from versions-data ──
+const _versionsDataDir = path.join(process.cwd(), "src/data/versions-data");
+const _versionsCache: Record<string, Record<string, any> | null> = {};
+
+function loadVersionsData(langCode: string): Record<string, any> | null {
+  if (langCode in _versionsCache) return _versionsCache[langCode];
+  const filePath = path.join(_versionsDataDir, langCode, "versions.json");
+  if (!fs.existsSync(filePath)) {
+    _versionsCache[langCode] = null;
+    return null;
+  }
+  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  _versionsCache[langCode] = data;
+  return data;
+}
+
+function versionKeyFromDistinctId(langCode: string, distinctId: string): string {
+  if (distinctId.includes("_")) {
+    return distinctId.split("_")[1].toUpperCase();
+  }
+  return distinctId.substring(langCode.length).toUpperCase();
+}
+
+export function isVersionRTL(langCode: string, distinctId: string): boolean | null {
+  const versions = loadVersionsData(langCode);
+  if (!versions) return null;
+  const key = versionKeyFromDistinctId(langCode, distinctId);
+  const ver = versions[key];
+  if (!ver) return null;
+  return ver.d === "rtl";
+}
+
 // ── Types ──
 export interface VerseEntry {
   ref: string;
@@ -337,6 +370,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
   textFilesetId: string;
   audioDistinctId: string;
   audioCategory: string;
+  textDistinctId: string;
   audioConfig: ExternalAudioConfig | null;
 } | null {
   const allCategories = [
@@ -350,6 +384,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
   let bestText = "";
   let audioDistinctId = "";
   let audioCategory = "";
+  let textDistinctId = "";
   for (const cat of allCategories) {
     const catPath = path.join(
       process.cwd(),
@@ -400,6 +435,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
               audioCategory = cat;
               if (!bestText && d.t) {
                 bestText = parseTextFilesetId(d.t, ver);
+                textDistinctId = ver;
               }
               if (bestAudio && bestText) break;
               continue;
@@ -414,6 +450,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
       }
       if (!bestText && d.t) {
         bestText = parseTextFilesetId(d.t, ver);
+        textDistinctId = ver;
       }
       if (bestAudio && bestText) break;
     }
@@ -442,7 +479,7 @@ export function getFilesetInfo(langCode: string, templateName: string, canon: st
     }
   }
 
-  return { audioFilesetId: bestAudio, textFilesetId: bestText, audioDistinctId, audioCategory, audioConfig };
+  return { audioFilesetId: bestAudio, textFilesetId: bestText, audioDistinctId, audioCategory, textDistinctId, audioConfig };
 }
 
 /**

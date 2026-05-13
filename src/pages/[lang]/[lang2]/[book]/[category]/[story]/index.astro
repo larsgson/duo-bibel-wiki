@@ -15,6 +15,7 @@ import {
     getTemplateImageConfig,
     getTemplateThemeCSS,
     templateHasOT,
+    isVersionRTL,
 } from "../../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../../i18n";
 import { defaultTemplateSlug } from "../../../../../../config";
@@ -29,10 +30,10 @@ if (!validated) {
 const { bookInfo, chapterNum: storyNum, learn, mt } = validated;
 const learnCode = learn.code;
 const learnEnglish = learn.english;
-const learnIsRTL = learn.isRTL;
+let learnIsRTL = learn.isRTL;
 const mtCode = mt.code;
 const mtEnglish = mt.english;
-const mtIsRTL = mt.isRTL;
+let mtIsRTL = mt.isRTL;
 const categoryId = category!;
 
 // ── Look up story data from story-locales ──
@@ -58,6 +59,14 @@ const mtOtFileset = getFilesetInfo(mtCode, bookInfo.img, "ot");
 // Use the story's canon fileset for timing resolution
 const learnFileset = storyCanon === "ot" ? learnOtFileset : learnNtFileset;
 const mtFileset = storyCanon === "ot" ? mtOtFileset : mtNtFileset;
+
+// ── Override RTL from per-version data (for multi-script languages) ──
+const learnVersionRTL = learnFileset?.textDistinctId
+    ? isVersionRTL(learnCode, learnFileset.textDistinctId) : null;
+if (learnVersionRTL !== null) learnIsRTL = learnVersionRTL;
+const mtVersionRTL = mtFileset?.textDistinctId
+    ? isVersionRTL(mtCode, mtFileset.textDistinctId) : null;
+if (mtVersionRTL !== null) mtIsRTL = mtVersionRTL;
 
 // ── Load timing data for the story's canon ──
 let learnTiming = findTimingData(

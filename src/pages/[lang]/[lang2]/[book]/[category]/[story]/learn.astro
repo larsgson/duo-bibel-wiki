@@ -15,6 +15,7 @@ import {
     getLangGapScale,
     getTemplateImageConfig,
     getTemplateThemeCSS,
+    isVersionRTL,
 } from "../../../../../../utils/chapterData";
 import { useTranslations } from "../../../../../../i18n";
 
@@ -30,11 +31,11 @@ const categoryId = category!;
 const learnCode = learn.code;
 const learnEnglish = learn.english;
 const learnVernacular = learn.info.v || learn.info.n || learnCode;
-const learnIsRTL = learn.isRTL;
+let learnIsRTL = learn.isRTL;
 const mtCode = mt.code;
 const mtEnglish = mt.english;
 const mtVernacular = mt.info.v || mt.info.n || mtCode;
-const mtIsRTL = mt.isRTL;
+let mtIsRTL = mt.isRTL;
 const learnFontScale = getLangFontScale(learnCode);
 const mtFontScale = getLangFontScale(mtCode);
 const learnGapScale = getLangGapScale(learnCode);
@@ -60,6 +61,15 @@ const mtNtFileset = getFilesetInfo(mtCode, bookInfo.img, "nt");
 const learnOtFileset = getFilesetInfo(learnCode, bookInfo.img, "ot");
 const mtOtFileset = getFilesetInfo(mtCode, bookInfo.img, "ot");
 const learnFileset = storyCanon === "ot" ? learnOtFileset : learnNtFileset;
+const mtFileset = storyCanon === "ot" ? mtOtFileset : mtNtFileset;
+
+// ── Override RTL from per-version data (for multi-script languages) ──
+const learnVersionRTL = learnFileset?.textDistinctId
+    ? isVersionRTL(learnCode, learnFileset.textDistinctId) : null;
+if (learnVersionRTL !== null) learnIsRTL = learnVersionRTL;
+const mtVersionRTL = mtFileset?.textDistinctId
+    ? isVersionRTL(mtCode, mtFileset.textDistinctId) : null;
+if (mtVersionRTL !== null) mtIsRTL = mtVersionRTL;
 
 // ── Load timing data for the story's canon ──
 let learnTiming = findTimingData(
@@ -69,7 +79,6 @@ let learnTiming = findTimingData(
 if (!learnTiming) {
     learnTiming = findTimingData(learnCode, undefined, undefined, bookInfo.img, storyCanon);
 }
-const mtFileset = storyCanon === "ot" ? mtOtFileset : mtNtFileset;
 let mtTiming = findTimingData(
     mtCode, mtFileset?.audioCategory, mtFileset?.audioDistinctId,
     bookInfo.img, storyCanon,

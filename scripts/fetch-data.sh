@@ -41,8 +41,15 @@ mkdir -p "$DATA_DIR/ALL-langs-data"
 unzip -q "$TMP_DIR/ALL-langs-data.zip" -d "$DATA_DIR/ALL-langs-data"
 echo "  ✓ ALL-langs-data/"
 
-# ── 3. Template content from latest release ──
-# Content zips are named {Template}-content.zip and extract to {Template}/ inside target
+# ── 3. Versions data from latest release ──
+echo "Fetching versions-data.zip..."
+curl -sfL "$RELEASE_URL/versions-data.zip" -o "$TMP_DIR/versions-data.zip"
+rm -rf "$DATA_DIR/versions-data"
+mkdir -p "$DATA_DIR/versions-data"
+unzip -q "$TMP_DIR/versions-data.zip" -d "$DATA_DIR"
+echo "  ✓ versions-data/"
+
+# ── 4. Template content from latest release ──
 mkdir -p "$DATA_DIR/templates"
 TEMPLATES="John"
 for tpl in $TEMPLATES; do
@@ -56,8 +63,7 @@ for tpl in $TEMPLATES; do
     fi
 done
 
-# ── 4. Template timing data from latest release ──
-# Discover templates from extracted content and fetch matching timing zips
+# ── 5. Template timing data from latest release ──
 for tpl_dir in "$DATA_DIR/templates"/*/; do
     tpl=$(basename "$tpl_dir")
     zip_name="${tpl}-ALL-timings.zip"
