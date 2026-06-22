@@ -856,7 +856,7 @@ const assetBase = import.meta.env.PUBLIC_ASSET_BASE || "";
                     // Local contributed text: /text/{LANG_UPPER}/{BOOK}_{CHAPTER}.txt — one verse per line
                     const langForContrib = (filesetId === CHAPTER.learnTextFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
-                    const txtUrl = `${assetBase}/text/${langForContrib.toUpperCase()}/${bookId}_${chNum}.txt`;
+                    const txtUrl = `/text/${langForContrib.toUpperCase()}/${bookId}_${chNum}.txt`;
                     const resp = await fetch(txtUrl);
                     if (resp.ok) {
                         const text = await resp.text();
