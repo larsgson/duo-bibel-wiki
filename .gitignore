@@ -37,6 +37,11 @@ src/generated/story-locales.json
 # reference React app (read-only, not part of the Astro build)
 example/
 
+# Static assets now served from CDN (cdn.bibel.wiki)
+public/audio/
+public/img/
+public/text/
+
 # AI assistant config
 CLAUDE.md
 

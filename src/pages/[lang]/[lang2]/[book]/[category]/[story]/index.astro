@@ -187,6 +187,7 @@ const uiLabels = JSON.stringify({
     exerciseModeToast: t("exerciseModeToast"),
 });
 const themeCSS = getTemplateThemeCSS(bookInfo.img);
+const assetBase = import.meta.env.PUBLIC_ASSET_BASE || "";
 ---
 
 <Layout
@@ -591,6 +592,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
             uiLabels,
             categoryId,
             defaultTemplateSlug,
+            assetBase,
         }}
     >
         const CHAPTER = JSON.parse(chapterData);
@@ -854,7 +856,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                     // Local contributed text: /text/{LANG_UPPER}/{BOOK}_{CHAPTER}.txt — one verse per line
                     const langForContrib = (filesetId === CHAPTER.learnTextFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
-                    const txtUrl = `/text/${langForContrib.toUpperCase()}/${bookId}_${chNum}.txt`;
+                    const txtUrl = `${assetBase}/text/${langForContrib.toUpperCase()}/${bookId}_${chNum}.txt`;
                     const resp = await fetch(txtUrl);
                     if (resp.ok) {
                         const text = await resp.text();
@@ -944,7 +946,7 @@ const themeCSS = getTemplateThemeCSS(bookInfo.img);
                     const version = audioFilesetId.slice(8);
                     const langForContrib = (audioFilesetId === CHAPTER.learnAudioFilesetId) ? CHAPTER.learnCode : CHAPTER.mtCode;
                     const chNum = parseInt(chapterId, 10);
-                    return `/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
+                    return `${assetBase}/audio/${langForContrib}/${version}/${bookId}_${chNum}.mp3`;
                 } else if (audioFilesetId.startsWith("helloao:")) {
                     const tid = audioFilesetId.slice(8);
                     const resp = await fetch(`https://bible.helloao.org/api/${tid}/${bookId}/${chapterId}.json`);

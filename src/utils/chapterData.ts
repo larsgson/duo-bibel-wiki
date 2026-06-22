@@ -54,7 +54,7 @@ export function isVersionRTL(langCode: string, distinctId: string): boolean | nu
   if (!versions) return null;
   const key = versionKeyFromDistinctId(langCode, distinctId);
   const ver = versions[key];
-  if (!ver) return null;
+  if (!ver || !ver.d) return null;
   return ver.d === "rtl";
 }
 
